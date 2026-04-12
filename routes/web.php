@@ -28,5 +28,5 @@ Route::get('/masuk', function () {
 })->name('login');
 
 Route::get('/daftar', function () {
-    return "Halaman Registrasi";
+    return view('auth.register-role');
 })->name('register');
