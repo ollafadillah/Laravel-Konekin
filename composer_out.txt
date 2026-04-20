@@ -1,0 +1,14 @@
+Loading composer repositories with package information
+Package "jenssegers/mongodb" listed for update is not locked.
+Updating dependencies
+Your requirements could not be resolved to an installable set of packages.
+
+  Problem 1
+    - mongodb/laravel-mongodb is locked to version 5.7.0 and an update of this package was not requested.
+    - mongodb/laravel-mongodb 5.7.0 requires mongodb/mongodb ^1.21|^2 -> satisfiable by mongodb/mongodb[2.2.0].
+    - mongodb/mongodb 2.2.0 requires ext-mongodb ^2.2 -> it has the wrong version installed (1.21.1).
+
+To enable extensions, verify that they are enabled in your .ini files:
+    - D:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.ini
+You can also run `php --ini` in a terminal to see which files are used by PHP in CLI mode.
+Alternatively, you can run Composer with `--ignore-platform-req=ext-mongodb` to temporarily ignore these required extensions.

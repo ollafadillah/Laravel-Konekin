@@ -9,17 +9,18 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /**
-     * Tampilkan halaman register
-     */
-    public function showRegister()
+    public function showRegister(Request $request)
     {
-        return view('auth.register');
+        $type = $request->query('type'); // Menangkap 'umkm' atau 'creative_worker'
+        
+        // Kalau user coba akses /register langsung tanpa pilih role, balikin ke halaman pilih role
+        if (!$type) {
+            return redirect()->route('register.role');
+        }
+
+        return view('auth.register', compact('type'));
     }
 
-    /**
-     * Proses register user baru
-     */
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -28,7 +29,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'type' => 'required|in:creative_worker,umkm',
             'phone' => 'nullable|string|max:20',
-            'city' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:255',
         ]);
 
         $user = User::create([
@@ -36,64 +37,42 @@ class AuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'type' => $validated['type'],
-            'phone' => $validated['phone'] ?? null,
-            'city' => $validated['city'] ?? null,
-            'bio' => '',
-            'address' => '',
+            'phone' => $validated['phone'],
+            'city' => $validated['city'],
         ]);
 
         Auth::login($user);
 
-        if ($user->isCreativeWorker()) {
-            return redirect()->route('dashboard.creative')->with('success', 'Registrasi berhasil! Selamat datang di platform kami.');
-        } else {
-            return redirect()->route('dashboard.umkm')->with('success', 'Registrasi berhasil! Selamat datang di platform kami.');
-        }
+        return ($user->type === 'umkm') 
+            ? redirect()->route('dashboard.umkm') 
+            : redirect()->route('dashboard.creative');
     }
 
-    /**
-     * Tampilkan halaman login
-     */
-    public function showLogin()
-    {
-        return view('auth.login');
-    }
+    public function showLogin() { return view('auth.login'); }
 
-    /**
-     * Proses login
-     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            
             $user = Auth::user();
-            if ($user->isCreativeWorker()) {
-                return redirect()->route('dashboard.creative')->with('success', 'Login berhasil!');
-            } else {
-                return redirect()->route('dashboard.umkm')->with('success', 'Login berhasil!');
-            }
+            return ($user->type === 'umkm') 
+                ? redirect()->route('dashboard.umkm') 
+                : redirect()->route('dashboard.creative');
         }
 
-        return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ])->onlyInput('email');
+        return back()->withErrors(['email' => 'Email atau password salah.']);
     }
 
-    /**
-     * Logout user
-     */
     public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
-        return redirect()->route('home')->with('success', 'Anda telah logout.');
+        return redirect()->route('login');
     }
 }

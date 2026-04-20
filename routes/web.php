@@ -24,41 +24,20 @@ Route::get('/tentang-kami', function () {
     return "Halaman Tentang Kami - Segera Hadir";
 })->name('about');
 
-// ===== AUTHENTICATION ROUTES =====
-Route::prefix('auth')->group(function () {
-    // Register
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register.show');
-    Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
+// Auth Routes
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Login
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login.show')->middleware('guest');
-    Route::post('/login', [AuthController::class, 'login'])->name('auth.login')->middleware('guest');
+Route::get('/register-role', function () {
+    return view('auth.register-role'); // Halaman pilih role
+})->name('register.role');
 
-    // Logout
-    Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout')->middleware('auth');
-});
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
-// ===== DASHBOARD ROUTES (Protected) =====
+// Dashboard (Contoh)
 Route::middleware('auth')->group(function () {
-    // Creative Worker Dashboard
-    Route::prefix('dashboard/creative')->group(function () {
-        Route::get('/', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
-    });
-
-    // UMKM Dashboard
-    Route::prefix('dashboard/umkm')->group(function () {
-        Route::get('/', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
-    });
-
-    // Update Profile (for both types)
-    Route::put('/profile/update', [DashboardController::class, 'updateProfile'])->name('dashboard.update-profile');
+    Route::get('/dashboard/umkm', function() { return "Dashboard UMKM"; })->name('dashboard.umkm');
+    Route::get('/dashboard/creative', function() { return "Dashboard Creative"; })->name('dashboard.creative');
 });
-
-// Redirect login/register routes to auth
-Route::get('/masuk', function () {
-    return redirect(route('auth.login.show'));
-})->name('login');
-
-Route::get('/daftar', function () {
-    return redirect(route('auth.register.show'));
-})->name('register');

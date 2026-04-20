@@ -26,13 +26,13 @@
                 @if (auth()->check())
                     <span class="text-[#1E3A8A] font-bold text-sm">Halo, {{ auth()->user()->name }}</span>
                     <a href="{{ auth()->user()->isCreativeWorker() ? route('dashboard.creative') : route('dashboard.umkm') }}" class="text-[#1E3A8A] font-bold text-sm hover:text-[#2563EB] transition-colors">Dashboard</a>
-                    <form method="POST" action="{{ route('auth.logout') }}" class="inline">
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="text-red-600 font-bold text-sm hover:text-red-700 transition-colors">Logout</button>
                     </form>
                 @else
-                    <a href="{{ route('auth.login.show') }}" class="text-[#1E3A8A] font-bold text-sm hover:text-[#2563EB] transition-colors">Masuk</a>
-                    <a href="{{ route('auth.register.show') }}" class="bg-gradient-to-r from-[#2563EB] to-[#0A66C2] hover:from-[#1E3A8A] hover:to-[#2563EB] text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-[#2563EB]/25 transition-all hover:-translate-y-1 active:translate-y-0 relative overflow-hidden group">
+                    <a href="{{ route('login') }}" class="text-[#1E3A8A] font-bold text-sm hover:text-[#2563EB] transition-colors">Masuk</a>
+                    <a href="{{ route('register') }}" class="bg-gradient-to-r from-[#2563EB] to-[#0A66C2] hover:from-[#1E3A8A] hover:to-[#2563EB] text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-[#2563EB]/25 transition-all hover:-translate-y-1 active:translate-y-0 relative overflow-hidden group">
                         <span class="relative z-10">Daftar Sekarang</span>
                         <div class="absolute inset-0 h-full w-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></div>
                     </a>
