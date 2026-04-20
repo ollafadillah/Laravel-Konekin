@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\PortfolioController;
 
 // Halaman Utama (Landing Page)
 Route::get('/', function () {
@@ -37,7 +39,7 @@ Route::get('/register-role', function () {
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
-// Dashboard & Profile
+// Dashboard & Profile & Projects & Portfolio
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
     Route::get('/dashboard/creative', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
@@ -45,4 +47,12 @@ Route::middleware('auth')->group(function () {
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Project Search Route
+    Route::get('/cari-proyek', [ProjectController::class, 'index'])->name('projects.index');
+
+    // Portfolio Routes
+    Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
+    Route::post('/portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
+    Route::delete('/portfolio/{id}', [PortfolioController::class, 'destroy'])->name('portfolio.destroy');
 });

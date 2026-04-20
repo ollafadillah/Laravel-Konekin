@@ -31,26 +31,7 @@
 <body class="antialiased text-[#1E3A8A]">
     
     <!-- Navbar -->
-    <nav class="fixed w-full top-0 z-50 glass border-b border-[#2563EB]/10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <a href="{{ route('dashboard.creative') }}" class="flex items-center gap-3 group shrink-0">
-                    <div class="relative w-10 h-10 flex items-center justify-center">
-                        <div class="absolute inset-0 bg-[#2563EB] rounded-xl rotate-3 group-hover:rotate-6 transition-all shadow-lg shadow-[#2563EB]/20"></div>
-                        <span class="relative text-white font-display font-bold text-lg">K</span>
-                    </div>
-                    <span class="font-display font-bold text-xl tracking-tight">Konekin<span class="text-[#2563EB]">.</span></span>
-                </a>
-
-                <div class="flex items-center gap-4">
-                    <a href="{{ route('dashboard.creative') }}" class="flex items-center gap-2 text-sm font-bold text-[#1E3A8A]/70 hover:text-[#2563EB] transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                        Kembali ke Dashboard
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <x-dashboard-nav />
 
     <main class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         

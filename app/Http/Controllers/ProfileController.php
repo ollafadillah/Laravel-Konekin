@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ProfileController extends Controller
 {
@@ -44,19 +45,17 @@ class ProfileController extends Controller
         // Handle upload ke Cloudinary jika ada foto baru
         if ($request->hasFile('profile_photo')) {
             try {
-                $uploadedFileUrl = Cloudinary::upload($request->file('profile_photo')->getRealPath(), [
-                    'folder' => 'konekin/profiles',
-                    'transformation' => [
-                        'width' => 400,
-                        'height' => 400,
-                        'crop' => 'fill',
-                        'gravity' => 'face'
-                    ]
-                ])->getSecurePath();
+                $file = $request->file('profile_photo');
                 
-                $data['profile_photo'] = $uploadedFileUrl;
+                // Coba upload dengan cara paling sederhana dulu untuk memastikan koneksi aman
+                $uploadedFile = Cloudinary::upload($file->getRealPath(), [
+                    'folder' => 'konekin/profiles',
+                ]);
+                
+                $data['profile_photo'] = $uploadedFile->getSecurePath();
             } catch (\Exception $e) {
-                return back()->with('error', 'Gagal upload foto ke Cloudinary: ' . $e->getMessage());
+                Log::error('Cloudinary Error: ' . $e->getMessage());
+                return back()->with('error', 'Gagal upload ke Cloudinary: ' . $e->getMessage());
             }
         }
 
