@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 
 // Halaman Utama (Landing Page)
 Route::get('/', function () {
@@ -36,8 +37,12 @@ Route::get('/register-role', function () {
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
-// Dashboard (Contoh)
+// Dashboard & Profile
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard/umkm', function() { return "Dashboard UMKM"; })->name('dashboard.umkm');
-    Route::get('/dashboard/creative', function() { return "Dashboard Creative"; })->name('dashboard.creative');
+    Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
+    Route::get('/dashboard/creative', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
+    
+    // Profile Routes
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });

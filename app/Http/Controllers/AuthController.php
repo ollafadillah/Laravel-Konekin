@@ -13,7 +13,6 @@ class AuthController extends Controller
     {
         $type = $request->query('type'); // Menangkap 'umkm' atau 'creative_worker'
         
-        // Kalau user coba akses /register langsung tanpa pilih role, balikin ke halaman pilih role
         if (!$type) {
             return redirect()->route('register.role');
         }
@@ -169,7 +168,10 @@ class AuthController extends Controller
     public function apiLogout(Request $request)
     {
         try {
-            $request->user()->currentAccessToken()->delete();
+            // Revoke all tokens for this user
+            if ($request->user()) {
+                $request->user()->tokens()->delete();
+            }
 
             return response()->json([
                 'success' => true,
@@ -202,3 +204,4 @@ class AuthController extends Controller
             ], 500);
         }
     }
+}
