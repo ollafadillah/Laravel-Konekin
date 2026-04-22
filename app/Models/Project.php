@@ -20,6 +20,13 @@ class Project extends Model
         'status',
         'requirements',
         'thumbnail',
+        'media_url',
+        'media_type',
+        'progress_percentage',
+        'applications_count',
+        'selected_creative_id',
+        'selected_creative_name',
+        'selected_creative_avatar',
     ];
 
     public function client()

@@ -3,30 +3,50 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\ProjectApplication;
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProjectController extends Controller
 {
-    /**
-     * Tampilkan halaman cari proyek
-     */
+    public function publicIndex(Request $request)
+    {
+        $query = Project::query();
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('category') && $request->category !== 'Semua') {
+            $query->where('category', $request->category);
+        }
+
+        $projects = $query->orderBy('created_at', 'desc')->get()
+            ->map(fn ($project) => $this->decorateProject($project));
+
+        if ($projects->isEmpty()) {
+            $projects = $this->getDummyProjects();
+        }
+
+        return view('projects.public-index', compact('projects'));
+    }
+
     public function index(Request $request)
     {
         $query = Project::query();
 
-        // Filter Pencarian
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $query->where('title', 'like', '%' . $request->search . '%');
         }
 
-        // Filter Kategori
-        if ($request->has('category') && $request->category != 'Semua') {
+        if ($request->filled('category') && $request->category !== 'Semua') {
             $query->where('category', $request->category);
         }
 
-        $projects = $query->orderBy('created_at', 'desc')->get();
+        $projects = $query->orderBy('created_at', 'desc')->get()
+            ->map(fn ($project) => $this->decorateProject($project));
 
-        // Dummy data jika database kosong biar UI tetap kelihatan bagus
         if ($projects->isEmpty()) {
             $projects = $this->getDummyProjects();
         }
@@ -34,9 +54,6 @@ class ProjectController extends Controller
         return view('projects.index', compact('projects'));
     }
 
-    /**
-     * Tampilkan form buat proyek (UMKM)
-     */
     public function create()
     {
         if (!auth()->user()->isUMKM()) {
@@ -46,10 +63,7 @@ class ProjectController extends Controller
         return view('projects.create');
     }
 
-    /**
-     * Simpan proyek baru
-     */
-    public function store(Request $request)
+    public function store(Request $request, CloudinaryService $cloudinary)
     {
         if (!auth()->user()->isUMKM()) {
             return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat membuat proyek.');
@@ -57,21 +71,188 @@ class ProjectController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'category' => 'required|string',
-            'budget' => 'required|string',
-            'description' => 'required|string',
-            'requirements' => 'nullable|string',
+            'category' => 'required|string|max:100',
+            'budget' => 'required|string|max:100',
+            'description' => 'required|string|max:2000',
+            'requirements' => 'nullable|string|max:2000',
+            'project_media' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,webm|max:20480',
         ]);
 
-        $project = new Project($validated);
+        $project = new Project($request->only([
+            'title',
+            'category',
+            'budget',
+            'description',
+            'requirements',
+        ]));
+
         $project->client_id = auth()->id();
         $project->client_name = auth()->user()->name;
-        $project->client_avatar = auth()->user()->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->name).'&background=random';
+        $project->client_avatar = auth()->user()->profile_photo ?? 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=random';
         $project->status = 'open';
-        $project->thumbnail = 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop'; // Default placeholder
+        $project->progress_percentage = 0;
+        $project->applications_count = 0;
+        $project->thumbnail = 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop';
+
+        if ($request->hasFile('project_media')) {
+            try {
+                $file = $request->file('project_media');
+                $mimeType = $file->getMimeType() ?? '';
+                $resourceType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+
+                $mediaUrl = $cloudinary->upload($file, [
+                    'folder' => 'konekin/projects/media',
+                    'resource_type' => $resourceType,
+                ]);
+
+                $project->media_url = $mediaUrl;
+                $project->media_type = $resourceType;
+
+                if ($resourceType === 'image') {
+                    $project->thumbnail = $mediaUrl;
+                }
+            } catch (\Exception $e) {
+                Log::error('Project Media Upload Error: ' . $e->getMessage());
+
+                return back()
+                    ->withInput()
+                    ->with('error', 'Media proyek gagal di-upload: ' . $e->getMessage());
+            }
+        }
+
         $project->save();
 
-        return redirect()->route('dashboard.umkm')->with('success', 'Proyek berhasil dipublikasikan!');
+        return redirect()->route('projects.progress')->with('success', 'Proyek berhasil dipublikasikan!');
+    }
+
+    public function show(string $id)
+    {
+        $project = $this->decorateProject(Project::findOrFail($id));
+        $applications = ProjectApplication::where('project_id', $project->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('projects.show', compact('project', 'applications'));
+    }
+
+    public function apply(Request $request, string $id, CloudinaryService $cloudinary)
+    {
+        $user = auth()->user();
+
+        if (!$user->isCreativeWorker()) {
+            return redirect()->route('projects.show', $id)->with('error', 'Hanya creative worker yang dapat mengajukan proyek.');
+        }
+
+        $project = Project::findOrFail($id);
+
+        $validated = $request->validate([
+            'message' => 'required|string|min:20|max:1000',
+            'proposal_file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,zip|max:20480',
+        ], [
+            'message.required' => 'Deskripsi pengajuan wajib diisi sebelum mengajukan ke UMKM.',
+            'message.min' => 'Deskripsi pengajuan minimal 20 karakter ya.',
+            'proposal_file.required' => 'File proposal wajib di-upload sebelum mengajukan ke UMKM.',
+        ]);
+
+        $existingApplication = ProjectApplication::where('project_id', $project->id)
+            ->where('creative_id', $user->id)
+            ->first();
+
+        if ($existingApplication) {
+            return back()->with('error', 'Kamu sudah mengajukan diri ke proyek ini.');
+        }
+
+        try {
+            $proposalFile = $request->file('proposal_file');
+            $proposalType = $proposalFile->getClientOriginalExtension();
+            $proposalUrl = $cloudinary->upload($proposalFile, [
+                'folder' => 'konekin/projects/proposals',
+                'resource_type' => 'raw',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Project Proposal Upload Error: ' . $e->getMessage());
+
+            return back()
+                ->withInput()
+                ->with('error', 'Proposal gagal di-upload: ' . $e->getMessage());
+        }
+
+        ProjectApplication::create([
+            'project_id' => $project->id,
+            'creative_id' => $user->id,
+            'creative_name' => $user->name,
+            'creative_avatar' => $user->profile_photo ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=random',
+            'creative_city' => $user->city,
+            'message' => $validated['message'],
+            'proposal_url' => $proposalUrl,
+            'proposal_type' => $proposalType,
+            'status' => 'applied',
+            'applied_at' => now(),
+        ]);
+
+        $applicationsCount = ProjectApplication::where('project_id', $project->id)->count();
+
+        $project->applications_count = $applicationsCount;
+        $project->status = $project->progress_percentage >= 100 ? 'completed' : 'applied';
+        $project->progress_percentage = max((int) ($project->progress_percentage ?? 0), 0);
+        $project->save();
+
+        return back()->with('success', 'Pengajuan berhasil dikirim ke UMKM.');
+    }
+
+    public function progress()
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat melihat progress proyek.');
+        }
+
+        $projects = Project::where('client_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($project) {
+                $project->applications = ProjectApplication::where('project_id', $project->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                return $this->decorateProject($project, $project->applications->count());
+            });
+
+        return view('projects.progress', compact('projects'));
+    }
+
+    public function updateProgress(Request $request, string $id)
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat memperbarui progress proyek.');
+        }
+
+        $project = Project::where('client_id', $user->id)->findOrFail($id);
+        $applicationsCount = ProjectApplication::where('project_id', $project->id)->count();
+
+        $validated = $request->validate([
+            'progress_percentage' => 'required|integer|min:0|max:100',
+            'status' => 'required|string|in:open,applied,in_progress,revision,completed',
+        ]);
+
+        if ($applicationsCount === 0) {
+            $project->progress_percentage = 0;
+            $project->status = 'open';
+
+            return back()->with('error', 'Progress baru bisa dijalankan setelah ada creative worker yang apply.');
+        }
+
+        $project->applications_count = $applicationsCount;
+        $project->progress_percentage = $validated['progress_percentage'];
+        $project->status = $validated['progress_percentage'] >= 100
+            ? 'completed'
+            : $validated['status'];
+        $project->save();
+
+        return back()->with('success', 'Progress proyek berhasil diperbarui.');
     }
 
     public function apiIndex(Request $request)
@@ -87,7 +268,8 @@ class ProjectController extends Controller
                 $query->where('category', $request->category);
             }
 
-            $projects = $query->orderBy('created_at', 'desc')->get();
+            $projects = $query->orderBy('created_at', 'desc')->get()
+                ->map(fn ($project) => $this->decorateProject($project));
 
             if ($projects->isEmpty()) {
                 $projects = $this->getDummyProjects();
@@ -127,7 +309,7 @@ class ProjectController extends Controller
     private function getDummyProjects()
     {
         return collect([
-            (object)[
+            (object) [
                 'title' => 'Redesain Identitas Visual "Kopi Kita"',
                 'description' => 'Kami membutuhkan desainer kreatif untuk memperbarui logo dan kemasan produk kopi artisan kami agar lebih modern.',
                 'category' => 'Branding',
@@ -135,9 +317,14 @@ class ProjectController extends Controller
                 'client_name' => 'UMKM Kopi Kita',
                 'client_avatar' => 'https://ui-avatars.com/api/?name=Kopi+Kita&background=2563EB&color=fff',
                 'thumbnail' => 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop',
-                'created_at' => now()->subHours(2)
+                'media_url' => null,
+                'media_type' => null,
+                'progress_percentage' => 0,
+                'applications_count' => 0,
+                'status' => 'open',
+                'created_at' => now()->subHours(2),
             ],
-            (object)[
+            (object) [
                 'title' => 'Konten Instagram & TikTok "Batik Solo"',
                 'description' => 'Mencari content creator untuk mengelola feed dan membuat video pendek kreatif untuk mempromosikan koleksi terbaru.',
                 'category' => 'Social Media',
@@ -145,9 +332,14 @@ class ProjectController extends Controller
                 'client_name' => 'UMKM Batik Solo',
                 'client_avatar' => 'https://ui-avatars.com/api/?name=Batik+Solo&background=DB2777&color=fff',
                 'thumbnail' => 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=1974&auto=format&fit=crop',
-                'created_at' => now()->subHours(5)
+                'media_url' => null,
+                'media_type' => null,
+                'progress_percentage' => 25,
+                'applications_count' => 1,
+                'status' => 'applied',
+                'created_at' => now()->subHours(5),
             ],
-            (object)[
+            (object) [
                 'title' => 'Pembuatan Website Katalog "Mebel Jati"',
                 'description' => 'Dibutuhkan web developer untuk membuat website landing page katalog produk mebel yang responsif.',
                 'category' => 'Web Dev',
@@ -155,23 +347,59 @@ class ProjectController extends Controller
                 'client_name' => 'Mebel Jati Perkasa',
                 'client_avatar' => 'https://ui-avatars.com/api/?name=Mebel+Jati&background=16A34A&color=fff',
                 'thumbnail' => 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop',
-                'created_at' => now()->subDays(1)
+                'media_url' => null,
+                'media_type' => null,
+                'progress_percentage' => 60,
+                'applications_count' => 3,
+                'status' => 'in_progress',
+                'created_at' => now()->subDay(),
             ],
-            (object)[
-                'title' => 'Video Profile UMKM "Kerajinan Bambu"',
-                'description' => 'Videografer untuk membuat video dokumentasi proses pembuatan kerajinan bambu untuk keperluan branding.',
-                'category' => 'Videography',
-                'budget' => '4.500.000',
-                'client_name' => 'Bambu Indah',
-                'client_avatar' => 'https://ui-avatars.com/api/?name=Bambu+Indah&background=EA580C&color=fff',
-                'thumbnail' => 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2071&auto=format&fit=crop',
-                'created_at' => now()->subDays(2)
-            ]
         ]);
+    }
+
+    private function decorateProject($project, ?int $applicationsCount = null)
+    {
+        $count = $applicationsCount ?? (int) ($project->applications_count ?? 0);
+        $progress = (int) ($project->progress_percentage ?? 0);
+        $status = $project->status ?? 'open';
+
+        if ($count === 0) {
+            $progress = 0;
+            $status = 'open';
+        } elseif ($progress >= 100) {
+            $status = 'completed';
+        } elseif ($progress > 0 && $status === 'applied') {
+            $status = 'in_progress';
+        }
+
+        $project->applications_count = $count;
+        $project->progress_percentage = max(0, min(100, $progress));
+        $project->status = $status;
+        $project->status_label = match ($status) {
+            'open' => 'Belum Ada Apply',
+            'applied' => 'Sudah Di-apply',
+            'in_progress' => 'Sedang Dikerjakan',
+            'revision' => 'Revisi',
+            'completed' => 'Selesai',
+            default => ucfirst(str_replace('_', ' ', $status)),
+        };
+        $project->progress_summary = $count === 0
+            ? 'Belum ada creative worker yang apply. Progress masih 0%.'
+            : match ($status) {
+                'applied' => 'Sudah ada apply masuk. Kamu bisa mulai menyeleksi creative worker.',
+                'in_progress' => 'Kolaborasi sedang berjalan. Pantau update proyek hingga selesai.',
+                'revision' => 'Proyek sedang dalam tahap revisi.',
+                'completed' => 'Proyek telah selesai 100%.',
+                default => 'Progress proyek siap dilanjutkan dari 0% sampai 100%.',
+            };
+
+        return $project;
     }
 
     private function transformProject($project): array
     {
+        $project = $this->decorateProject($project);
+
         return [
             'id' => isset($project->id) ? (string) $project->id : null,
             'title' => $project->title,
@@ -184,6 +412,12 @@ class ProjectController extends Controller
             'status' => $project->status ?? null,
             'requirements' => $project->requirements ?? null,
             'thumbnail' => $project->thumbnail ?? null,
+            'media_url' => $project->media_url ?? null,
+            'media_type' => $project->media_type ?? null,
+            'progress_percentage' => $project->progress_percentage ?? 0,
+            'applications_count' => $project->applications_count ?? 0,
+            'status_label' => $project->status_label ?? null,
+            'progress_summary' => $project->progress_summary ?? null,
             'created_at' => isset($project->created_at) && $project->created_at ? $project->created_at->toISOString() : null,
             'updated_at' => isset($project->updated_at) && $project->updated_at ? $project->updated_at->toISOString() : null,
         ];

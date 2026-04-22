@@ -17,10 +17,8 @@ use App\Http\Controllers\CreatorController;
 // Halaman Cari Kreator
 Route::get('/kreator', [CreatorController::class, 'index'])->name('kreator.index');
 
-// Halaman Proyek UMKM (Placeholder)
-Route::get('/umkm', function () {
-    return "Halaman Proyek UMKM - Segera Hadir";
-})->name('umkm.index');
+// Halaman Proyek UMKM Publik
+Route::get('/umkm', [ProjectController::class, 'publicIndex'])->name('umkm.index');
 
 // Halaman Tentang Kami (Placeholder)
 Route::get('/tentang-kami', function () {
@@ -54,6 +52,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/cari-proyek', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/proyek/buat', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/proyek', [ProjectController::class, 'store'])->name('projects.store');
+    Route::get('/proyek/{id}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::post('/proyek/{id}/apply', [ProjectController::class, 'apply'])->name('projects.apply');
+    Route::get('/progress-proyek', [ProjectController::class, 'progress'])->name('projects.progress');
+    Route::post('/progress-proyek/{id}', [ProjectController::class, 'updateProgress'])->name('projects.progress.update');
 
     // Portfolio Routes
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');

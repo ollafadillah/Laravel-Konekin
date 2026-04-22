@@ -46,15 +46,23 @@
         </div>
 
         <!-- Form Card -->
+        @if(session('error'))
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                <span class="font-bold text-sm">{{ session('error') }}</span>
+            </div>
+        @endif
+
         <div class="bg-white rounded-[3rem] p-8 md:p-12 border border-[#2563EB]/5 shadow-2xl shadow-[#2563EB]/5">
-            <form action="{{ route('projects.store') }}" method="POST" class="space-y-8">
+            <form action="{{ route('projects.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                 @csrf
                 
                 <!-- Project Title -->
                 <div class="space-y-3">
                     <label for="title" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Judul Proyek</label>
-                    <input type="text" id="title" name="title" required placeholder="Contoh: Redesain Logo UMKM Kuliner" 
+                    <input type="text" id="title" name="title" required value="{{ old('title') }}" placeholder="Contoh: Redesain Logo UMKM Kuliner" 
                            class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium">
+                    @error('title') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -63,21 +71,23 @@
                         <label for="category" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Kategori</label>
                         <select id="category" name="category" required 
                                 class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium appearance-none">
-                            <option value="" disabled selected>Pilih Kategori</option>
-                            <option value="Branding">Branding</option>
-                            <option value="Social Media">Social Media</option>
-                            <option value="Web Dev">Web Development</option>
-                            <option value="Videography">Videography</option>
-                            <option value="UI/UX Design">UI/UX Design</option>
-                            <option value="Illustration">Illustration</option>
+                            <option value="" disabled {{ old('category') ? '' : 'selected' }}>Pilih Kategori</option>
+                            <option value="Branding" {{ old('category') === 'Branding' ? 'selected' : '' }}>Branding</option>
+                            <option value="Social Media" {{ old('category') === 'Social Media' ? 'selected' : '' }}>Social Media</option>
+                            <option value="Web Dev" {{ old('category') === 'Web Dev' ? 'selected' : '' }}>Web Development</option>
+                            <option value="Videography" {{ old('category') === 'Videography' ? 'selected' : '' }}>Videography</option>
+                            <option value="UI/UX Design" {{ old('category') === 'UI/UX Design' ? 'selected' : '' }}>UI/UX Design</option>
+                            <option value="Illustration" {{ old('category') === 'Illustration' ? 'selected' : '' }}>Illustration</option>
                         </select>
+                        @error('category') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
                     </div>
 
                     <!-- Budget -->
                     <div class="space-y-3">
                         <label for="budget" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Estimasi Budget (Rp)</label>
-                        <input type="text" id="budget" name="budget" required placeholder="Contoh: 2.500.000" 
+                        <input type="text" id="budget" name="budget" required value="{{ old('budget') }}" placeholder="Contoh: 2.500.000" 
                                class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium">
+                        @error('budget') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -85,14 +95,53 @@
                 <div class="space-y-3">
                     <label for="description" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Deskripsi Proyek</label>
                     <textarea id="description" name="description" required rows="5" placeholder="Jelaskan secara detail mengenai proyek yang ingin Anda buat..." 
-                              class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium"></textarea>
+                              class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium">{{ old('description') }}</textarea>
+                    @error('description') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- Requirements -->
                 <div class="space-y-3">
                     <label for="requirements" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Kebutuhan / Spesifikasi (Opsional)</label>
                     <textarea id="requirements" name="requirements" rows="3" placeholder="Contoh: Harus berpengalaman di industri F&B, paham gaya minimalis, dll." 
-                              class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium"></textarea>
+                              class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium">{{ old('requirements') }}</textarea>
+                    @error('requirements') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <label for="project_media" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Upload Foto / Video (Opsional)</label>
+                            <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2">Tambahkan referensi visual supaya creative worker lebih cepat memahami brief. JPG, PNG, MP4, MOV, WEBM maksimal 20MB.</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-[2.5rem] border border-dashed border-[#2563EB]/20 bg-[#F8FAFC] p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-[1fr_0.8fr] gap-6 items-center">
+                            <label for="project_media" class="flex items-center justify-center min-h-[220px] rounded-[2rem] bg-white border border-[#2563EB]/10 cursor-pointer hover:border-[#2563EB]/25 transition-all overflow-hidden">
+                                <div id="media-placeholder" class="text-center px-6">
+                                    <div class="w-14 h-14 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto mb-4">
+                                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 2v10m0 0l-4-4m4 4l4-4" /></svg>
+                                    </div>
+                                    <p class="font-bold text-[#1E3A8A]">Klik untuk pilih media proyek</p>
+                                    <p class="text-sm text-[#1E3A8A]/55 font-medium mt-2">Bisa berupa foto produk, brief visual, atau video referensi.</p>
+                                </div>
+                                <img id="media-image-preview" class="hidden w-full h-full object-cover" alt="Preview media">
+                                <video id="media-video-preview" class="hidden w-full h-full object-cover" controls></video>
+                            </label>
+
+                            <div class="space-y-4">
+                                <input type="file" id="project_media" name="project_media" class="hidden" accept="image/*,video/*" onchange="previewProjectMedia()">
+                                <button type="button" onclick="document.getElementById('project_media').click()" class="w-full px-6 py-4 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all">
+                                    Pilih File Referensi
+                                </button>
+                                <div class="rounded-[1.8rem] bg-white border border-[#2563EB]/10 p-5">
+                                    <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2563EB] mb-2">Kenapa ini penting?</p>
+                                    <p class="text-sm text-[#1E3A8A]/65 leading-7 font-medium">Media referensi membantu creative worker melihat vibe, kebutuhan, dan konteks proyek sejak awal. Ini opsional, tapi sangat membantu menaikkan kualitas apply yang masuk.</p>
+                                </div>
+                                @error('project_media') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tips / Notice -->
@@ -122,6 +171,37 @@
             <a href="#" class="text-[#1E3A8A]/40 hover:text-[#2563EB] text-sm font-bold transition-colors">Kebijakan</a>
         </div>
     </footer>
+
+    <script>
+        function previewProjectMedia() {
+            const fileInput = document.getElementById('project_media');
+            const file = fileInput.files[0];
+            const imagePreview = document.getElementById('media-image-preview');
+            const videoPreview = document.getElementById('media-video-preview');
+            const placeholder = document.getElementById('media-placeholder');
+
+            imagePreview.classList.add('hidden');
+            videoPreview.classList.add('hidden');
+            imagePreview.removeAttribute('src');
+            videoPreview.removeAttribute('src');
+
+            if (!file) {
+                placeholder.classList.remove('hidden');
+                return;
+            }
+
+            const fileUrl = URL.createObjectURL(file);
+            placeholder.classList.add('hidden');
+
+            if (file.type.startsWith('video/')) {
+                videoPreview.src = fileUrl;
+                videoPreview.classList.remove('hidden');
+            } else {
+                imagePreview.src = fileUrl;
+                imagePreview.classList.remove('hidden');
+            }
+        }
+    </script>
 
 </body>
 </html>

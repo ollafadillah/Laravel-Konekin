@@ -64,10 +64,22 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             @forelse($projects as $project)
                 <div class="bg-white p-8 rounded-[3rem] border border-[#2563EB]/5 shadow-sm hover:shadow-2xl hover:shadow-[#2563EB]/10 transition-all group flex flex-col h-full">
-                    <div class="relative h-56 rounded-[2.5rem] overflow-hidden mb-6">
-                        <img src="{{ $project->thumbnail }}" alt="{{ $project->title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute top-4 left-4">
+                    <div class="relative h-56 rounded-[2.5rem] overflow-hidden mb-6 bg-slate-100">
+                        @if(($project->media_type ?? null) === 'video' && !empty($project->media_url))
+                            <video src="{{ $project->media_url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" muted playsinline></video>
+                        @else
+                            <img src="{{ $project->thumbnail }}" alt="{{ $project->title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        @endif
+                        <div class="absolute top-4 left-4 flex flex-wrap gap-2">
                             <span class="px-4 py-2 bg-white/90 backdrop-blur-md text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full shadow-sm">{{ $project->category }}</span>
+                            @if(isset($project->created_at) && $project->created_at && $project->created_at->diffInHours(now()) < 24)
+                                <span class="px-4 py-2 bg-[#1E3A8A] text-white text-[10px] font-extrabold uppercase tracking-widest rounded-full shadow-sm">Baru</span>
+                            @endif
+                            @if(!empty($project->media_url))
+                                <span class="px-4 py-2 bg-white/90 backdrop-blur-md text-[#1E3A8A] text-[10px] font-extrabold uppercase tracking-widest rounded-full shadow-sm">
+                                    {{ ($project->media_type ?? 'image') === 'video' ? 'Video Brief' : 'Foto Brief' }}
+                                </span>
+                            @endif
                         </div>
                     </div>
 
@@ -77,6 +89,13 @@
                             <span class="text-[#2563EB] font-display font-bold shrink-0 ml-4 text-xl">Rp {{ $project->budget }}</span>
                         </div>
                         <p class="text-[#1E3A8A]/60 text-sm mb-6 line-clamp-3 font-medium leading-relaxed">{{ $project->description }}</p>
+
+                        <div class="flex flex-wrap gap-3 mb-6">
+                            <span class="px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest">{{ $project->applications_count ?? 0 }} Apply</span>
+                            <span class="px-4 py-2 rounded-full bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest">{{ $project->progress_percentage ?? 0 }}% Progress</span>
+                            <span class="px-4 py-2 rounded-full bg-white border border-[#2563EB]/10 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest">{{ $project->status_label ?? strtoupper(str_replace('_', ' ', $project->status ?? 'open')) }}</span>
+                        </div>
+                        <p class="text-[#2563EB] text-xs font-medium mb-6">{{ $project->progress_summary ?? 'Pantau update proyek dan apply terbaru dari halaman detail.' }}</p>
                     </div>
 
                     <div class="pt-6 border-t border-[#2563EB]/5 flex items-center justify-between mt-auto">
@@ -87,7 +106,7 @@
                                 <p class="text-[10px] font-bold text-[#2563EB] uppercase tracking-wider">UMKM Terverifikasi</p>
                             </div>
                         </div>
-                        <button class="px-8 py-3 bg-[#EFF6FF] text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-2xl font-bold text-xs transition-all">Lihat Detail</button>
+                        <a href="{{ route('projects.show', $project->id) }}" class="px-8 py-3 bg-[#EFF6FF] text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-2xl font-bold text-xs transition-all inline-flex items-center justify-center">Lihat Detail</a>
                     </div>
                 </div>
             @empty

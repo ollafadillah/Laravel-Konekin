@@ -101,55 +101,45 @@
                     <a href="{{ route('projects.index') }}" class="text-[#2563EB] text-sm font-bold hover:underline">Lihat Semua</a>
                 </div>
 
-                <!-- Project Card 1 -->
-                <div class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all flex flex-col md:flex-row gap-6 items-center">
-                    <div class="w-full md:w-40 h-40 rounded-[2rem] overflow-hidden shrink-0">
-                        <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop" alt="Project" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-grow">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">Branding</span>
-                            <span class="text-[#1E3A8A]/40 text-xs font-bold">2 jam yang lalu</span>
+                @forelse($latestProjects as $project)
+                    <div class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all flex flex-col md:flex-row gap-6 items-center">
+                        <div class="w-full md:w-40 h-40 rounded-[2rem] overflow-hidden shrink-0 bg-slate-100">
+                            @if(($project->media_type ?? null) === 'video' && !empty($project->media_url))
+                                <video src="{{ $project->media_url }}" class="w-full h-full object-cover" muted playsinline></video>
+                            @else
+                                <img src="{{ $project->thumbnail }}" alt="Project" class="w-full h-full object-cover">
+                            @endif
                         </div>
-                        <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2">Redesain Identitas Visual "Kopi Kita"</h4>
-                        <p class="text-[#1E3A8A]/60 text-sm line-clamp-2 mb-4 font-medium">Kami membutuhkan desainer kreatif untuk memperbarui logo dan kemasan produk kopi artisan kami agar lebih modern.</p>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <img src="https://ui-avatars.com/api/?name=Kopi+Kita&background=2563EB&color=fff" class="w-6 h-6 rounded-full">
-                                <span class="text-xs font-bold text-[#1E3A8A]/80">UMKM Kopi Kita</span>
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $project->category }}</span>
+                                <span class="text-[#1E3A8A]/40 text-xs font-bold">{{ optional($project->created_at)->diffForHumans() ?? 'Baru saja' }}</span>
+                                <span class="px-3 py-1 bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $project->status_label ?? 'Belum Ada Apply' }}</span>
                             </div>
-                            <div class="flex items-center gap-4">
-                                <span class="text-[#1E3A8A] font-display font-bold">Rp 3.500.000</span>
-                                <button class="px-5 py-2.5 bg-[#1E3A8A] text-white text-xs font-bold rounded-xl hover:bg-[#2563EB] transition-colors">Ajukan</button>
+                            <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2">{{ $project->title }}</h4>
+                            <p class="text-[#1E3A8A]/60 text-sm line-clamp-2 mb-4 font-medium">{{ $project->description }}</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $project->applications_count ?? 0 }} Apply</span>
+                                <span class="px-3 py-1 bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $project->progress_percentage ?? 0 }}% Progress</span>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project Card 2 -->
-                <div class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all flex flex-col md:flex-row gap-6 items-center">
-                    <div class="w-full md:w-40 h-40 rounded-[2rem] overflow-hidden shrink-0">
-                        <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=1974&auto=format&fit=crop" alt="Project" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-grow">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-3 py-1 bg-[#FDF2F8] text-[#DB2777] text-[10px] font-extrabold uppercase tracking-widest rounded-full">Social Media</span>
-                            <span class="text-[#1E3A8A]/40 text-xs font-bold">5 jam yang lalu</span>
-                        </div>
-                        <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2">Konten Instagram & TikTok "Batik Solo"</h4>
-                        <p class="text-[#1E3A8A]/60 text-sm line-clamp-2 mb-4 font-medium">Mencari content creator untuk mengelola feed dan membuat video pendek kreatif untuk mempromosikan koleksi terbaru.</p>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <img src="https://ui-avatars.com/api/?name=Batik+Solo&background=DB2777&color=fff" class="w-6 h-6 rounded-full">
-                                <span class="text-xs font-bold text-[#1E3A8A]/80">UMKM Batik Solo</span>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <span class="text-[#1E3A8A] font-display font-bold">Rp 2.000.000</span>
-                                <button class="px-5 py-2.5 bg-[#1E3A8A] text-white text-xs font-bold rounded-xl hover:bg-[#2563EB] transition-colors">Ajukan</button>
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-2">
+                                    <img src="{{ $project->client_avatar }}" class="w-6 h-6 rounded-full">
+                                    <span class="text-xs font-bold text-[#1E3A8A]/80">{{ $project->client_name }}</span>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <span class="text-[#1E3A8A] font-display font-bold">Rp {{ $project->budget }}</span>
+                                    <a href="{{ route('projects.show', $project->id) }}" class="px-5 py-2.5 bg-[#1E3A8A] text-white text-xs font-bold rounded-xl hover:bg-[#2563EB] transition-colors inline-flex items-center justify-center">Lihat</a>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                @empty
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm text-center">
+                        <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2">Belum Ada Proyek Baru</h4>
+                        <p class="text-[#1E3A8A]/60 font-medium">Begitu UMKM mempublikasikan proyek baru, daftar terbaru akan muncul di sini.</p>
+                    </div>
+                @endforelse
             </div>
 
             <!-- Messages & Notifications (Right 1/3) -->
