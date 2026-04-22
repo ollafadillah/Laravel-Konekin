@@ -119,6 +119,36 @@
                 </div>
             </div>
 
+            <!-- Bank Info Section -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm space-y-6">
+                <div class="flex items-center justify-between border-b border-[#2563EB]/5 pb-4">
+                    <h3 class="text-xl font-display font-bold text-[#1E3A8A]">Informasi Rekening</h3>
+                    <span class="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest">Wajib untuk Pencairan</span>
+                </div>
+                
+                <p class="text-xs text-[#1E3A8A]/50 font-medium italic mb-4">Pastikan data rekening benar untuk kelancaran pencairan dana proyek via Midtrans Iris.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Kode Bank (Contoh: bca, mandiri, bni)</label>
+                        <input type="text" name="bank_code" value="{{ old('bank_code', $user->bank_code) }}" class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] focus:ring-4 focus:ring-[#2563EB]/5 outline-none transition-all font-medium text-[#1E3A8A]" placeholder="bca / mandiri / bni">
+                        @error('bank_code') <p class="text-red-500 text-[10px] font-bold mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Nomor Rekening</label>
+                        <input type="text" name="bank_account_number" value="{{ old('bank_account_number', $user->bank_account_number) }}" class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] focus:ring-4 focus:ring-[#2563EB]/5 outline-none transition-all font-medium text-[#1E3A8A]" placeholder="1234567890">
+                        @error('bank_account_number') <p class="text-red-500 text-[10px] font-bold mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Nama Pemilik Rekening (Sesuai Buku Tabungan)</label>
+                        <input type="text" name="bank_account_name" value="{{ old('bank_account_name', $user->bank_account_name) }}" class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] focus:ring-4 focus:ring-[#2563EB]/5 outline-none transition-all font-medium text-[#1E3A8A]" placeholder="Nama Lengkap Pemilik">
+                        @error('bank_account_name') <p class="text-red-500 text-[10px] font-bold mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
+
             <!-- Submit Button -->
             <div class="flex justify-end pt-4">
                 <button type="submit" class="px-10 py-4 bg-[#2563EB] text-white rounded-2xl font-bold text-base shadow-xl shadow-[#2563EB]/20 hover:bg-[#1E3A8A] hover:-translate-y-1 transition-all active:translate-y-0">Simpan Perubahan</button>

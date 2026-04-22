@@ -140,10 +140,17 @@
                                 </button>
                             </form>
                         @endif
-                    @else
-                        <a href="{{ route('projects.progress') }}" class="w-full inline-flex items-center justify-center px-6 py-4 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all">
-                            Lihat Progress Proyek
-                        </a>
+                    @elseif(auth()->user()->isUMKM())
+                        <div class="space-y-3">
+                            @if($project->status === 'hired' && ($project->escrow_status ?? '') !== 'held')
+                                <a href="{{ route('escrow.checkout', $project->id) }}" class="w-full inline-flex items-center justify-center px-6 py-4 rounded-2xl bg-[#2563EB] text-white font-bold text-sm hover:bg-[#1E3A8A] transition-all shadow-lg shadow-[#2563EB]/20">
+                                    <i class="fas fa-wallet mr-2"></i> Bayar Escrow (Amankan Dana)
+                                </a>
+                            @endif
+                            <a href="{{ route('projects.progress') }}" class="w-full inline-flex items-center justify-center px-6 py-4 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all">
+                                Lihat Progress Proyek
+                            </a>
+                        </div>
                     @endif
                 </div>
 

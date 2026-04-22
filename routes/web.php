@@ -6,6 +6,8 @@ use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\EscrowController;
+use App\Http\Controllers\AdminEscrowController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
@@ -75,4 +77,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
     Route::post('/portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
     Route::delete('/portfolio/{id}', [PortfolioController::class, 'destroy'])->name('portfolio.destroy');
+
+    // Escrow Routes
+    Route::get('/proyek/{project}/checkout', [EscrowController::class, 'checkout'])->name('escrow.checkout');
+    Route::post('/proyek/{project}/simulate', [EscrowController::class, 'simulatePayment'])->name('escrow.simulate');
+    
+    // Admin Escrow
+    Route::get('/admin/escrow', [AdminEscrowController::class, 'index'])->name('admin.escrow.index');
+    Route::post('/admin/escrow/{escrow}/release', [AdminEscrowController::class, 'release'])->name('admin.escrow.release');
 });
+
+// Public Webhook (No Auth)
+Route::post('/payment/midtrans/notification', [EscrowController::class, 'handleMidtransNotification'])->name('midtrans.notification');

@@ -43,9 +43,12 @@ class ProfileController extends Controller
             'city' => 'nullable|string|max:100',
             'bio' => 'nullable|string|max:1000',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'bank_code' => 'nullable|string|max:50',
+            'bank_account_number' => 'nullable|string|max:50',
+            'bank_account_name' => 'nullable|string|max:255',
         ]);
 
-        $data = $request->only(['name', 'phone', 'address', 'city', 'bio']);
+        $data = $request->only(['name', 'phone', 'address', 'city', 'bio', 'bank_code', 'bank_account_number', 'bank_account_name']);
 
         // Handle upload ke Cloudinary jika ada foto baru
         if ($request->hasFile('profile_photo')) {

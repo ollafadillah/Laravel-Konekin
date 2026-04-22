@@ -28,6 +28,9 @@ class User extends Authenticatable
         'profile_photo',
         'status', // active, warned, suspended
         'warnings', // array of warning messages
+        'bank_code',
+        'bank_account_number',
+        'bank_account_name',
     ];
 
     protected $hidden = [
@@ -57,5 +60,15 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->type === 'admin';
+    }
+
+    public function escrowPayments()
+    {
+        return $this->hasMany(EscrowTransaction::class, 'payer_id');
+    }
+
+    public function escrowEarnings()
+    {
+        return $this->hasMany(EscrowTransaction::class, 'payee_id');
     }
 }

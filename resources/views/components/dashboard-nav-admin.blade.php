@@ -16,6 +16,7 @@
                 <a href="{{ route('dashboard.admin') }}" class="px-4 py-2 {{ request()->routeIs('dashboard.admin') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Dashboard</a>
                 <a href="{{ route('admin.users') }}" class="px-4 py-2 {{ request()->routeIs('admin.users') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Users</a>
                 <a href="{{ route('admin.projects') }}" class="px-4 py-2 {{ request()->routeIs('admin.projects') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Projects</a>
+                <a href="{{ route('admin.escrow.index') }}" class="px-4 py-2 {{ request()->routeIs('admin.escrow.index') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Payments</a>
                 <a href="{{ route('admin.jobs') }}" class="px-4 py-2 {{ request()->routeIs('admin.jobs') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Activity</a>
             </div>
 
