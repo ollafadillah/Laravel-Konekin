@@ -34,6 +34,56 @@ class ProjectController extends Controller
         return view('projects.index', compact('projects'));
     }
 
+    public function apiIndex(Request $request)
+    {
+        try {
+            $query = Project::query();
+
+            if ($request->filled('search')) {
+                $query->where('title', 'like', '%' . $request->search . '%');
+            }
+
+            if ($request->filled('category') && $request->category !== 'Semua') {
+                $query->where('category', $request->category);
+            }
+
+            $projects = $query->orderBy('created_at', 'desc')->get();
+
+            if ($projects->isEmpty()) {
+                $projects = $this->getDummyProjects();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Daftar proyek berhasil diambil',
+                'data' => collect($projects)->map(fn ($project) => $this->transformProject($project))->values(),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function apiShow($id)
+    {
+        try {
+            $project = Project::findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Detail proyek berhasil diambil',
+                'data' => $this->transformProject($project),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proyek tidak ditemukan',
+            ], 404);
+        }
+    }
+
     private function getDummyProjects()
     {
         return collect([
@@ -78,5 +128,24 @@ class ProjectController extends Controller
                 'created_at' => now()->subDays(2)
             ]
         ]);
+    }
+
+    private function transformProject($project): array
+    {
+        return [
+            'id' => isset($project->id) ? (string) $project->id : null,
+            'title' => $project->title,
+            'description' => $project->description,
+            'category' => $project->category,
+            'budget' => $project->budget,
+            'client_id' => isset($project->client_id) ? (string) $project->client_id : null,
+            'client_name' => $project->client_name,
+            'client_avatar' => $project->client_avatar,
+            'status' => $project->status ?? null,
+            'requirements' => $project->requirements ?? null,
+            'thumbnail' => $project->thumbnail ?? null,
+            'created_at' => isset($project->created_at) && $project->created_at ? $project->created_at->toISOString() : null,
+            'updated_at' => isset($project->updated_at) && $project->updated_at ? $project->updated_at->toISOString() : null,
+        ];
     }
 }
