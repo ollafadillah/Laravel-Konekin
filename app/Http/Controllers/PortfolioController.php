@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Portfolio;
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -19,7 +19,7 @@ class PortfolioController extends Controller
         return view('portfolio.index', compact('portfolios'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CloudinaryService $cloudinary)
     {
         $request->validate([
             'title' => 'required|string|max:255',
@@ -30,9 +30,10 @@ class PortfolioController extends Controller
 
         try {
             // 1. Upload Image (Thumbnail)
-            $imageUrl = Cloudinary::upload($request->file('image')->getRealPath(), [
+            $imageUrl = $cloudinary->upload($request->file('image'), [
                 'folder' => 'konekin/portfolios/thumbnails',
-            ])->getSecurePath();
+                'resource_type' => 'image',
+            ]);
 
             $fileUrl = null;
             $fileType = null;
@@ -41,14 +42,11 @@ class PortfolioController extends Controller
             if ($request->hasFile('attachment')) {
                 $file = $request->file('attachment');
                 $fileType = $file->getClientOriginalExtension();
-                
-                // Cloudinary upload auto detect resource type (image, video, raw)
-                $uploadedFile = Cloudinary::upload($file->getRealPath(), [
+
+                $fileUrl = $cloudinary->upload($file, [
                     'folder' => 'konekin/portfolios/files',
-                    'resource_type' => 'auto' 
+                    'resource_type' => 'auto'
                 ]);
-                
-                $fileUrl = $uploadedFile->getSecurePath();
             }
 
             Portfolio::create([

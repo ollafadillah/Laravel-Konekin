@@ -86,6 +86,59 @@
         </div>
     </div>
 
+    <!-- How it Works Section -->
+    <div class="mt-40 relative z-10">
+        <div class="text-center mb-20">
+            <h3 class="text-[#2563EB] font-black text-sm uppercase tracking-[0.3em] mb-4">Cara Kerja Platform</h3>
+            <h2 class="font-display text-4xl lg:text-5xl font-bold text-[#1E3A8A] mb-6">Kolaborasi dalam 4 Langkah Mudah</h2>
+            <p class="text-[#1E3A8A]/60 text-lg lg:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+                Temukan cara Konekin menghubungkan UMKM dengan kreator profesional untuk hasil yang luar biasa.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Step 1 -->
+            <div class="group relative bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/10 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-[#2563EB]/10 transition-all duration-500 hover:-translate-y-2">
+                <div class="absolute top-0 left-0 w-full h-2 bg-[#2563EB] rounded-t-[2.5rem] scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                <div class="w-16 h-16 bg-[#2563EB] rounded-full flex items-center justify-center text-white text-2xl font-bold mb-8 shadow-lg shadow-[#2563EB]/30 mx-auto">1</div>
+                <h4 class="text-xl font-bold text-[#1E3A8A] mb-4 text-center">Daftar Akun</h4>
+                <p class="text-[#1E3A8A]/60 text-center leading-relaxed font-medium">
+                    Pilih peran Anda sebagai UMKM atau Kreator. Lengkapi profil untuk mendapatkan rekomendasi terbaik.
+                </p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="group relative bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/10 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-[#2563EB]/10 transition-all duration-500 hover:-translate-y-2">
+                <div class="absolute top-0 left-0 w-full h-2 bg-[#2563EB] rounded-t-[2.5rem] scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                <div class="w-16 h-16 bg-[#2563EB] rounded-full flex items-center justify-center text-white text-2xl font-bold mb-8 shadow-lg shadow-[#2563EB]/30 mx-auto">2</div>
+                <h4 class="text-xl font-bold text-[#1E3A8A] mb-4 text-center">Temukan Partner</h4>
+                <p class="text-[#1E3A8A]/60 text-center leading-relaxed font-medium">
+                    Cari dan temukan UMKM atau kreator yang sesuai dengan kebutuhan dan keahlian Anda.
+                </p>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="group relative bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/10 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-[#2563EB]/10 transition-all duration-500 hover:-translate-y-2">
+                <div class="absolute top-0 left-0 w-full h-2 bg-[#2563EB] rounded-t-[2.5rem] scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                <div class="w-16 h-16 bg-[#2563EB] rounded-full flex items-center justify-center text-white text-2xl font-bold mb-8 shadow-lg shadow-[#2563EB]/30 mx-auto">3</div>
+                <h4 class="text-xl font-bold text-[#1E3A8A] mb-4 text-center">Mulai Kolaborasi</h4>
+                <p class="text-[#1E3A8A]/60 text-center leading-relaxed font-medium">
+                    Komunikasikan kebutuhan, buat perjanjian, dan mulai bekerja sama dalam platform yang aman.
+                </p>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="group relative bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/10 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-[#2563EB]/10 transition-all duration-500 hover:-translate-y-2">
+                <div class="absolute top-0 left-0 w-full h-2 bg-[#2563EB] rounded-t-[2.5rem] scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                <div class="w-16 h-16 bg-[#2563EB] rounded-full flex items-center justify-center text-white text-2xl font-bold mb-8 shadow-lg shadow-[#2563EB]/30 mx-auto">4</div>
+                <h4 class="text-xl font-bold text-[#1E3A8A] mb-4 text-center">Hasil & Ulasan</h4>
+                <p class="text-[#1E3A8A]/60 text-center leading-relaxed font-medium">
+                    Selesaikan proyek, berikan ulasan, dan bangun portofolio yang semakin kuat.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Video Tayangan Section -->
     <div class="mt-40 max-w-5xl mx-auto relative z-10">
         <div class="text-center mb-16">
@@ -105,6 +158,131 @@
         <!-- Decorative blobs behind video -->
         <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#2563EB]/20 rounded-full blur-2xl -z-10"></div>
         <div class="absolute -bottom-10 -left-10 w-60 h-60 bg-[#0A66C2]/20 rounded-full blur-3xl -z-10"></div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="mt-40 relative z-10">
+        <div class="text-center mb-16">
+            <h3 class="text-[#2563EB] font-black text-sm uppercase tracking-[0.3em] mb-4">Frequently Asked <span class="font-latin text-[#2563EB]">Questions</span></h3>
+            <h2 class="font-display text-4xl lg:text-5xl font-bold text-[#1E3A8A] mb-6">Pertanyaan yang Sering Ditanyakan</h2>
+            <p class="text-[#1E3A8A]/60 text-lg lg:text-xl font-medium max-w-3xl mx-auto leading-relaxed">
+                Beberapa hal yang paling sering ditanyakan pengguna sebelum mulai berkolaborasi di Konekin.
+            </p>
+        </div>
+
+        <div class="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 items-start">
+            <div class="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#0A66C2] p-8 lg:p-10 text-white shadow-2xl shadow-[#2563EB]/20">
+                <div class="absolute inset-0 bg-[radial-gradient(#ffffff22_1px,transparent_1px)] bg-[size:1.3rem_1.3rem] opacity-30"></div>
+                <div class="relative z-10">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 border border-white/20 text-xs font-bold tracking-[0.2em] uppercase mb-6">
+                        Tanya Jawab
+                    </div>
+                    <h3 class="font-display text-3xl lg:text-4xl font-bold leading-tight mb-5">
+                        Mulai lebih tenang, paham alurnya lebih cepat.
+                    </h3>
+                    <p class="text-white/80 text-lg leading-relaxed font-medium mb-8">
+                        Dari cara daftar, mencari partner, sampai bagaimana hasil karya tersimpan, semuanya kami rangkum di sini.
+                    </p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="rounded-2xl bg-white/10 border border-white/15 p-4 backdrop-blur-sm">
+                            <div class="text-2xl font-bold">24/7</div>
+                            <div class="text-sm text-white/75 mt-1">Akses platform kapan saja</div>
+                        </div>
+                        <div class="rounded-2xl bg-white/10 border border-white/15 p-4 backdrop-blur-sm">
+                            <div class="text-2xl font-bold">1 Klik</div>
+                            <div class="text-sm text-white/75 mt-1">Mulai bangun profil profesional</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-5">
+                <details class="group rounded-[2rem] bg-white border border-[#2563EB]/10 shadow-xl shadow-slate-200/40 p-6 open:shadow-2xl open:shadow-[#2563EB]/10 transition-all duration-300" open>
+                    <summary class="list-none cursor-pointer flex items-start justify-between gap-4">
+                        <div>
+                            <h4 class="text-xl font-bold text-[#1E3A8A]">Apa itu Konekin dan siapa yang bisa bergabung?</h4>
+                            <p class="text-sm text-[#2563EB] font-semibold mt-2">Untuk creative worker dan pelaku UMKM</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0 transition-transform duration-300 group-open:rotate-45">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 5v14m7-7H5"/>
+                            </svg>
+                        </div>
+                    </summary>
+                    <p class="mt-5 text-[#1E3A8A]/70 leading-relaxed font-medium">
+                        Konekin adalah platform yang mempertemukan creative worker dengan UMKM untuk membangun branding, konten, desain, dan kebutuhan kreatif lainnya dalam satu ekosistem kolaborasi.
+                    </p>
+                </details>
+
+                <details class="group rounded-[2rem] bg-white border border-[#2563EB]/10 shadow-xl shadow-slate-200/40 p-6 open:shadow-2xl open:shadow-[#2563EB]/10 transition-all duration-300">
+                    <summary class="list-none cursor-pointer flex items-start justify-between gap-4">
+                        <div>
+                            <h4 class="text-xl font-bold text-[#1E3A8A]">Bagaimana cara mulai kolaborasi di Konekin?</h4>
+                            <p class="text-sm text-[#2563EB] font-semibold mt-2">Daftar, lengkapi profil, lalu temukan partner</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0 transition-transform duration-300 group-open:rotate-45">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 5v14m7-7H5"/>
+                            </svg>
+                        </div>
+                    </summary>
+                    <p class="mt-5 text-[#1E3A8A]/70 leading-relaxed font-medium">
+                        Kamu cukup membuat akun sesuai peranmu, melengkapi profil, lalu menjelajahi partner yang relevan. Setelah itu, komunikasi dan proses kerja sama bisa dimulai langsung melalui alur platform.
+                    </p>
+                </details>
+
+                <details class="group rounded-[2rem] bg-white border border-[#2563EB]/10 shadow-xl shadow-slate-200/40 p-6 open:shadow-2xl open:shadow-[#2563EB]/10 transition-all duration-300">
+                    <summary class="list-none cursor-pointer flex items-start justify-between gap-4">
+                        <div>
+                            <h4 class="text-xl font-bold text-[#1E3A8A]">Apakah saya bisa menampilkan portofolio atau hasil karya?</h4>
+                            <p class="text-sm text-[#2563EB] font-semibold mt-2">Bisa, agar profil terlihat lebih meyakinkan</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0 transition-transform duration-300 group-open:rotate-45">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 5v14m7-7H5"/>
+                            </svg>
+                        </div>
+                    </summary>
+                    <p class="mt-5 text-[#1E3A8A]/70 leading-relaxed font-medium">
+                        Tentu. Creative worker bisa menampilkan portofolio, karya visual, atau file pendukung agar UMKM lebih mudah memahami kualitas dan gaya kerja yang kamu tawarkan.
+                    </p>
+                </details>
+
+                <details class="group rounded-[2rem] bg-white border border-[#2563EB]/10 shadow-xl shadow-slate-200/40 p-6 open:shadow-2xl open:shadow-[#2563EB]/10 transition-all duration-300">
+                    <summary class="list-none cursor-pointer flex items-start justify-between gap-4">
+                        <div>
+                            <h4 class="text-xl font-bold text-[#1E3A8A]">Apakah Konekin cocok untuk UMKM yang baru mulai bangun brand?</h4>
+                            <p class="text-sm text-[#2563EB] font-semibold mt-2">Sangat cocok untuk kebutuhan branding awal</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0 transition-transform duration-300 group-open:rotate-45">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 5v14m7-7H5"/>
+                            </svg>
+                        </div>
+                    </summary>
+                    <p class="mt-5 text-[#1E3A8A]/70 leading-relaxed font-medium">
+                        Iya. Konekin membantu UMKM menemukan kreator yang tepat untuk kebutuhan seperti desain logo, konten promosi, visual produk, hingga penguatan identitas brand secara bertahap.
+                    </p>
+                </details>
+
+                <details class="group rounded-[2rem] bg-white border border-[#2563EB]/10 shadow-xl shadow-slate-200/40 p-6 open:shadow-2xl open:shadow-[#2563EB]/10 transition-all duration-300">
+                    <summary class="list-none cursor-pointer flex items-start justify-between gap-4">
+                        <div>
+                            <h4 class="text-xl font-bold text-[#1E3A8A]">Di mana file atau foto yang diunggah pengguna disimpan?</h4>
+                            <p class="text-sm text-[#2563EB] font-semibold mt-2">Tersimpan aman dan terhubung ke profil pengguna</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0 transition-transform duration-300 group-open:rotate-45">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 5v14m7-7H5"/>
+                            </svg>
+                        </div>
+                    </summary>
+                    <p class="mt-5 text-[#1E3A8A]/70 leading-relaxed font-medium">
+                        File dan gambar yang diunggah pengguna akan disimpan melalui layanan cloud, lalu tautannya dihubungkan langsung ke data profil atau portofolio agar tetap ringan, rapi, dan mudah diakses.
+                    </p>
+                </details>
+            </div>
+        </div>
     </div>
 
     <!-- CTA Section -->

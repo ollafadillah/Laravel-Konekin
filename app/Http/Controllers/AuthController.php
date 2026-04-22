@@ -72,7 +72,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('login');
+        return redirect()->route('home');
     }
 
     // ============ API Methods (untuk Mobile & External Apps) ============
@@ -170,7 +170,7 @@ class AuthController extends Controller
         try {
             // Revoke all tokens for this user
             if ($request->user()) {
-                $request->user()->tokens()->delete();
+                $request->user()->tokens()->delete();       
             }
 
             return response()->json([

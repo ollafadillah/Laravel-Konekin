@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -26,7 +26,7 @@ class ProfileController extends Controller
     /**
      * Update data profil
      */
-    public function update(Request $request)
+    public function update(Request $request, CloudinaryService $cloudinary)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -46,13 +46,11 @@ class ProfileController extends Controller
         if ($request->hasFile('profile_photo')) {
             try {
                 $file = $request->file('profile_photo');
-                
-                // Coba upload dengan cara paling sederhana dulu untuk memastikan koneksi aman
-                $uploadedFile = Cloudinary::upload($file->getRealPath(), [
+
+                $data['profile_photo'] = $cloudinary->upload($file, [
                     'folder' => 'konekin/profiles',
+                    'resource_type' => 'image',
                 ]);
-                
-                $data['profile_photo'] = $uploadedFile->getSecurePath();
             } catch (\Exception $e) {
                 Log::error('Cloudinary Error: ' . $e->getMessage());
                 return back()->with('error', 'Gagal upload ke Cloudinary: ' . $e->getMessage());
