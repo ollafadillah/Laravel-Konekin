@@ -95,6 +95,7 @@
                             <span class="px-4 py-2 rounded-full bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest">{{ $project->progress_percentage ?? 0 }}% Progress</span>
                             <span class="px-4 py-2 rounded-full bg-white border border-[#2563EB]/10 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest">{{ $project->status_label ?? strtoupper(str_replace('_', ' ', $project->status ?? 'open')) }}</span>
                         </div>
+                        <p class="text-[#1E3A8A]/55 text-xs font-medium mb-3">Deadline: {{ \Illuminate\Support\Carbon::parse($project->deadline)->translatedFormat('d M Y') }}</p>
                         <p class="text-[#2563EB] text-xs font-medium mb-6">{{ $project->progress_summary ?? 'Pantau update proyek dan apply terbaru dari halaman detail.' }}</p>
                     </div>
 

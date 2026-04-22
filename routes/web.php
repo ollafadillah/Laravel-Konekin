@@ -1,11 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\AdminController;
+use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
 Route::get('/', function () {
@@ -22,7 +23,7 @@ Route::get('/umkm', [ProjectController::class, 'publicIndex'])->name('umkm.index
 
 // Halaman Tentang Kami (Placeholder)
 Route::get('/tentang-kami', function () {
-    return "Halaman Tentang Kami - Segera Hadir";
+    return 'Halaman Tentang Kami - Segera Hadir';
 })->name('about');
 
 // Auth Routes
@@ -43,7 +44,18 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
     Route::get('/dashboard/creative', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
-    
+    Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])->name('dashboard.admin');
+
+    // Admin Management
+    Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::post('/admin/users/{id}/warn', [AdminController::class, 'warnUser'])->name('admin.users.warn');
+    Route::post('/admin/users/{id}/suspend', [AdminController::class, 'suspendUser'])->name('admin.users.suspend');
+    Route::post('/admin/users/{id}/activate', [AdminController::class, 'activateUser'])->name('admin.users.activate');
+
+    Route::get('/admin/projects', [AdminController::class, 'projects'])->name('admin.projects');
+    Route::delete('/admin/projects/{id}', [AdminController::class, 'destroyProject'])->name('admin.projects.destroy');
+    Route::get('/admin/jobs', [AdminController::class, 'jobs'])->name('admin.jobs');
+
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -55,7 +67,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/proyek/{id}', [ProjectController::class, 'show'])->name('projects.show');
     Route::post('/proyek/{id}/apply', [ProjectController::class, 'apply'])->name('projects.apply');
     Route::get('/progress-proyek', [ProjectController::class, 'progress'])->name('projects.progress');
-    Route::post('/progress-proyek/{id}', [ProjectController::class, 'updateProgress'])->name('projects.progress.update');
+    Route::post('/progress-proyek/{id}/approve/{applicationId}', [ProjectController::class, 'approveApplication'])->name('projects.progress.approve');
+    Route::get('/progress-proyek-kreator', [ProjectController::class, 'creativeProgress'])->name('projects.progress.creative');
+    Route::post('/progress-proyek-kreator/{id}', [ProjectController::class, 'storeCreativeProgress'])->name('projects.progress.creative.update');
 
     // Portfolio Routes
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectApplication;
+use App\Models\ProjectProgressUpdate;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -73,6 +74,7 @@ class ProjectController extends Controller
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:100',
             'budget' => 'required|string|max:100',
+            'deadline' => 'required|date|after_or_equal:today',
             'description' => 'required|string|max:2000',
             'requirements' => 'nullable|string|max:2000',
             'project_media' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,webm|max:20480',
@@ -82,6 +84,7 @@ class ProjectController extends Controller
             'title',
             'category',
             'budget',
+            'deadline',
             'description',
             'requirements',
         ]));
@@ -131,8 +134,11 @@ class ProjectController extends Controller
         $applications = ProjectApplication::where('project_id', $project->id)
             ->orderBy('created_at', 'desc')
             ->get();
+        $progressUpdates = ProjectProgressUpdate::where('project_id', $project->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return view('projects.show', compact('project', 'applications'));
+        return view('projects.show', compact('project', 'applications', 'progressUpdates'));
     }
 
     public function apply(Request $request, string $id, CloudinaryService $cloudinary)
@@ -144,6 +150,10 @@ class ProjectController extends Controller
         }
 
         $project = Project::findOrFail($id);
+
+        if (!empty($project->selected_creative_id) && (string) $project->selected_creative_id !== (string) $user->id) {
+            return back()->with('error', 'UMKM sudah memilih creative worker lain untuk proyek ini.');
+        }
 
         $validated = $request->validate([
             'message' => 'required|string|min:20|max:1000',
@@ -215,6 +225,9 @@ class ProjectController extends Controller
                 $project->applications = ProjectApplication::where('project_id', $project->id)
                     ->orderBy('created_at', 'desc')
                     ->get();
+                $project->progress_updates = ProjectProgressUpdate::where('project_id', $project->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
 
                 return $this->decorateProject($project, $project->applications->count());
             });
@@ -222,34 +235,114 @@ class ProjectController extends Controller
         return view('projects.progress', compact('projects'));
     }
 
-    public function updateProgress(Request $request, string $id)
+    public function approveApplication(string $id, string $applicationId)
     {
         $user = auth()->user();
 
         if (!$user->isUMKM()) {
-            return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat memperbarui progress proyek.');
+            return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat menyetujui pelamar proyek.');
         }
 
         $project = Project::where('client_id', $user->id)->findOrFail($id);
-        $applicationsCount = ProjectApplication::where('project_id', $project->id)->count();
+        $application = ProjectApplication::where('project_id', $project->id)->findOrFail($applicationId);
+
+        ProjectApplication::where('project_id', $project->id)
+            ->where('status', 'approved')
+            ->update([
+                'status' => 'applied',
+                'approved_at' => null,
+            ]);
+
+        $application->status = 'approved';
+        $application->approved_at = now();
+        $application->save();
+
+        $project->selected_creative_id = $application->creative_id;
+        $project->selected_creative_name = $application->creative_name;
+        $project->selected_creative_avatar = $application->creative_avatar;
+        $project->applications_count = ProjectApplication::where('project_id', $project->id)->count();
+        $project->status = (int) ($project->progress_percentage ?? 0) >= 100 ? 'completed' : 'applied';
+        $project->save();
+
+        return back()->with('success', 'Creative worker berhasil disetujui untuk mengerjakan proyek ini.');
+    }
+
+    public function creativeProgress()
+    {
+        $user = auth()->user();
+
+        if (!$user->isCreativeWorker()) {
+            return redirect()->route('home')->with('error', 'Hanya creative worker yang dapat melihat progress proyek ini.');
+        }
+
+        $projects = Project::where('selected_creative_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($project) use ($user) {
+                $project->progress_updates = ProjectProgressUpdate::where('project_id', $project->id)
+                    ->where('creative_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                return $this->decorateProject($project);
+            });
+
+        return view('projects.progress-creative', compact('projects'));
+    }
+
+    public function storeCreativeProgress(Request $request, string $id, CloudinaryService $cloudinary)
+    {
+        $user = auth()->user();
+
+        if (!$user->isCreativeWorker()) {
+            return redirect()->route('home')->with('error', 'Hanya creative worker yang dapat memperbarui progress proyek.');
+        }
+
+        $project = Project::where('selected_creative_id', $user->id)->findOrFail($id);
 
         $validated = $request->validate([
             'progress_percentage' => 'required|integer|min:0|max:100',
-            'status' => 'required|string|in:open,applied,in_progress,revision,completed',
+            'note' => 'required|string|min:10|max:1500',
+            'progress_media' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,webm|max:20480',
+        ], [
+            'note.required' => 'Catatan progress wajib diisi ya.',
+            'note.min' => 'Catatan progress minimal 10 karakter.',
         ]);
 
-        if ($applicationsCount === 0) {
-            $project->progress_percentage = 0;
-            $project->status = 'open';
+        $mediaUrl = null;
+        $mediaType = null;
 
-            return back()->with('error', 'Progress baru bisa dijalankan setelah ada creative worker yang apply.');
+        if ($request->hasFile('progress_media')) {
+            try {
+                $file = $request->file('progress_media');
+                $mimeType = $file->getMimeType() ?? '';
+                $mediaType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+
+                $mediaUrl = $cloudinary->upload($file, [
+                    'folder' => 'konekin/projects/progress',
+                    'resource_type' => $mediaType,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Project Progress Media Upload Error: ' . $e->getMessage());
+
+                return back()
+                    ->withInput()
+                    ->with('error', 'Media progress gagal di-upload: ' . $e->getMessage());
+            }
         }
 
-        $project->applications_count = $applicationsCount;
+        ProjectProgressUpdate::create([
+            'project_id' => $project->id,
+            'creative_id' => $user->id,
+            'creative_name' => $user->name,
+            'note' => $validated['note'],
+            'progress_percentage' => $validated['progress_percentage'],
+            'media_url' => $mediaUrl,
+            'media_type' => $mediaType,
+        ]);
+
         $project->progress_percentage = $validated['progress_percentage'];
-        $project->status = $validated['progress_percentage'] >= 100
-            ? 'completed'
-            : $validated['status'];
+        $project->status = $validated['progress_percentage'] >= 100 ? 'completed' : 'in_progress';
         $project->save();
 
         return back()->with('success', 'Progress proyek berhasil diperbarui.');
@@ -314,6 +407,7 @@ class ProjectController extends Controller
                 'description' => 'Kami membutuhkan desainer kreatif untuk memperbarui logo dan kemasan produk kopi artisan kami agar lebih modern.',
                 'category' => 'Branding',
                 'budget' => '3.500.000',
+                'deadline' => now()->addDays(7),
                 'client_name' => 'UMKM Kopi Kita',
                 'client_avatar' => 'https://ui-avatars.com/api/?name=Kopi+Kita&background=2563EB&color=fff',
                 'thumbnail' => 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop',
@@ -329,6 +423,7 @@ class ProjectController extends Controller
                 'description' => 'Mencari content creator untuk mengelola feed dan membuat video pendek kreatif untuk mempromosikan koleksi terbaru.',
                 'category' => 'Social Media',
                 'budget' => '2.000.000',
+                'deadline' => now()->addDays(10),
                 'client_name' => 'UMKM Batik Solo',
                 'client_avatar' => 'https://ui-avatars.com/api/?name=Batik+Solo&background=DB2777&color=fff',
                 'thumbnail' => 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=1974&auto=format&fit=crop',
@@ -344,6 +439,7 @@ class ProjectController extends Controller
                 'description' => 'Dibutuhkan web developer untuk membuat website landing page katalog produk mebel yang responsif.',
                 'category' => 'Web Dev',
                 'budget' => '5.000.000',
+                'deadline' => now()->addDays(14),
                 'client_name' => 'Mebel Jati Perkasa',
                 'client_avatar' => 'https://ui-avatars.com/api/?name=Mebel+Jati&background=16A34A&color=fff',
                 'thumbnail' => 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop',
@@ -386,7 +482,9 @@ class ProjectController extends Controller
         $project->progress_summary = $count === 0
             ? 'Belum ada creative worker yang apply. Progress masih 0%.'
             : match ($status) {
-                'applied' => 'Sudah ada apply masuk. Kamu bisa mulai menyeleksi creative worker.',
+                'applied' => !empty($project->selected_creative_id)
+                    ? 'Creative worker sudah disetujui. Menunggu progres kerja pertama.'
+                    : 'Sudah ada apply masuk. Kamu bisa mulai menyeleksi creative worker.',
                 'in_progress' => 'Kolaborasi sedang berjalan. Pantau update proyek hingga selesai.',
                 'revision' => 'Proyek sedang dalam tahap revisi.',
                 'completed' => 'Proyek telah selesai 100%.',
@@ -406,6 +504,7 @@ class ProjectController extends Controller
             'description' => $project->description,
             'category' => $project->category,
             'budget' => $project->budget,
+            'deadline' => isset($project->deadline) && $project->deadline ? \Illuminate\Support\Carbon::parse($project->deadline)->toISOString() : null,
             'client_id' => isset($project->client_id) ? (string) $project->client_id : null,
             'client_name' => $project->client_name,
             'client_avatar' => $project->client_avatar,

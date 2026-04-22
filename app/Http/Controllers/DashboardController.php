@@ -72,6 +72,29 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function adminDashboard()
+    {
+        $user = auth()->user();
+
+        if (!$user->isAdmin()) {
+            return redirect()->route('home')->with('error', 'Akses ditolak.');
+        }
+
+        // Admin might want to see total stats
+        $totalUsers = \App\Models\User::count();
+        $totalCreativeWorkers = \App\Models\User::where('type', 'creative_worker')->count();
+        $totalUMKM = \App\Models\User::where('type', 'umkm')->count();
+        $totalProjects = Project::count();
+
+        return view('dashboard.admin', [
+            'user' => $user,
+            'totalUsers' => $totalUsers,
+            'totalCreativeWorkers' => $totalCreativeWorkers,
+            'totalUMKM' => $totalUMKM,
+            'totalProjects' => $totalProjects,
+        ]);
+    }
+
     public function updateProfile(Request $request)
     {
         $user = auth()->user();

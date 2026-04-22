@@ -20,5 +20,6 @@ class ProjectApplication extends Model
         'proposal_type',
         'status',
         'applied_at',
+        'approved_at',
     ];
 }

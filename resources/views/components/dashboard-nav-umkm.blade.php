@@ -17,7 +17,6 @@
                 <a href="{{ route('kreator.index') }}" class="px-4 py-2 {{ request()->routeIs('kreator.index') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Cari Kreator</a>
                 <a href="{{ route('projects.create') }}" class="px-4 py-2 {{ request()->routeIs('projects.create') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Upload Proyek</a>
                 <a href="{{ route('projects.progress') }}" class="px-4 py-2 {{ request()->routeIs('projects.progress') || request()->routeIs('projects.progress.update') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Progress Proyek</a>
-                <a href="#" class="px-4 py-2 text-[#1E3A8A]/70 hover:text-[#2563EB] rounded-full text-sm font-bold transition-all">Pesan</a>
             </div>
 
             <!-- Right Side: Notification & Profile -->

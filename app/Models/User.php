@@ -26,6 +26,8 @@ class User extends Authenticatable
         'city',
         'bio',
         'profile_photo',
+        'status', // active, warned, suspended
+        'warnings', // array of warning messages
     ];
 
     protected $hidden = [
@@ -38,6 +40,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'warnings' => 'array',
         ];
     }
 
@@ -49,5 +52,10 @@ class User extends Authenticatable
     public function isUMKM(): bool
     {
         return $this->type === 'umkm';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->type === 'admin';
     }
 }

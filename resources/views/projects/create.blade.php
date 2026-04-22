@@ -91,6 +91,15 @@
                     </div>
                 </div>
 
+                <div class="space-y-3">
+                    <label for="deadline" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Deadline Pengerjaan</label>
+                    <input type="date" id="deadline" name="deadline" required value="{{ old('deadline') }}"
+                           min="{{ now()->toDateString() }}"
+                           class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium">
+                    <p class="text-sm text-[#1E3A8A]/60 font-medium">Tanggal ini akan terlihat oleh creative worker sebagai batas pengumpulan/pengerjaan proyek.</p>
+                    @error('deadline') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
+                </div>
+
                 <!-- Description -->
                 <div class="space-y-3">
                     <label for="description" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Deskripsi Proyek</label>

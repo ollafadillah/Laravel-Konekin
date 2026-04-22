@@ -118,6 +118,7 @@
                             </div>
                             <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2">{{ $project->title }}</h4>
                             <p class="text-[#1E3A8A]/60 text-sm line-clamp-2 mb-4 font-medium">{{ $project->description }}</p>
+                            <p class="text-[#1E3A8A]/55 text-xs font-medium mb-4">Deadline: {{ \Illuminate\Support\Carbon::parse($project->deadline)->translatedFormat('d M Y') }}</p>
                             <div class="flex flex-wrap gap-2 mb-4">
                                 <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $project->applications_count ?? 0 }} Apply</span>
                                 <span class="px-3 py-1 bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $project->progress_percentage ?? 0 }}% Progress</span>
