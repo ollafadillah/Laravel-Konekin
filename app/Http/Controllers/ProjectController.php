@@ -34,6 +34,46 @@ class ProjectController extends Controller
         return view('projects.index', compact('projects'));
     }
 
+    /**
+     * Tampilkan form buat proyek (UMKM)
+     */
+    public function create()
+    {
+        if (!auth()->user()->isUMKM()) {
+            return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat membuat proyek.');
+        }
+
+        return view('projects.create');
+    }
+
+    /**
+     * Simpan proyek baru
+     */
+    public function store(Request $request)
+    {
+        if (!auth()->user()->isUMKM()) {
+            return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat membuat proyek.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'category' => 'required|string',
+            'budget' => 'required|string',
+            'description' => 'required|string',
+            'requirements' => 'nullable|string',
+        ]);
+
+        $project = new Project($validated);
+        $project->client_id = auth()->id();
+        $project->client_name = auth()->user()->name;
+        $project->client_avatar = auth()->user()->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->name).'&background=random';
+        $project->status = 'open';
+        $project->thumbnail = 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop'; // Default placeholder
+        $project->save();
+
+        return redirect()->route('dashboard.umkm')->with('success', 'Proyek berhasil dipublikasikan!');
+    }
+
     public function apiIndex(Request $request)
     {
         try {

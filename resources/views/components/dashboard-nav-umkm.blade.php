@@ -13,9 +13,10 @@
 
             <!-- Navigation Links -->
             <div class="hidden md:flex items-center bg-white/50 px-6 py-2 rounded-full border border-white/80 shadow-sm gap-1">
-                <a href="{{ route('dashboard.creative') }}" class="px-4 py-2 {{ request()->routeIs('dashboard.creative') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Dashboard</a>
-                <a href="{{ route('projects.index') }}" class="px-4 py-2 {{ request()->routeIs('projects.index') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Cari Proyek</a>
-                <a href="{{ route('portfolio.index') }}" class="px-4 py-2 {{ request()->routeIs('portfolio.index') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Portfolio</a>
+                <a href="{{ route('dashboard.umkm') }}" class="px-4 py-2 {{ request()->routeIs('dashboard.umkm') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Dashboard</a>
+                <a href="{{ route('kreator.index') }}" class="px-4 py-2 {{ request()->routeIs('kreator.index') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Cari Kreator</a>
+                <a href="{{ route('projects.create') }}" class="px-4 py-2 {{ request()->routeIs('projects.create') ? 'bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20' : 'text-[#1E3A8A]/70 hover:text-[#2563EB]' }} rounded-full text-sm font-bold transition-all">Upload Proyek</a>
+                <a href="#" class="px-4 py-2 text-[#1E3A8A]/70 hover:text-[#2563EB] rounded-full text-sm font-bold transition-all">Progress Proyek</a>
                 <a href="#" class="px-4 py-2 text-[#1E3A8A]/70 hover:text-[#2563EB] rounded-full text-sm font-bold transition-all">Pesan</a>
             </div>
 
@@ -36,7 +37,7 @@
                 <a href="{{ route('profile.index') }}" class="flex items-center gap-3 pl-4 border-l border-[#2563EB]/10 group/profile cursor-pointer hover:opacity-80 transition-all">
                     <div class="text-right hidden sm:block">
                         <p class="text-sm font-bold text-[#1E3A8A] leading-none group-hover/profile:text-[#2563EB] transition-colors">{{ auth()->user()->name }}</p>
-                        <p class="text-[10px] font-bold text-[#2563EB] uppercase tracking-wider mt-1">Creative Worker</p>
+                        <p class="text-[10px] font-bold text-[#2563EB] uppercase tracking-wider mt-1">UMKM</p>
                     </div>
                     <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#2563EB] to-[#0A66C2] p-0.5 shadow-lg shadow-[#2563EB]/20 group-hover/profile:scale-105 transition-transform">
                         <img src="{{ auth()->user()->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->name).'&background=random' }}" alt="Profile" class="w-full h-full object-cover rounded-[10px] border-2 border-white">
@@ -90,7 +91,7 @@
                                 {{ auth()->user()->name }}
                             </h3>
                             <p class="text-xs font-black text-[#2563EB] uppercase tracking-[0.2em] mb-6">
-                                {{ auth()->user()->type === 'creative_worker' ? 'Creative Worker' : 'Mitra UMKM' }}
+                                MITRA UMKM
                             </p>
                             
                             <div class="inline-block px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100 mb-2">

@@ -11,17 +11,21 @@ use Illuminate\Validation\ValidationException;
 class ProfileController extends Controller
 {
     /**
-     * Tampilkan halaman profil creative worker
+     * Tampilkan halaman profil sesuai role user
      */
     public function index()
     {
         $user = Auth::user();
-        
-        if (!$user->isCreativeWorker()) {
-            return redirect()->route('home')->with('error', 'Akses hanya untuk Creative Worker.');
+
+        if (!$user->isCreativeWorker() && !$user->isUMKM()) {
+            return redirect()->route('home')->with('error', 'Role akun tidak dikenali.');
         }
 
-        return view('profile.creative.profile', compact('user'));
+        $view = $user->isUMKM()
+            ? 'profile.umkm.profile'
+            : 'profile.creative.profile';
+
+        return view($view, compact('user'));
     }
 
     /**

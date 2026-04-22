@@ -12,10 +12,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-// Halaman Cari Kreator (Placeholder)
-Route::get('/kreator', function () {
-    return "Halaman Cari Kreator - Segera Hadir";
-})->name('kreator.index');
+use App\Http\Controllers\CreatorController;
+
+// Halaman Cari Kreator
+Route::get('/kreator', [CreatorController::class, 'index'])->name('kreator.index');
 
 // Halaman Proyek UMKM (Placeholder)
 Route::get('/umkm', function () {
@@ -41,6 +41,8 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.po
 
 // Dashboard & Profile & Projects & Portfolio
 Route::middleware('auth')->group(function () {
+    Route::get('/kreator/{id}', [CreatorController::class, 'show'])->name('kreator.show');
+
     Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
     Route::get('/dashboard/creative', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
     
@@ -48,8 +50,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    // Project Search Route
+    // Project Routes
     Route::get('/cari-proyek', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/proyek/buat', [ProjectController::class, 'create'])->name('projects.create');
+    Route::post('/proyek', [ProjectController::class, 'store'])->name('projects.store');
 
     // Portfolio Routes
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
