@@ -104,6 +104,38 @@
                                 <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-2">Catatan Monitoring</p>
                                 <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7">UMKM sekarang hanya memantau progres kerja, melihat file update dari creative worker, dan menyetujui pelamar yang dipilih. Pengubahan angka progress dilakukan dari sisi creative worker.</p>
                             </div>
+
+                            @if($project->status === 'completed' && !($project->is_rated ?? false))
+                            <div class="rounded-[2.5rem] bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] p-6 text-white shadow-xl shadow-[#2563EB]/20">
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/70 mb-3">Feedback Proyek</p>
+                                <h4 class="text-xl font-display font-bold mb-4">Beri Rating {{ strtok($project->selected_creative_name, ' ') }}</h4>
+                                <form action="{{ route('rating.store') }}" method="POST" class="space-y-4">
+                                    @csrf
+                                    <input type="hidden" name="project_id" value="{{ $project->id }}">
+                                    
+                                    <div class="flex items-center gap-2 mb-2">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <button type="button" onclick="setRating('{{ $project->id }}', {{ $i }})" class="rating-star-{{ $project->id }} text-white/30 hover:text-amber-400 transition-colors" data-value="{{ $i }}">
+                                                <svg class="w-8 h-8 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/></svg>
+                                            </button>
+                                        @endfor
+                                        <input type="hidden" name="rating" id="rating_input_{{ $project->id }}" value="0" required>
+                                    </div>
+
+                                    <textarea name="comment" rows="3" class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:bg-white/20 resize-none transition-all" placeholder="Tulis testimoni singkat (opsional)..."></textarea>
+                                    
+                                    <button type="submit" class="w-full py-3 bg-white text-[#1E3A8A] rounded-xl text-xs font-extrabold uppercase tracking-widest hover:bg-[#EFF6FF] transition-all shadow-lg">Kirim Rating</button>
+                                </form>
+                            </div>
+                            @elseif($project->is_rated ?? false)
+                            <div class="rounded-[2.5rem] bg-green-50 border border-green-200 p-6 text-green-800">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <p class="text-xs font-extrabold uppercase tracking-widest">Rating Terkirim</p>
+                                </div>
+                                <p class="text-sm font-medium">Terima kasih! Kamu sudah memberikan feedback untuk creative worker ini.</p>
+                            </div>
+                            @endif
                         </div>
                     </div>
 
@@ -187,5 +219,20 @@
             </div>
         @endforelse
     </main>
+    <script>
+        function setRating(projectId, value) {
+            document.getElementById('rating_input_' + projectId).value = value;
+            const stars = document.querySelectorAll('.rating-star-' + projectId);
+            stars.forEach((star, index) => {
+                if (index < value) {
+                    star.classList.remove('text-white/30');
+                    star.classList.add('text-amber-400');
+                } else {
+                    star.classList.remove('text-amber-400');
+                    star.classList.add('text-white/30');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

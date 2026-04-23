@@ -23,6 +23,10 @@ class ProjectController extends Controller
             $query->where('category', $request->category);
         }
 
+        // Only show projects that are not completed and don't have a selected creative worker yet
+        $query->where('status', '!=', 'completed')
+              ->whereNull('selected_creative_id');
+
         $projects = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($project) => $this->decorateProject($project));
 
@@ -44,6 +48,10 @@ class ProjectController extends Controller
         if ($request->filled('category') && $request->category !== 'Semua') {
             $query->where('category', $request->category);
         }
+
+        // Only show projects that are not completed and don't have a selected creative worker yet
+        $query->where('status', '!=', 'completed')
+              ->whereNull('selected_creative_id');
 
         $projects = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($project) => $this->decorateProject($project));
@@ -228,6 +236,7 @@ class ProjectController extends Controller
                 $project->progress_updates = ProjectProgressUpdate::where('project_id', $project->id)
                     ->orderBy('created_at', 'desc')
                     ->get();
+                $project->is_rated = \App\Models\Rating::where('project_id', $project->id)->exists();
 
                 return $this->decorateProject($project, $project->applications->count());
             });
@@ -360,6 +369,10 @@ class ProjectController extends Controller
             if ($request->filled('category') && $request->category !== 'Semua') {
                 $query->where('category', $request->category);
             }
+
+            // Only show projects that are not completed and don't have a selected creative worker yet
+            $query->where('status', '!=', 'completed')
+                  ->whereNull('selected_creative_id');
 
             $projects = $query->orderBy('created_at', 'desc')->get()
                 ->map(fn ($project) => $this->decorateProject($project));

@@ -54,18 +54,27 @@
                     </div>
                 </div>
 
-                <div class="lg:ml-auto grid grid-cols-3 gap-3 w-full lg:w-auto">
+                <div class="lg:ml-auto grid grid-cols-2 md:grid-cols-4 gap-3 w-full lg:w-auto">
                     <div class="rounded-[1.8rem] bg-white/80 border border-white p-4 text-center shadow-sm">
                         <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Portfolio</p>
                         <p class="font-display text-2xl font-bold text-[#1E3A8A]">{{ $portfolios->count() }}</p>
                     </div>
+                    @if($creator->completed_projects_count > 0)
+                    <div class="rounded-[1.8rem] bg-white/80 border border-white p-4 text-center shadow-sm">
+                        <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Proyek Selesai</p>
+                        <p class="font-display text-2xl font-bold text-[#1E3A8A]">{{ $creator->completed_projects_count }}</p>
+                    </div>
+                    <div class="rounded-[1.8rem] bg-white/80 border border-white p-4 text-center shadow-sm">
+                        <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Rating</p>
+                        <div class="flex items-center justify-center gap-1">
+                            <svg class="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/></svg>
+                            <p class="font-display text-2xl font-bold text-[#1E3A8A]">{{ $creator->average_rating }}</p>
+                        </div>
+                    </div>
+                    @endif
                     <div class="rounded-[1.8rem] bg-white/80 border border-white p-4 text-center shadow-sm">
                         <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Status</p>
                         <p class="font-display text-lg font-bold text-[#2563EB]">Aktif</p>
-                    </div>
-                    <div class="rounded-[1.8rem] bg-white/80 border border-white p-4 text-center shadow-sm">
-                        <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Konekin</p>
-                        <p class="font-display text-lg font-bold text-[#1E3A8A]">Verified</p>
                     </div>
                 </div>
             </div>

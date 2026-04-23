@@ -45,6 +45,9 @@ class DashboardController extends Controller
         return view('dashboard.creative', [
             'user' => $user,
             'latestProjects' => $latestProjects,
+            'activeProjectsCount' => Project::where('selected_creative_id', $user->id)->where('status', 'in_progress')->count(),
+            'completedProjectsCount' => $user->completed_projects_count,
+            'averageRating' => $user->average_rating,
         ]);
     }
 

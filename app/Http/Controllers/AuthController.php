@@ -66,9 +66,17 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
-            return ($user->type === 'umkm') 
-                ? redirect()->route('dashboard.umkm') 
-                : redirect()->route('dashboard.creative');
+            
+            // Prioritas redirect berdasarkan role
+            if ($user->type === 'admin') {
+                return redirect()->route('dashboard.admin');
+            }
+            
+            if ($user->type === 'umkm') {
+                return redirect()->route('dashboard.umkm');
+            }
+            
+            return redirect()->route('dashboard.creative');
         }
 
         return back()->withErrors(['email' => 'Email atau password salah.']);
@@ -122,7 +130,7 @@ class AuthController extends Controller
                     ],
                     'token' => $token,
                     'token_type' => 'bearer',
-                    'expires_in' => auth('api')->factory()->getTTL() * 60
+                    'expires_in' => JWTAuth::factory()->getTTL() * 60
                 ]
             ], 201);
 
@@ -172,7 +180,7 @@ class AuthController extends Controller
                     ],
                     'token' => $token,
                     'token_type' => 'bearer',
-                    'expires_in' => auth('api')->factory()->getTTL() * 60
+                    'expires_in' => JWTAuth::factory()->getTTL() * 60
                 ]
             ], 200);
 
@@ -256,7 +264,7 @@ class AuthController extends Controller
                 'success' => true,
                 'token' => $newToken,
                 'token_type' => 'bearer',
-                'expires_in' => auth('api')->factory()->getTTL() * 60
+                'expires_in' => JWTAuth::factory()->getTTL() * 60
             ]);
         } catch (JWTException $e) {
             return response()->json([

@@ -54,7 +54,7 @@
                     <span class="text-green-500 text-xs font-bold bg-green-50 px-2.5 py-1 rounded-full">+2 Proyek</span>
                 </div>
                 <h3 class="text-[#1E3A8A]/60 text-sm font-bold uppercase tracking-wider">Proyek Aktif</h3>
-                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">12</p>
+                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">{{ $activeProjectsCount ?? 0 }}</p>
             </div>
 
             <!-- Stat 2 -->
@@ -65,7 +65,7 @@
                     </div>
                 </div>
                 <h3 class="text-[#1E3A8A]/60 text-sm font-bold uppercase tracking-wider">Pendapatan</h3>
-                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">Rp 8.5M</p>
+                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">Rp {{ number_format($user->escrowEarnings()->sum('amount'), 0, ',', '.') }}</p>
             </div>
 
             <!-- Stat 3 -->
@@ -76,7 +76,7 @@
                     </div>
                 </div>
                 <h3 class="text-[#1E3A8A]/60 text-sm font-bold uppercase tracking-wider">Selesai</h3>
-                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">48</p>
+                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">{{ $completedProjectsCount ?? 0 }}</p>
             </div>
 
             <!-- Stat 4 -->
@@ -87,7 +87,7 @@
                     </div>
                 </div>
                 <h3 class="text-[#1E3A8A]/60 text-sm font-bold uppercase tracking-wider">Rating</h3>
-                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">4.9</p>
+                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">{{ $averageRating > 0 ? $averageRating : '-' }}</p>
             </div>
         </div>
 

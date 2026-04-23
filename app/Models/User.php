@@ -8,6 +8,8 @@ use Illuminate\Notifications\Notifiable;
 // Hapus: use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;  // Tambahkan ini
 use MongoDB\Laravel\Auth\User as Authenticatable;
+use App\Models\Rating;
+use App\Models\Project;
 
 class User extends Authenticatable implements JWTSubject  // implements JWTSubject
 {
@@ -51,7 +53,41 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
     {
         return $this->type === 'umkm';
     }
+    public function isAdmin(): bool
+    {
+        return $this->type === 'admin';
+    }
 
+    public function escrowPayments()
+    {
+        return $this->hasMany(EscrowTransaction::class, 'payer_id');
+    }
+
+    public function escrowEarnings()
+    {
+        return $this->hasMany(EscrowTransaction::class, 'payee_id');
+    }
+
+    public function ratingsReceived()
+    {
+        return $this->hasMany(Rating::class, 'to_user_id');
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        $ratings = $this->ratingsReceived();
+        if ($ratings->count() === 0) {
+            return 0;
+        }
+        return round($ratings->avg('rating'), 1);
+    }
+
+    public function getCompletedProjectsCountAttribute()
+    {
+        return Project::where('selected_creative_id', $this->id)
+            ->where('status', 'completed')
+            ->count();
+    }
     /**
      * Get the identifier that will be stored in the JWT.
      * Required method for JWTSubject interface.

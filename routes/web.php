@@ -8,6 +8,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EscrowController;
 use App\Http\Controllers\AdminEscrowController;
+use App\Http\Controllers\RatingController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
@@ -85,6 +86,9 @@ Route::middleware('auth')->group(function () {
     // Admin Escrow
     Route::get('/admin/escrow', [AdminEscrowController::class, 'index'])->name('admin.escrow.index');
     Route::post('/admin/escrow/{escrow}/release', [AdminEscrowController::class, 'release'])->name('admin.escrow.release');
+
+    // Rating Routes
+    Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');
 });
 
 // Public Webhook (No Auth)

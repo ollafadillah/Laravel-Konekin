@@ -97,20 +97,25 @@
                             {{ $creator->bio ?? 'Kreator ini belum menambahkan bio profil mereka.' }}
                         </p>
 
-                        <div class="grid grid-cols-3 gap-4 mb-8">
+                        @if($creator->completed_projects_count > 0)
+                        <div class="grid grid-cols-2 gap-4 mb-8">
                             <div class="text-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
                                 <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase mb-1">Rating</p>
-                                <p class="text-sm font-display font-bold text-[#1E3A8A]">4.9</p>
+                                <div class="flex items-center justify-center gap-1">
+                                    <svg class="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/></svg>
+                                    <p class="text-sm font-display font-bold text-[#1E3A8A]">{{ $creator->average_rating }}</p>
+                                </div>
                             </div>
                             <div class="text-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
                                 <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase mb-1">Proyek</p>
-                                <p class="text-sm font-display font-bold text-[#1E3A8A]">24</p>
-                            </div>
-                            <div class="text-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                                <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase mb-1">Review</p>
-                                <p class="text-sm font-display font-bold text-[#1E3A8A]">18</p>
+                                <p class="text-sm font-display font-bold text-[#1E3A8A]">{{ $creator->completed_projects_count }}</p>
                             </div>
                         </div>
+                        @else
+                        <div class="mb-8 p-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center">
+                            <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase italic">Kreator Baru di Konekin</p>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Action Footer -->
