@@ -6,12 +6,16 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
+    // ============ Web Methods (tetap sama) ============
+    
     public function showRegister(Request $request)
     {
-        $type = $request->query('type'); // Menangkap 'umkm' atau 'creative_worker'
+        $type = $request->query('type');
         
         if (!$type) {
             return redirect()->route('register.role');
@@ -42,14 +46,15 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return ($user->type === 'admin') 
-            ? redirect()->route('dashboard.admin')
-            : (($user->type === 'umkm') 
-                ? redirect()->route('dashboard.umkm') 
-                : redirect()->route('dashboard.creative'));
+        return ($user->type === 'umkm') 
+            ? redirect()->route('dashboard.umkm') 
+            : redirect()->route('dashboard.creative');
     }
 
-    public function showLogin() { return view('auth.login'); }
+    public function showLogin() 
+    { 
+        return view('auth.login'); 
+    }
 
     public function login(Request $request)
     {
@@ -61,11 +66,9 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
-            return ($user->type === 'admin') 
-                ? redirect()->route('dashboard.admin')
-                : (($user->type === 'umkm') 
-                    ? redirect()->route('dashboard.umkm') 
-                    : redirect()->route('dashboard.creative'));
+            return ($user->type === 'umkm') 
+                ? redirect()->route('dashboard.umkm') 
+                : redirect()->route('dashboard.creative');
         }
 
         return back()->withErrors(['email' => 'Email atau password salah.']);
@@ -76,10 +79,10 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('home');
+        return redirect()->route('login');
     }
 
-    // ============ API Methods (untuk Mobile & External Apps) ============
+    // ============ API Methods dengan JWT ============
 
     public function apiRegister(Request $request)
     {
@@ -102,14 +105,24 @@ class AuthController extends Controller
                 'city' => $validated['city'],
             ]);
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            // Generate JWT token untuk user yang baru registrasi
+            $token = JWTAuth::fromUser($user);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Registrasi berhasil',
                 'data' => [
-                    'user' => $user,
+                    'user' => [
+                        'id' => (string) $user->_id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'type' => $user->type,
+                        'phone' => $user->phone,
+                        'city' => $user->city,
+                    ],
                     'token' => $token,
+                    'token_type' => 'bearer',
+                    'expires_in' => auth('api')->factory()->getTTL() * 60
                 ]
             ], 201);
 
@@ -135,23 +148,31 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
-            $user = User::where('email', $credentials['email'])->first();
-
-            if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            // Coba login dengan JWT
+            if (!$token = JWTAuth::attempt($credentials)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Email atau password salah'
                 ], 401);
             }
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $user = Auth::user();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login berhasil',
                 'data' => [
-                    'user' => $user,
+                    'user' => [
+                        'id' => (string) $user->_id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'type' => $user->type,
+                        'phone' => $user->phone,
+                        'city' => $user->city,
+                    ],
                     'token' => $token,
+                    'token_type' => 'bearer',
+                    'expires_in' => auth('api')->factory()->getTTL() * 60
                 ]
             ], 200);
 
@@ -161,6 +182,11 @@ class AuthController extends Controller
                 'message' => 'Validasi gagal',
                 'errors' => $e->errors()
             ], 422);
+        } catch (JWTException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not create token: ' . $e->getMessage()
+            ], 500);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -172,16 +198,47 @@ class AuthController extends Controller
     public function apiLogout(Request $request)
     {
         try {
-            // Revoke all tokens for this user
-            if ($request->user()) {
-                $request->user()->tokens()->delete();       
-            }
-
+            // Invalidate token
+            JWTAuth::invalidate(JWTAuth::getToken());
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Logout berhasil'
             ], 200);
+        } catch (JWTException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal logout: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
+    public function getProfile(Request $request)
+    {
+        try {
+            $user = auth('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak ditemukan'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile berhasil diambil',
+                'data' => [
+                    'id' => (string) $user->_id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'type' => $user->type,
+                    'phone' => $user->phone,
+                    'city' => $user->city,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                ]
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -190,22 +247,22 @@ class AuthController extends Controller
         }
     }
 
-    public function getProfile(Request $request)
+    public function refreshToken()
     {
         try {
-            $user = $request->user();
-
+            $newToken = JWTAuth::refresh(JWTAuth::getToken());
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Profile berhasil diambil',
-                'data' => $user
-            ], 200);
-
-        } catch (\Exception $e) {
+                'token' => $newToken,
+                'token_type' => 'bearer',
+                'expires_in' => auth('api')->factory()->getTTL() * 60
+            ]);
+        } catch (JWTException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Token expired or invalid'
+            ], 401);
         }
     }
 }

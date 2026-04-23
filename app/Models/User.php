@@ -5,13 +5,14 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+// Hapus: use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;  // Tambahkan ini
 use MongoDB\Laravel\Auth\User as Authenticatable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject  // implements JWTSubject
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable;  // Hapus HasApiTokens
 
     protected $connection = 'mongodb';
     protected $collection = 'users';
@@ -26,11 +27,6 @@ class User extends Authenticatable
         'city',
         'bio',
         'profile_photo',
-        'status', // active, warned, suspended
-        'warnings', // array of warning messages
-        'bank_code',
-        'bank_account_number',
-        'bank_account_name',
     ];
 
     protected $hidden = [
@@ -43,7 +39,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'warnings' => 'array',
         ];
     }
 
@@ -57,18 +52,24 @@ class User extends Authenticatable
         return $this->type === 'umkm';
     }
 
-    public function isAdmin(): bool
+    /**
+     * Get the identifier that will be stored in the JWT.
+     * Required method for JWTSubject interface.
+     */
+    public function getJWTIdentifier()
     {
-        return $this->type === 'admin';
+        return $this->getKey();
     }
 
-    public function escrowPayments()
+    /**
+     * Return custom claims to be added to the JWT.
+     * Required method for JWTSubject interface.
+     */
+    public function getJWTCustomClaims()
     {
-        return $this->hasMany(EscrowTransaction::class, 'payer_id');
-    }
-
-    public function escrowEarnings()
-    {
-        return $this->hasMany(EscrowTransaction::class, 'payee_id');
+        return [
+            'type' => $this->type,
+            'name' => $this->name,
+        ];
     }
 }
