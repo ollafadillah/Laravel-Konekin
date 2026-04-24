@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\GoogleController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -11,6 +12,7 @@ Route::get('/user', function (Request $request) {
 // Auth Routes API
 Route::post('/register', [AuthController::class, 'apiRegister']);
 Route::post('/login', [AuthController::class, 'apiLogin']);
+Route::post('/auth/google', [GoogleController::class, 'apiGoogleLogin']);
 
 Route::middleware('auth:api')->group(function () {  // Ubah dari 'auth:sanctum' ke 'auth:api'
     Route::post('/logout', [AuthController::class, 'apiLogout']);

@@ -9,6 +9,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EscrowController;
 use App\Http\Controllers\AdminEscrowController;
 use App\Http\Controllers\RatingController;
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\OnboardingController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
@@ -33,6 +35,10 @@ Route::get('/tentang-kami', function () {
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Google Auth
+Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
 Route::get('/register-role', function () {
     return view('auth.register-role'); // Halaman pilih role
@@ -89,6 +95,10 @@ Route::middleware('auth')->group(function () {
 
     // Rating Routes
     Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');
+
+    // Onboarding Routes
+    Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding');
+    Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
 });
 
 // Public Webhook (No Auth)

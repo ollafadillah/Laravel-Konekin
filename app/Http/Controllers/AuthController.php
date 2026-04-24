@@ -21,6 +21,22 @@ class AuthController extends Controller
             return redirect()->route('register.role');
         }
 
+        // Jika user sudah login (misal via Google) tapi belum punya role
+        if (Auth::check()) {
+            $user = Auth::user();
+            if (!$user->type && in_array($type, ['creative_worker', 'umkm'])) {
+                $user->update(['type' => $type]);
+                
+                if ($user->isCreativeWorker()) {
+                    return redirect()->route('onboarding');
+                }
+                return redirect()->route('profile.index')->with('info', 'Silakan lengkapi profil UMKM Anda.');
+            }
+            
+            // Kalau sudah punya role, lempar ke dashboard
+            return $user->isUMKM() ? redirect()->route('dashboard.umkm') : redirect()->route('dashboard.creative');
+        }
+
         return view('auth.register', compact('type'));
     }
 
@@ -45,10 +61,12 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
+        
+        if ($user->isUMKM()) {
+            return redirect()->route('profile.index')->with('info', 'Pendaftaran berhasil! Yuk lengkapi profil bisnis Anda.');
+        }
 
-        return ($user->type === 'umkm') 
-            ? redirect()->route('dashboard.umkm') 
-            : redirect()->route('dashboard.creative');
+        return redirect()->route('onboarding'); // Creative worker langsung onboarding
     }
 
     public function showLogin() 
