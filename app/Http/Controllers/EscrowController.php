@@ -75,4 +75,62 @@ class EscrowController extends Controller
     {
         return response()->json(['success' => true, 'message' => 'Notification handled (Mock)']);
     }
+
+    public function apiSimulatePayment($id)
+    {
+        $user = auth()->user();
+        $project = Project::findOrFail($id);
+
+        if ((string) $user->id !== (string) $project->client_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak.',
+            ], 403);
+        }
+
+        if ($project->escrow_status === 'held') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran sudah dilakukan.',
+            ], 400);
+        }
+
+        $amount = (int) $project->budget;
+        $platformFee = $amount * 0.10;
+        $netAmount = $amount - $platformFee;
+        $orderId = 'SIM-' . $project->id . '-' . time();
+
+        $escrow = EscrowTransaction::create([
+            'project_id' => $project->id,
+            'payer_id' => $project->client_id,
+            'payee_id' => $project->selected_creative_id,
+            'amount' => $amount,
+            'platform_fee' => $platformFee,
+            'net_amount' => $netAmount,
+            'status' => 'held',
+            'midtrans_order_id' => $orderId,
+            'midtrans_transaction_id' => 'SIM-TX-' . uniqid(),
+            'midtrans_payment_type' => 'simulation',
+        ]);
+
+        $project->update([
+            'escrow_status' => 'held',
+            'status' => 'in_progress',
+            'escrow_transaction_id' => $escrow->id
+        ]);
+
+        // Notify
+        $escrow->payee->notify(new EscrowPaymentReceived($project, $escrow));
+        $escrow->payer->notify(new EscrowPaymentSuccessful($project));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembayaran escrow berhasil disimulasikan!',
+            'data' => [
+                'project_id' => (string) $project->id,
+                'status' => $project->status,
+                'escrow_status' => $project->escrow_status,
+            ]
+        ], 200);
+    }
 }

@@ -412,6 +412,368 @@ class ProjectController extends Controller
         }
     }
 
+    public function apiApply(Request $request, $id, CloudinaryService $cloudinary)
+    {
+        $user = auth()->user();
+
+        if (!$user->isCreativeWorker()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya creative worker yang dapat mengajukan proyek.',
+            ], 403);
+        }
+
+        try {
+            $project = Project::findOrFail($id);
+
+            if (!empty($project->selected_creative_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'UMKM sudah memilih creative worker lain untuk proyek ini.',
+                ], 400);
+            }
+
+            $validated = $request->validate([
+                'message' => 'required|string|min:20|max:1000',
+                'proposal_file' => 'required|file|mimes:pdf,doc,docx,ppt,pptx,zip|max:20480',
+            ]);
+
+            $existingApplication = ProjectApplication::where('project_id', $project->id)
+                ->where('creative_id', $user->id)
+                ->first();
+
+            if ($existingApplication) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kamu sudah mengajukan diri ke proyek ini.',
+                ], 400);
+            }
+
+            $proposalFile = $request->file('proposal_file');
+            $proposalType = $proposalFile->getClientOriginalExtension();
+            $proposalUrl = $cloudinary->upload($proposalFile, [
+                'folder' => 'konekin/projects/proposals',
+                'resource_type' => 'raw',
+            ]);
+
+            ProjectApplication::create([
+                'project_id' => $project->id,
+                'creative_id' => $user->id,
+                'creative_name' => $user->name,
+                'creative_avatar' => $user->profile_photo ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=random',
+                'creative_city' => $user->city,
+                'message' => $validated['message'],
+                'proposal_url' => $proposalUrl,
+                'proposal_type' => $proposalType,
+                'status' => 'applied',
+                'applied_at' => now(),
+            ]);
+
+            $project->applications_count = ProjectApplication::where('project_id', $project->id)->count();
+            $project->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengajuan berhasil dikirim ke UMKM.',
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengajukan proyek: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function apiCreativeProgress()
+    {
+        $user = auth()->user();
+
+        if (!$user->isCreativeWorker()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya creative worker yang dapat melihat progress proyek.',
+            ], 403);
+        }
+
+        $projects = Project::where('selected_creative_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($project) use ($user) {
+                $project->progress_updates = ProjectProgressUpdate::where('project_id', $project->id)
+                    ->where('creative_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                return $this->transformProject($project);
+            });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar progress proyek berhasil diambil',
+            'data' => $projects,
+        ], 200);
+    }
+
+    public function apiStoreCreativeProgress(Request $request, $id, CloudinaryService $cloudinary)
+    {
+        $user = auth()->user();
+
+        if (!$user->isCreativeWorker()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya creative worker yang dapat memperbarui progress proyek.',
+            ], 403);
+        }
+
+        try {
+            $project = Project::where('selected_creative_id', $user->id)->findOrFail($id);
+
+            $validated = $request->validate([
+                'progress_percentage' => 'required|integer|min:0|max:100',
+                'note' => 'required|string|min:10|max:1500',
+                'progress_media' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,webm|max:20480',
+            ]);
+
+            $mediaUrl = null;
+            $mediaType = null;
+
+            if ($request->hasFile('progress_media')) {
+                $file = $request->file('progress_media');
+                $mimeType = $file->getMimeType() ?? '';
+                $mediaType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+
+                $mediaUrl = $cloudinary->upload($file, [
+                    'folder' => 'konekin/projects/progress',
+                    'resource_type' => $mediaType,
+                ]);
+            }
+
+            ProjectProgressUpdate::create([
+                'project_id' => $project->id,
+                'creative_id' => $user->id,
+                'creative_name' => $user->name,
+                'note' => $validated['note'],
+                'progress_percentage' => $validated['progress_percentage'],
+                'media_url' => $mediaUrl,
+                'media_type' => $mediaType,
+            ]);
+
+            $project->progress_percentage = $validated['progress_percentage'];
+            $project->status = $validated['progress_percentage'] >= 100 ? 'completed' : 'in_progress';
+            $project->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Progress proyek berhasil diperbarui.',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui progress: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function apiStore(Request $request, CloudinaryService $cloudinary)
+    {
+        if (!auth()->user()->isUMKM()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya UMKM yang dapat membuat proyek.',
+            ], 403);
+        }
+
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'category' => 'required|string|max:100',
+                'budget' => 'required|string|max:100',
+                'deadline' => 'required|date|after_or_equal:today',
+                'description' => 'required|string|max:2000',
+                'requirements' => 'nullable|string|max:2000',
+                'project_media' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov,webm|max:20480',
+            ]);
+
+            $project = new Project($request->only([
+                'title',
+                'category',
+                'budget',
+                'deadline',
+                'description',
+                'requirements',
+            ]));
+
+            $project->client_id = auth()->id();
+            $project->client_name = auth()->user()->name;
+            $project->client_avatar = auth()->user()->profile_photo ?? 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=random';
+            $project->status = 'open';
+            $project->progress_percentage = 0;
+            $project->applications_count = 0;
+            $project->thumbnail = 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop';
+
+            if ($request->hasFile('project_media')) {
+                $file = $request->file('project_media');
+                $mimeType = $file->getMimeType() ?? '';
+                $resourceType = str_starts_with($mimeType, 'video/') ? 'video' : 'image';
+
+                $mediaUrl = $cloudinary->upload($file, [
+                    'folder' => 'konekin/projects/media',
+                    'resource_type' => $resourceType,
+                ]);
+
+                $project->media_url = $mediaUrl;
+                $project->media_type = $resourceType;
+
+                if ($resourceType === 'image') {
+                    $project->thumbnail = $mediaUrl;
+                }
+            }
+
+            $project->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Proyek berhasil dipublikasikan!',
+                'data' => $this->transformProject($project),
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mempublikasikan proyek: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function apiUMKMProjectProgress()
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya UMKM yang dapat melihat progress proyek.',
+            ], 403);
+        }
+
+        $projects = Project::where('client_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($project) {
+                $project->applications = ProjectApplication::where('project_id', $project->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                $project->progress_updates = ProjectProgressUpdate::where('project_id', $project->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $decorated = $this->decorateProject($project);
+                $transformed = $this->transformProject($decorated);
+                
+                $transformed['applications'] = $project->applications->map(fn($app) => [
+                    'id' => (string) $app->id,
+                    'creative_name' => $app->creative_name,
+                    'creative_avatar' => $app->creative_avatar,
+                    'status' => $app->status,
+                    'message' => $app->message,
+                    'proposal_url' => $app->proposal_url,
+                    'applied_at' => $app->applied_at,
+                ]);
+
+                $transformed['progress_updates'] = $project->progress_updates->map(fn($update) => [
+                    'id' => (string) $update->id,
+                    'note' => $update->note,
+                    'percentage' => (int) $update->progress_percentage,
+                    'media_url' => $update->media_url,
+                    'media_type' => $update->media_type,
+                    'created_at' => $update->created_at->toISOString(),
+                ]);
+
+                return $transformed;
+            });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar progress proyek UMKM berhasil diambil',
+            'data' => $projects,
+        ], 200);
+    }
+
+    public function apiGetApplications($id)
+    {
+        $user = auth()->user();
+        $project = Project::where('client_id', $user->id)->findOrFail($id);
+
+        $applications = ProjectApplication::where('project_id', $project->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($app) => [
+                'id' => (string) $app->id,
+                'creative_id' => (string) $app->creative_id,
+                'creative_name' => $app->creative_name,
+                'creative_avatar' => $app->creative_avatar,
+                'creative_city' => $app->creative_city,
+                'status' => $app->status,
+                'message' => $app->message,
+                'proposal_url' => $app->proposal_url,
+                'proposal_type' => $app->proposal_type,
+                'applied_at' => $app->applied_at,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar pelamar berhasil diambil',
+            'data' => $applications,
+        ], 200);
+    }
+
+    public function apiApproveApplication($id, $applicationId)
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya UMKM yang dapat menyetujui pelamar proyek.',
+            ], 403);
+        }
+
+        try {
+            $project = Project::where('client_id', $user->id)->findOrFail($id);
+            $application = ProjectApplication::where('project_id', $project->id)->findOrFail($applicationId);
+
+            ProjectApplication::where('project_id', $project->id)
+                ->where('status', 'approved')
+                ->update([
+                    'status' => 'applied',
+                    'approved_at' => null,
+                ]);
+
+            $application->status = 'approved';
+            $application->approved_at = now();
+            $application->save();
+
+            $project->selected_creative_id = $application->creative_id;
+            $project->selected_creative_name = $application->creative_name;
+            $project->selected_creative_avatar = $application->creative_avatar;
+            $project->status = 'hired'; // Mark as hired, waiting for payment
+            $project->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Creative worker berhasil disetujui. Silakan lakukan pembayaran untuk memulai proyek.',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyetujui pelamar: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     private function getDummyProjects()
     {
         return collect([
