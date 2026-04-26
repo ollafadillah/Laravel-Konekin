@@ -19,6 +19,7 @@ Route::get('/', function () {
 })->name('home');
 
 use App\Http\Controllers\CreatorController;
+use App\Http\Controllers\PaymentController;
 
 // Halaman Cari Kreator
 Route::get('/kreator', [CreatorController::class, 'index'])->name('kreator.index');
@@ -99,6 +100,20 @@ Route::middleware('auth')->group(function () {
     // Onboarding Routes
     Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+
+    // Payment Routes
+    Route::get('/pembayaran', [PaymentController::class, 'index'])->name('payments.index');
+    Route::post('/proyek/{projectId}/pembayaran/buat', [PaymentController::class, 'generatePayment'])->name('payments.generate');
+    Route::get('/pembayaran/{paymentId}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::post('/pembayaran/{paymentId}/bukti-upload', [PaymentController::class, 'uploadProof'])->name('payments.upload-proof');
+    Route::post('/pembayaran/{paymentId}/batalkan', [PaymentController::class, 'cancel'])->name('payments.cancel');
+    
+    // Admin Payment Routes
+    Route::get('/admin/pembayaran', [AdminController::class, 'payments'])->name('admin.payments.index');
+    Route::get('/admin/pembayaran/{paymentId}/detail', [AdminController::class, 'paymentDetail'])->name('admin.payments.detail');
+    Route::post('/admin/pembayaran/{paymentId}/verifikasi', [PaymentController::class, 'verify'])->name('admin.payments.verify');
+    Route::post('/admin/pembayaran/{paymentId}/tolak', [PaymentController::class, 'reject'])->name('admin.payments.reject');
+
 });
 
 // Public Webhook (No Auth)

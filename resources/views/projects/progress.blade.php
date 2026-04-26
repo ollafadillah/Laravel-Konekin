@@ -136,6 +136,33 @@
                                 <p class="text-sm font-medium">Terima kasih! Kamu sudah memberikan feedback untuk creative worker ini.</p>
                             </div>
                             @endif
+
+                            @if($project->status === 'completed')
+                            <div class="rounded-[2.5rem] bg-gradient-to-br from-[#10B981] to-[#059669] p-6 text-white shadow-xl shadow-[#10B981]/20">
+                                <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/70 mb-3">💳 Pembayaran Proyek</p>
+                                <h4 class="text-xl font-display font-bold mb-2">Bayar Sekarang</h4>
+                                <p class="text-sm text-white/80 mb-4">Proyek ini sudah selesai. Kamu perlu melakukan pembayaran sebelum project final.</p>
+                                
+                                @php
+                                    $existingPayment = \App\Models\Payment::where('project_id', $project->id)
+                                        ->whereIn('status', ['pending', 'paid'])
+                                        ->first();
+                                @endphp
+
+                                @if($existingPayment)
+                                    <a href="{{ route('payments.show', $existingPayment->_id) }}" class="inline-flex items-center justify-center px-6 py-3 bg-white text-[#10B981] rounded-xl text-xs font-extrabold uppercase tracking-widest hover:bg-[#EFF6FF] transition-all">
+                                        Lihat Invoice Pembayaran
+                                    </a>
+                                @else
+                                    <form action="{{ route('payments.generate', $project->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        <button type="submit" class="px-6 py-3 bg-white text-[#10B981] rounded-xl text-xs font-extrabold uppercase tracking-widest hover:bg-[#EFF6FF] transition-all shadow-lg">
+                                            Buat Invoice Pembayaran
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                            @endif
                         </div>
                     </div>
 

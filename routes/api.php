@@ -4,12 +4,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleController;
+
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\EscrowController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
