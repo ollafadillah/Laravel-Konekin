@@ -97,7 +97,6 @@
                             {{ $creator->bio ?? 'Kreator ini belum menambahkan bio profil mereka.' }}
                         </p>
 
-                        @if($creator->completed_projects_count > 0)
                         <div class="grid grid-cols-2 gap-4 mb-8">
                             <div class="text-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
                                 <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase mb-1">Rating</p>
@@ -111,11 +110,6 @@
                                 <p class="text-sm font-display font-bold text-[#1E3A8A]">{{ $creator->completed_projects_count }}</p>
                             </div>
                         </div>
-                        @else
-                        <div class="mb-8 p-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center">
-                            <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase italic">Kreator Baru di Konekin</p>
-                        </div>
-                        @endif
                     </div>
 
                     <!-- Action Footer -->

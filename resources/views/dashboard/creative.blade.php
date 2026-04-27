@@ -45,6 +45,12 @@
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            @php
+                $displayRating = ($ratingsCount ?? 0) > 0
+                    ? rtrim(rtrim(number_format($averageRating ?? 0, 1, '.', ''), '0'), '.')
+                    : '-';
+            @endphp
+
             <!-- Stat 1 -->
             <div class="bg-white p-6 rounded-3xl border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all group">
                 <div class="flex justify-between items-start mb-4">
@@ -80,15 +86,21 @@
             </div>
 
             <!-- Stat 4 -->
-            <div class="bg-white p-6 rounded-3xl border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all group">
+            <button type="button" onclick="openRatingsModal()" class="bg-white p-6 rounded-3xl border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all group text-left w-full">
                 <div class="flex justify-between items-start mb-4">
                     <div class="p-3 bg-[#FAF5FF] rounded-2xl group-hover:bg-[#9333EA] group-hover:text-white transition-colors text-[#9333EA]">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                     </div>
                 </div>
                 <h3 class="text-[#1E3A8A]/60 text-sm font-bold uppercase tracking-wider">Rating</h3>
-                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">{{ $averageRating > 0 ? $averageRating : '-' }}</p>
-            </div>
+                <p class="text-3xl font-display font-bold mt-1 text-[#1E3A8A]">
+                    {{ $displayRating }}
+                    @if(($ratingsCount ?? 0) > 0)
+                        <span class="text-xl align-middle">({{ $ratingsCount }})</span>
+                    @endif
+                </p>
+                <p class="text-xs font-bold text-[#1E3A8A]/35 mt-2">Klik untuk lihat preview ulasan</p>
+            </button>
         </div>
 
         <!-- Content Sections -->
@@ -190,9 +202,122 @@
                         </div>
                     </div>
                 </div>
+
+                <div>
+                    <h2 class="font-display text-2xl font-bold text-[#1E3A8A] mb-6">Ulasan Terbaru</h2>
+                    <div class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm overflow-hidden">
+                        @forelse($recentRatings as $rating)
+                            <div class="p-5 {{ !$loop->last ? 'border-b border-[#2563EB]/5' : '' }}">
+                                <div class="flex items-start gap-4">
+                                    <img src="{{ optional($rating->fromUser)->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode(optional($rating->fromUser)->name ?? 'UMKM').'&background=random' }}" alt="{{ optional($rating->fromUser)->name ?? 'UMKM' }}" class="w-12 h-12 rounded-2xl object-cover shrink-0">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between gap-3 mb-2">
+                                            <div>
+                                                <p class="font-bold text-[#1E3A8A]">{{ optional($rating->fromUser)->name ?? 'UMKM' }}</p>
+                                                <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#2563EB]">{{ optional($rating->project)->title ?? 'Proyek' }}</p>
+                                            </div>
+                                            <div class="flex items-center gap-0.5 shrink-0">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <svg class="w-3.5 h-3.5 {{ $i <= $rating->rating ? 'text-amber-400' : 'text-slate-200' }} fill-current" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/>
+                                                    </svg>
+                                                @endfor
+                                            </div>
+                                        </div>
+                                        <p class="text-sm text-[#1E3A8A]/65 leading-7 font-medium">
+                                            {{ $rating->comment ?: 'UMKM ini belum menambahkan komentar.' }}
+                                        </p>
+                                        <p class="text-[11px] text-[#1E3A8A]/40 font-bold mt-2">{{ optional($rating->created_at)->diffForHumans() }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="p-8 text-center">
+                                <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-[#2563EB]">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-display text-xl font-bold text-[#1E3A8A] mb-2">Belum Ada Ulasan</h4>
+                                <p class="text-sm text-[#1E3A8A]/60 font-medium">Begitu UMKM memberi rating setelah proyek selesai, ulasan akan muncul di sini.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
             </div>
         </div>
     </main>
+
+    <div id="ratings-modal" class="fixed inset-0 z-[140] hidden">
+        <div class="absolute inset-0 bg-slate-900/55 backdrop-blur-md" onclick="closeRatingsModal()"></div>
+
+        <div class="relative min-h-screen flex items-center justify-center px-4 py-8">
+            <div class="w-full max-w-2xl rounded-[2.5rem] bg-white border border-white/80 shadow-2xl shadow-[#1E3A8A]/20 overflow-hidden relative">
+                <div class="px-8 sm:px-10 pt-10 pb-8 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.18),_transparent_42%),linear-gradient(135deg,#EFF6FF_0%,#FFFFFF_55%,#F8FAFC_100%)]">
+                    <button type="button" onclick="closeRatingsModal()" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/90 border border-[#2563EB]/10 text-[#1E3A8A] hover:bg-[#EFF6FF] transition-all">
+                        <span class="sr-only">Tutup</span>
+                        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#2563EB]/10 shadow-sm mb-6">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#9333EA]"></span>
+                        <span class="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#9333EA]">Rating Creative Worker</span>
+                    </div>
+
+                    <h2 class="font-display text-3xl sm:text-[2rem] font-bold text-[#1E3A8A] leading-tight mb-3 flex items-center gap-3">
+                        <span>{{ $displayRating }}</span>
+                        @if(($ratingsCount ?? 0) > 0)
+                            <span class="text-lg text-[#2563EB]/80">({{ $ratingsCount }})</span>
+                        @endif
+                    </h2>
+                    <p class="text-[#1E3A8A]/65 font-medium leading-relaxed text-sm sm:text-base">
+                        Preview ini menampilkan ulasan terbaru yang kamu terima setelah proyek selesai.
+                    </p>
+                </div>
+
+                <div class="px-8 sm:px-10 py-8 max-h-[60vh] overflow-y-auto space-y-4">
+                    @forelse($recentRatings as $rating)
+                        <article class="rounded-[2rem] border border-[#2563EB]/8 bg-[#F8FAFC] p-5">
+                            <div class="flex items-start gap-4">
+                                <img src="{{ optional($rating->fromUser)->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode(optional($rating->fromUser)->name ?? 'UMKM').'&background=random' }}" alt="{{ optional($rating->fromUser)->name ?? 'UMKM' }}" class="w-12 h-12 rounded-2xl object-cover shrink-0">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                                        <div>
+                                            <p class="font-bold text-[#1E3A8A]">{{ optional($rating->fromUser)->name ?? 'UMKM' }}</p>
+                                            <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#2563EB]">{{ optional($rating->project)->title ?? 'Proyek' }}</p>
+                                        </div>
+                                        <p class="text-[11px] text-[#1E3A8A]/40 font-bold">{{ optional($rating->created_at)->diffForHumans() }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-0.5 mb-3">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <svg class="w-3.5 h-3.5 {{ $i <= $rating->rating ? 'text-amber-400' : 'text-slate-200' }} fill-current" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/>
+                                            </svg>
+                                        @endfor
+                                    </div>
+                                    <p class="text-sm text-[#1E3A8A]/65 leading-7 font-medium">
+                                        {{ $rating->comment ?: 'UMKM ini belum menambahkan komentar.' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    @empty
+                        <div class="rounded-[2rem] bg-[#F8FAFC] border border-dashed border-[#2563EB]/15 p-8 text-center">
+                            <div class="w-14 h-14 rounded-2xl bg-white shadow-sm mx-auto mb-4 flex items-center justify-center">
+                                <svg class="w-7 h-7 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 1.24 1.24 1.81 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                </svg>
+                            </div>
+                            <h3 class="font-display text-xl font-bold text-[#1E3A8A] mb-2">Belum Ada Ulasan</h3>
+                            <p class="text-[#1E3A8A]/60 font-medium">Begitu UMKM memberi rating setelah proyek selesai, ulasan akan tampil di sini.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer Simple -->
     <footer class="py-10 border-t border-[#2563EB]/10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -203,6 +328,30 @@
             <a href="#" class="text-[#1E3A8A]/40 hover:text-[#2563EB] text-sm font-bold transition-colors">Syarat & Ketentuan</a>
         </div>
     </footer>
+
+    <script>
+        function openRatingsModal() {
+            const modal = document.getElementById('ratings-modal');
+            if (!modal) return;
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRatingsModal() {
+            const modal = document.getElementById('ratings-modal');
+            if (!modal) return;
+
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        window.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeRatingsModal();
+            }
+        });
+    </script>
 
 </body>
 </html>

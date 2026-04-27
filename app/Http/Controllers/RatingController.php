@@ -19,7 +19,7 @@ class RatingController extends Controller
         $project = Project::findOrFail($validated['project_id']);
 
         // Ensure only UMKM (client) can rate
-        if (auth()->id() !== $project->client_id) {
+        if ((string) auth()->id() !== (string) $project->client_id) {
             return back()->with('error', 'Hanya UMKM pemilik proyek yang dapat memberikan rating.');
         }
 

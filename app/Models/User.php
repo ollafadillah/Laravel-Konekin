@@ -75,13 +75,37 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
         return $this->hasMany(Rating::class, 'to_user_id');
     }
 
+    public function ratingsQuery()
+    {
+        return Rating::where('to_user_id', (string) $this->getKey());
+    }
+
     public function getAverageRatingAttribute()
     {
-        $ratings = $this->ratingsReceived();
-        if ($ratings->count() === 0) {
+        $ratings = $this->ratingsQuery()->get(['rating']);
+
+        if ($ratings->isEmpty()) {
             return 0;
         }
-        return round($ratings->avg('rating'), 1);
+
+        $average = $ratings->avg(function ($rating) {
+            return (float) ($rating->rating ?? 0);
+        });
+
+        return round((float) $average, 1);
+    }
+
+    public function getRatingsCountAttribute()
+    {
+        return $this->ratingsQuery()->count();
+    }
+
+    public function recentRatings(int $limit = 5)
+    {
+        return $this->ratingsQuery()
+            ->with(['fromUser:id,name,profile_photo', 'project:id,title'])
+            ->orderBy('created_at', 'desc')
+            ->limit($limit);
     }
 
     public function getCompletedProjectsCountAttribute()

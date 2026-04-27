@@ -24,6 +24,8 @@ class CreatorController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('creators.show', compact('creator', 'portfolios'));
+        $recentRatings = $creator->recentRatings(3)->get();
+
+        return view('creators.show', compact('creator', 'portfolios', 'recentRatings'));
     }
 }
