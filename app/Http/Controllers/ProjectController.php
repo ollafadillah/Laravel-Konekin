@@ -24,8 +24,10 @@ class ProjectController extends Controller
         }
 
         // Only show projects that are not completed and don't have a selected creative worker yet
+        // And project deadline must be in the future
         $query->where('status', '!=', 'completed')
-              ->whereNull('selected_creative_id');
+              ->whereNull('selected_creative_id')
+              ->where('deadline', '>=', now()->startOfDay()->format('Y-m-d'));
 
         $projects = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($project) => $this->decorateProject($project));
@@ -50,8 +52,10 @@ class ProjectController extends Controller
         }
 
         // Only show projects that are not completed and don't have a selected creative worker yet
+        // And project deadline must be in the future
         $query->where('status', '!=', 'completed')
-              ->whereNull('selected_creative_id');
+              ->whereNull('selected_creative_id')
+              ->where('deadline', '>=', now()->startOfDay()->format('Y-m-d'));
 
         $projects = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($project) => $this->decorateProject($project));
@@ -371,8 +375,10 @@ class ProjectController extends Controller
             }
 
             // Only show projects that are not completed and don't have a selected creative worker yet
+            // And project deadline must be in the future
             $query->where('status', '!=', 'completed')
-                  ->whereNull('selected_creative_id');
+                  ->whereNull('selected_creative_id')
+                  ->where('deadline', '>=', now()->startOfDay()->format('Y-m-d'));
 
             $projects = $query->orderBy('created_at', 'desc')->get()
                 ->map(fn ($project) => $this->decorateProject($project));
@@ -865,6 +871,21 @@ class ProjectController extends Controller
                 'completed' => 'Proyek telah selesai 100%.',
                 default => 'Progress proyek siap dilanjutkan dari 0% sampai 100%.',
             };
+
+        // Handle Overdue Logic
+        $deadline = \Illuminate\Support\Carbon::parse($project->deadline);
+        $project->is_overdue = $deadline->isPast() && $status !== 'completed';
+        $project->overdue_reason = null;
+
+        if ($project->is_overdue) {
+            if ($count === 0) {
+                $project->overdue_reason = 'Maaf, tidak ada creative worker yang mengajukan diri (apply) hingga batas waktu berakhir.';
+            } elseif (empty($project->selected_creative_id)) {
+                $project->overdue_reason = 'Batas waktu berakhir namun kamu belum memilih (approve) creative worker untuk proyek ini.';
+            } elseif ($progress < 100) {
+                $project->overdue_reason = 'Proyek terlambat! Creative worker tidak menyelesaikan progres tepat waktu (deadline sudah lewat).';
+            }
+        }
 
         return $project;
     }

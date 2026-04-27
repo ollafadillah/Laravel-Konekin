@@ -33,8 +33,24 @@
         @endif
 
         @forelse($projects as $project)
-            <section class="bg-white rounded-[3rem] border border-[#2563EB]/5 shadow-sm overflow-hidden">
+            <section id="project-{{ $project->id }}" class="bg-white rounded-[3rem] border border-[#2563EB]/5 shadow-sm overflow-hidden scroll-mt-32">
                 <div class="p-8 md:p-10 border-b border-[#2563EB]/5">
+                    
+                    @if($project->is_overdue)
+                        <div class="mb-8 p-6 bg-red-50 border-2 border-red-100 rounded-[2.5rem] flex items-start gap-5 animate-pulse">
+                            <div class="w-12 h-12 rounded-2xl bg-red-500 text-white flex items-center justify-center shrink-0 shadow-xl shadow-red-200">
+                                <i class="fas fa-exclamation-triangle text-xl"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <div class="flex items-center justify-between gap-4 mb-2">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.25em] text-red-500">Notifikasi Keterlambatan Proyek</p>
+                                    <span class="px-3 py-1 rounded-full bg-red-100 text-red-600 text-[9px] font-black uppercase tracking-widest">Sangat Penting</span>
+                                </div>
+                                <p class="text-base font-bold text-red-800 leading-relaxed">{{ $project->overdue_reason }}</p>
+                                <p class="text-xs text-red-600/70 font-medium mt-2 italic">*Silakan hubungi tim support kami atau buat proyek baru jika diperlukan.</p>
+                            </div>
+                        </div>
+                    @endif
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                         <div class="flex gap-5">
                             <div class="w-24 h-24 rounded-[1.8rem] overflow-hidden bg-slate-100 shrink-0">
