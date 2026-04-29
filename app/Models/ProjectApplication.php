@@ -22,4 +22,14 @@ class ProjectApplication extends Model
         'applied_at',
         'approved_at',
     ];
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'project_id');
+    }
+
+    public function creative()
+    {
+        return $this->belongsTo(User::class, 'creative_id');
+    }
 }

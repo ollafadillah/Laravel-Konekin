@@ -172,7 +172,7 @@
                                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
                                             <div>
                                                 <p class="font-bold text-[#1E3A8A]">{{ optional($rating->fromUser)->name ?? 'UMKM' }}</p>
-                                                <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#2563EB]">{{ optional($rating->project)->title ?? 'Proyek' }}</p>
+                                                <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#2563EB]">{{ optional($rating->project)->title ?? $rating->project_title_snapshot ?? 'Proyek diarsipkan' }}</p>
                                             </div>
                                             <p class="text-[11px] text-[#1E3A8A]/40 font-bold">{{ optional($rating->created_at)->diffForHumans() }}</p>
                                         </div>

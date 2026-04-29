@@ -26,9 +26,9 @@ Route::get('/kreator', [CreatorController::class, 'index'])->name('kreator.index
 // Halaman Proyek UMKM Publik
 Route::get('/umkm', [ProjectController::class, 'publicIndex'])->name('umkm.index');
 
-// Halaman Tentang Kami (Placeholder)
+// Halaman Tentang Kami
 Route::get('/tentang-kami', function () {
-    return 'Halaman Tentang Kami - Segera Hadir';
+    return view('about');
 })->name('about');
 
 // Auth Routes
@@ -77,6 +77,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/proyek/{id}/apply', [ProjectController::class, 'apply'])->name('projects.apply');
     Route::get('/progress-proyek', [ProjectController::class, 'progress'])->name('projects.progress');
     Route::post('/progress-proyek/{id}/approve/{applicationId}', [ProjectController::class, 'approveApplication'])->name('projects.progress.approve');
+    Route::delete('/progress-proyek/{id}', [ProjectController::class, 'destroyProgressProject'])->name('projects.progress.destroy');
     Route::get('/progress-proyek-kreator', [ProjectController::class, 'creativeProgress'])->name('projects.progress.creative');
     Route::post('/progress-proyek-kreator/{id}', [ProjectController::class, 'storeCreativeProgress'])->name('projects.progress.creative.update');
 

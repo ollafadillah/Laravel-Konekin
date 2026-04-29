@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectApplication;
+use App\Models\ProjectHistory;
 use App\Models\ProjectProgressUpdate;
+use App\Notifications\ProjectApplicationApproved;
 use App\Services\CloudinaryService;
+use App\Services\ProjectArchiveService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -222,13 +225,15 @@ class ProjectController extends Controller
         return back()->with('success', 'Pengajuan berhasil dikirim ke UMKM.');
     }
 
-    public function progress()
+    public function progress(ProjectArchiveService $archiveService)
     {
         $user = auth()->user();
 
         if (!$user->isUMKM()) {
             return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat melihat progress proyek.');
         }
+
+        $archiveService->syncCompletedProjectsForClient($user->id);
 
         $projects = Project::where('client_id', $user->id)
             ->orderBy('created_at', 'desc')
@@ -245,7 +250,33 @@ class ProjectController extends Controller
                 return $this->decorateProject($project, $project->applications->count());
             });
 
-        return view('projects.progress', compact('projects'));
+        $historyProjects = ProjectHistory::where('client_id', $user->id)
+            ->orderBy('archived_at', 'desc')
+            ->get();
+
+        return view('projects.progress', compact('projects', 'historyProjects'));
+    }
+
+    public function destroyProgressProject(string $id, ProjectArchiveService $archiveService)
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat menghapus proyek.');
+        }
+
+        $project = Project::where('client_id', $user->id)->findOrFail($id);
+
+        $applicationsCount = ProjectApplication::where('project_id', $project->id)->count();
+        if ($applicationsCount > 0 || !empty($project->selected_creative_id)) {
+            return back()->with('error', 'Proyek ini sudah menerima apply atau sedang berjalan, jadi tidak bisa dihapus langsung.');
+        }
+
+        $archiveService->deleteUnfinishedProject($project);
+
+        return redirect()
+            ->route('projects.progress')
+            ->with('success', 'Proyek berhasil dihapus setelah persetujuan UMKM.');
     }
 
     public function approveApplication(string $id, string $applicationId)
@@ -269,6 +300,10 @@ class ProjectController extends Controller
         $application->status = 'approved';
         $application->approved_at = now();
         $application->save();
+
+        if ($creativeWorker = $application->creative) {
+            $creativeWorker->notify(new ProjectApplicationApproved($project, $application));
+        }
 
         $project->selected_creative_id = $application->creative_id;
         $project->selected_creative_name = $application->creative_name;
@@ -653,7 +688,7 @@ class ProjectController extends Controller
         }
     }
 
-    public function apiUMKMProjectProgress()
+    public function apiUMKMProjectProgress(ProjectArchiveService $archiveService)
     {
         $user = auth()->user();
 
@@ -663,6 +698,8 @@ class ProjectController extends Controller
                 'message' => 'Hanya UMKM yang dapat melihat progress proyek.',
             ], 403);
         }
+
+        $archiveService->syncCompletedProjectsForClient($user->id);
 
         $projects = Project::where('client_id', $user->id)
             ->orderBy('created_at', 'desc')
@@ -700,11 +737,67 @@ class ProjectController extends Controller
                 return $transformed;
             });
 
+        $historyProjects = ProjectHistory::where('client_id', $user->id)
+            ->orderBy('archived_at', 'desc')
+            ->get()
+            ->map(fn ($history) => [
+                'id' => (string) $history->id,
+                'original_project_id' => (string) ($history->original_project_id ?? ''),
+                'title' => $history->title,
+                'category' => $history->category,
+                'budget' => $history->budget,
+                'thumbnail' => $history->thumbnail,
+                'selected_creative_name' => $history->selected_creative_name,
+                'progress_percentage' => (int) ($history->progress_percentage ?? 0),
+                'rating' => isset($history->rating) ? (int) $history->rating : null,
+                'comment' => $history->comment,
+                'archive_reason' => $history->archive_reason,
+                'archived_at' => optional($history->archived_at)->toISOString(),
+                'rated_at' => optional($history->rated_at)->toISOString(),
+            ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Daftar progress proyek UMKM berhasil diambil',
             'data' => $projects,
+            'history' => $historyProjects,
         ], 200);
+    }
+
+    public function apiDestroyProgressProject($id, ProjectArchiveService $archiveService)
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya UMKM yang dapat menghapus proyek.',
+            ], 403);
+        }
+
+        try {
+            $project = Project::where('client_id', $user->id)->findOrFail($id);
+
+            $applicationsCount = ProjectApplication::where('project_id', $project->id)->count();
+            if ($applicationsCount > 0 || !empty($project->selected_creative_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Proyek ini sudah menerima apply atau sedang berjalan, jadi tidak bisa dihapus langsung.',
+                ], 400);
+            }
+
+            $archiveService->deleteUnfinishedProject($project);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Proyek berhasil dihapus setelah persetujuan UMKM.',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus proyek: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function apiGetApplications($id)
@@ -757,12 +850,16 @@ class ProjectController extends Controller
                     'approved_at' => null,
                 ]);
 
-            $application->status = 'approved';
-            $application->approved_at = now();
-            $application->save();
+        $application->status = 'approved';
+        $application->approved_at = now();
+        $application->save();
 
-            $project->selected_creative_id = $application->creative_id;
-            $project->selected_creative_name = $application->creative_name;
+        if ($creativeWorker = $application->creative) {
+            $creativeWorker->notify(new ProjectApplicationApproved($project, $application));
+        }
+
+        $project->selected_creative_id = $application->creative_id;
+        $project->selected_creative_name = $application->creative_name;
             $project->selected_creative_avatar = $application->creative_avatar;
             $project->status = 'hired'; // Mark as hired, waiting for payment
             $project->save();

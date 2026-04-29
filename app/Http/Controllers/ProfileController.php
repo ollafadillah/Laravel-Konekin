@@ -42,13 +42,15 @@ class ProfileController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'bio' => 'nullable|string|max:1000',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'bank_code' => 'nullable|string|max:50',
             'bank_account_number' => 'nullable|string|max:50',
             'bank_account_name' => 'nullable|string|max:255',
         ]);
 
-        $data = $request->only(['name', 'phone', 'address', 'city', 'bio', 'bank_code', 'bank_account_number', 'bank_account_name']);
+        $data = $request->only(['name', 'phone', 'address', 'city', 'bio', 'latitude', 'longitude', 'bank_code', 'bank_account_number', 'bank_account_name']);
 
         // Handle upload ke Cloudinary jika ada foto baru
         if ($request->hasFile('profile_photo')) {
@@ -95,6 +97,8 @@ class ProfileController extends Controller
                 'address' => 'nullable|string|max:255',
                 'city' => 'nullable|string|max:100',
                 'bio' => 'nullable|string|max:1000',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
                 'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
 
@@ -138,6 +142,8 @@ class ProfileController extends Controller
             'phone' => $user->phone,
             'address' => $user->address,
             'city' => $user->city,
+            'latitude' => $user->latitude,
+            'longitude' => $user->longitude,
             'bio' => $user->bio,
             'profile_photo' => $user->profile_photo,
             'created_at' => optional($user->created_at)?->toISOString(),

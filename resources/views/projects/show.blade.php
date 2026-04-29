@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
@@ -112,6 +113,15 @@
                         </div>
                     </div>
 
+                    @if($project->client && $project->client->latitude && $project->client->longitude)
+                        <div class="mb-6">
+                            <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#2563EB] mb-3">Lokasi Usaha</p>
+                            <div id="umkm-map" class="w-full h-48 rounded-xl border border-[#2563EB]/10 z-0"></div>
+                            <input type="hidden" id="umkm-lat" value="{{ $project->client->latitude }}">
+                            <input type="hidden" id="umkm-lng" value="{{ $project->client->longitude }}">
+                        </div>
+                    @endif
+
                     @if(auth()->user()->isCreativeWorker())
                         @if(!empty($project->selected_creative_id) && (string) $project->selected_creative_id !== (string) auth()->id())
                             <div class="rounded-[2rem] bg-amber-50 border border-amber-200 p-5 text-amber-700 text-sm font-bold">
@@ -197,5 +207,25 @@
             </aside>
         </section>
     </main>
+
+    @if($project->client && $project->client->latitude && $project->client->longitude)
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const lat = parseFloat(document.getElementById('umkm-lat').value);
+            const lng = parseFloat(document.getElementById('umkm-lng').value);
+
+            const map = L.map('umkm-map').setView([lat, lng], 16);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup('<b>{{ $project->client_name }}</b><br>Lokasi Usaha')
+                .openPopup();
+        });
+    </script>
+    @endif
 </body>
 </html>

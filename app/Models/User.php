@@ -10,6 +10,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;  // Tambahkan ini
 use MongoDB\Laravel\Auth\User as Authenticatable;
 use App\Models\Rating;
 use App\Models\Project;
+use App\Models\ProjectHistory;
 
 class User extends Authenticatable implements JWTSubject  // implements JWTSubject
 {
@@ -31,6 +32,8 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
         'profile_photo',
         'google_id',
         'google_token',
+        'latitude',
+        'longitude',
     ];
 
     protected $hidden = [
@@ -110,9 +113,15 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
 
     public function getCompletedProjectsCountAttribute()
     {
-        return Project::where('selected_creative_id', $this->id)
+        $activeCompleted = Project::where('selected_creative_id', $this->id)
             ->where('status', 'completed')
             ->count();
+
+        $archivedCompleted = ProjectHistory::where('selected_creative_id', $this->id)
+            ->where('history_type', 'completed')
+            ->count();
+
+        return $activeCompleted + $archivedCompleted;
     }
     /**
      * Get the identifier that will be stored in the JWT.

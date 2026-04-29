@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -113,12 +114,33 @@
                 </div>
             </div>
 
+            <div class="bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm space-y-6">
+                <h3 class="text-xl font-display font-bold text-[#1E3A8A] border-b border-[#2563EB]/5 pb-4">Lokasi Usaha</h3>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <div class="flex gap-2">
+                            <input type="text" id="search-location" class="flex-grow px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] focus:ring-4 focus:ring-[#2563EB]/5 outline-none transition-all font-medium text-[#1E3A8A]" placeholder="Cari alamat atau nama tempat... (tekan Enter)">
+                            <button type="button" id="btn-search-location" class="px-6 py-4 bg-[#2563EB] text-white rounded-2xl font-bold shadow-md hover:bg-[#1E3A8A] transition-all">Cari</button>
+                        </div>
+                        <ul id="search-results" class="hidden absolute left-0 right-0 top-full mt-2 bg-white shadow-xl rounded-xl border border-[#2563EB]/10 z-50 max-h-60 overflow-y-auto divide-y divide-gray-100"></ul>
+                    </div>
+                    
+                    <div id="map" class="w-full h-[400px] rounded-2xl border border-[#2563EB]/10 z-0 relative"></div>
+                    <p class="text-xs font-medium text-[#1E3A8A]/60">*Geser marker atau klik pada peta untuk menentukan lokasi persis usaha Anda.</p>
+                </div>
+                
+                <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude', $user->latitude ?? '') }}">
+                <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude', $user->longitude ?? '') }}">
+            </div>
+
             <div class="flex justify-end pt-4">
                 <button type="submit" class="px-10 py-4 bg-[#2563EB] text-white rounded-2xl font-bold text-base shadow-xl shadow-[#2563EB]/20 hover:bg-[#1E3A8A] hover:-translate-y-1 transition-all active:translate-y-0">Simpan Perubahan</button>
             </div>
         </form>
     </main>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
         function previewFile() {
             const preview = document.getElementById('preview-image');
@@ -133,6 +155,119 @@
                 reader.readAsDataURL(file);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inisialisasi peta
+            let defaultLat = -6.200000; // Default Jakarta
+            let defaultLng = 106.816666;
+            let zoomLevel = 13;
+
+            const latInput = document.getElementById('latitude');
+            const lngInput = document.getElementById('longitude');
+
+            if (latInput.value && lngInput.value) {
+                defaultLat = parseFloat(latInput.value);
+                defaultLng = parseFloat(lngInput.value);
+                zoomLevel = 16;
+            } else if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    if (!latInput.value && !lngInput.value) {
+                        const newLat = position.coords.latitude;
+                        const newLng = position.coords.longitude;
+                        map.setView([newLat, newLng], 16);
+                        marker.setLatLng([newLat, newLng]);
+                        updateInputs(newLat, newLng);
+                    }
+                });
+            }
+
+            const map = L.map('map').setView([defaultLat, defaultLng], zoomLevel);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            const marker = L.marker([defaultLat, defaultLng], {
+                draggable: true
+            }).addTo(map);
+
+            function updateInputs(lat, lng) {
+                latInput.value = lat;
+                lngInput.value = lng;
+            }
+
+            // Update saat marker digeser
+            marker.on('dragend', function(e) {
+                const position = marker.getLatLng();
+                updateInputs(position.lat, position.lng);
+            });
+
+            // Update saat peta diklik
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                updateInputs(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Fitur Pencarian dengan Nominatim
+            const searchInput = document.getElementById('search-location');
+            const searchBtn = document.getElementById('btn-search-location');
+            const resultsContainer = document.getElementById('search-results');
+
+            function performSearch() {
+                const query = searchInput.value;
+                if (!query) return;
+
+                resultsContainer.innerHTML = '<li class="px-5 py-3 text-sm text-gray-500 text-center">Mencari...</li>';
+                resultsContainer.classList.remove('hidden');
+
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        resultsContainer.innerHTML = '';
+                        if (data.length === 0) {
+                            resultsContainer.innerHTML = '<li class="px-5 py-3 text-sm text-gray-500 text-center">Lokasi tidak ditemukan</li>';
+                            return;
+                        }
+
+                        data.forEach(place => {
+                            const li = document.createElement('li');
+                            li.className = 'px-5 py-3 text-sm text-[#1E3A8A] hover:bg-blue-50 cursor-pointer font-medium transition-colors';
+                            li.textContent = place.display_name;
+                            li.addEventListener('click', () => {
+                                const lat = parseFloat(place.lat);
+                                const lon = parseFloat(place.lon);
+                                
+                                map.setView([lat, lon], 16);
+                                marker.setLatLng([lat, lon]);
+                                updateInputs(lat, lon);
+                                
+                                searchInput.value = place.display_name;
+                                resultsContainer.classList.add('hidden');
+                            });
+                            resultsContainer.appendChild(li);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error searching location:', error);
+                        resultsContainer.innerHTML = '<li class="px-5 py-3 text-sm text-red-500 text-center">Gagal mencari lokasi</li>';
+                    });
+            }
+
+            searchBtn.addEventListener('click', performSearch);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performSearch();
+                }
+            });
+
+            // Sembunyikan hasil saat klik di luar
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                    resultsContainer.classList.add('hidden');
+                }
+            });
+        });
     </script>
 </body>
 </html>

@@ -55,5 +55,6 @@ Route::middleware('auth:api')->group(function () {  // Ubah dari 'auth:sanctum' 
     Route::get('/umkm/projects/progress', [ProjectController::class, 'apiUMKMProjectProgress']);
     Route::get('/umkm/projects/{id}/applications', [ProjectController::class, 'apiGetApplications']);
     Route::post('/umkm/projects/{id}/approve/{applicationId}', [ProjectController::class, 'apiApproveApplication']);
+    Route::delete('/umkm/projects/{id}', [ProjectController::class, 'apiDestroyProgressProject']);
     Route::post('/umkm/projects/{id}/pay', [EscrowController::class, 'apiSimulatePayment']);
 });

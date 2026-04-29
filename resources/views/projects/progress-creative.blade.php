@@ -33,7 +33,7 @@
         @endif
 
         @forelse($projects as $project)
-            <section class="bg-white rounded-[3rem] border border-[#2563EB]/5 shadow-sm overflow-hidden">
+            <section id="project-{{ $project->id }}" class="bg-white rounded-[3rem] border border-[#2563EB]/5 shadow-sm overflow-hidden">
                 <div class="p-8 md:p-10 border-b border-[#2563EB]/5">
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                         <div class="flex gap-5">
