@@ -11,6 +11,7 @@ use App\Http\Controllers\AdminEscrowController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ChatbotController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
@@ -101,6 +102,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
 });
+
+// Chatbot Route
+Route::post('/chat/ask', [ChatbotController::class, 'ask'])->name('chat.ask');
 
 // Public Webhook (No Auth)
 Route::post('/payment/midtrans/notification', [EscrowController::class, 'handleMidtransNotification'])->name('midtrans.notification');

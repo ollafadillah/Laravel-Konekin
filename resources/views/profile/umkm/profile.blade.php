@@ -191,9 +191,45 @@
                 draggable: true
             }).addTo(map);
 
-            function updateInputs(lat, lng) {
+            function reverseGeocode(lat, lng) {
+                // Gunakan Nominatim Reverse Geocoding
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.address) {
+                            // Update field Kota
+                            const cityInput = document.querySelector('input[name="city"]');
+                            if (cityInput) {
+                                cityInput.value = data.address.city || data.address.town || data.address.village || data.address.county || data.address.state || cityInput.value;
+                            }
+                            
+                            // Update field Alamat Singkat
+                            const addressInput = document.querySelector('input[name="address"]');
+                            if (addressInput) {
+                                // Gunakan nama jalan atau display_name yang relevan
+                                const street = data.address.road || '';
+                                const sub = data.address.suburb || '';
+                                let shortAddress = street ? (sub ? `${street}, ${sub}` : street) : data.display_name;
+                                addressInput.value = shortAddress;
+                            }
+
+                            // Update text pencarian biar konsisten
+                            const searchInput = document.getElementById('search-location');
+                            if (searchInput) {
+                                searchInput.value = data.display_name || '';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Gagal mengambil detail alamat:', error));
+            }
+
+            function updateInputs(lat, lng, doReverseGeocode = true) {
                 latInput.value = lat;
                 lngInput.value = lng;
+                
+                if (doReverseGeocode) {
+                    reverseGeocode(lat, lng);
+                }
             }
 
             // Update saat marker digeser
@@ -205,7 +241,7 @@
             // Update saat peta diklik
             map.on('click', function(e) {
                 marker.setLatLng(e.latlng);
-                updateInputs(e.latlng.lat, e.latlng.lng);
+                updateInputs(e.latlng.lat, e.latlng.lng, true);
             });
 
             // Fitur Pencarian dengan Nominatim
@@ -220,7 +256,8 @@
                 resultsContainer.innerHTML = '<li class="px-5 py-3 text-sm text-gray-500 text-center">Mencari...</li>';
                 resultsContainer.classList.remove('hidden');
 
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                // Tambahkan parameter addressdetails=1 agar bisa mengambil info detail kota saat search
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}`)
                     .then(response => response.json())
                     .then(data => {
                         resultsContainer.innerHTML = '';
@@ -239,7 +276,13 @@
                                 
                                 map.setView([lat, lon], 16);
                                 marker.setLatLng([lat, lon]);
-                                updateInputs(lat, lon);
+                                updateInputs(lat, lon, false); // Jangan reverse geocode karena udah dari hasil search
+                                
+                                // Update manual field address dan city dari hasil search
+                                const cityInput = document.querySelector('input[name="city"]');
+                                const addressInput = document.querySelector('input[name="address"]');
+                                if (cityInput) cityInput.value = place.address?.city || place.address?.town || place.address?.state || '';
+                                if (addressInput) addressInput.value = place.display_name;
                                 
                                 searchInput.value = place.display_name;
                                 resultsContainer.classList.add('hidden');

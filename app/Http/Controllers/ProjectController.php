@@ -35,10 +35,6 @@ class ProjectController extends Controller
         $projects = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($project) => $this->decorateProject($project));
 
-        if ($projects->isEmpty()) {
-            $projects = $this->getDummyProjects();
-        }
-
         return view('projects.public-index', compact('projects'));
     }
 
@@ -62,10 +58,6 @@ class ProjectController extends Controller
 
         $projects = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($project) => $this->decorateProject($project));
-
-        if ($projects->isEmpty()) {
-            $projects = $this->getDummyProjects();
-        }
 
         return view('projects.index', compact('projects'));
     }
@@ -145,7 +137,23 @@ class ProjectController extends Controller
 
     public function show(string $id)
     {
-        $project = $this->decorateProject(Project::findOrFail($id));
+        $project = Project::find($id);
+
+        if (!$project) {
+            // Handle dummy projects so it doesn't throw 404 when clicked
+            $dummyProject = collect($this->getDummyProjects())->firstWhere('id', (int) $id);
+            
+            if ($dummyProject) {
+                $project = $this->decorateProject($dummyProject);
+                $applications = collect();
+                $progressUpdates = collect();
+                return view('projects.show', compact('project', 'applications', 'progressUpdates'));
+            }
+            
+            abort(404);
+        }
+
+        $project = $this->decorateProject($project);
         $applications = ProjectApplication::where('project_id', $project->id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -418,10 +426,6 @@ class ProjectController extends Controller
             $projects = $query->orderBy('created_at', 'desc')->get()
                 ->map(fn ($project) => $this->decorateProject($project));
 
-            if ($projects->isEmpty()) {
-                $projects = $this->getDummyProjects();
-            }
-
             return response()->json([
                 'success' => true,
                 'message' => 'Daftar proyek berhasil diambil',
@@ -438,7 +442,19 @@ class ProjectController extends Controller
     public function apiShow($id)
     {
         try {
-            $project = Project::findOrFail($id);
+            $project = Project::find($id);
+
+            if (!$project) {
+                $dummyProject = collect($this->getDummyProjects())->firstWhere('id', (int) $id);
+                if ($dummyProject) {
+                    $project = $dummyProject;
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Proyek tidak ditemukan',
+                    ], 404);
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -448,8 +464,8 @@ class ProjectController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Proyek tidak ditemukan',
-            ], 404);
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -881,6 +897,7 @@ class ProjectController extends Controller
     {
         return collect([
             (object) [
+                'id' => 9991,
                 'title' => 'Redesain Identitas Visual "Kopi Kita"',
                 'description' => 'Kami membutuhkan desainer kreatif untuk memperbarui logo dan kemasan produk kopi artisan kami agar lebih modern.',
                 'category' => 'Branding',
@@ -897,6 +914,7 @@ class ProjectController extends Controller
                 'created_at' => now()->subHours(2),
             ],
             (object) [
+                'id' => 9992,
                 'title' => 'Konten Instagram & TikTok "Batik Solo"',
                 'description' => 'Mencari content creator untuk mengelola feed dan membuat video pendek kreatif untuk mempromosikan koleksi terbaru.',
                 'category' => 'Social Media',
@@ -913,6 +931,7 @@ class ProjectController extends Controller
                 'created_at' => now()->subHours(5),
             ],
             (object) [
+                'id' => 9993,
                 'title' => 'Pembuatan Website Katalog "Mebel Jati"',
                 'description' => 'Dibutuhkan web developer untuk membuat website landing page katalog produk mebel yang responsif.',
                 'category' => 'Web Dev',
