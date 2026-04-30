@@ -11,6 +11,7 @@ use App\Http\Controllers\AdminEscrowController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ChatbotController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
@@ -27,9 +28,9 @@ Route::get('/kreator', [CreatorController::class, 'index'])->name('kreator.index
 // Halaman Proyek UMKM Publik
 Route::get('/umkm', [ProjectController::class, 'publicIndex'])->name('umkm.index');
 
-// Halaman Tentang Kami (Placeholder)
+// Halaman Tentang Kami
 Route::get('/tentang-kami', function () {
-    return 'Halaman Tentang Kami - Segera Hadir';
+    return view('about');
 })->name('about');
 
 // Auth Routes
@@ -78,6 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/proyek/{id}/apply', [ProjectController::class, 'apply'])->name('projects.apply');
     Route::get('/progress-proyek', [ProjectController::class, 'progress'])->name('projects.progress');
     Route::post('/progress-proyek/{id}/approve/{applicationId}', [ProjectController::class, 'approveApplication'])->name('projects.progress.approve');
+    Route::delete('/progress-proyek/{id}', [ProjectController::class, 'destroyProgressProject'])->name('projects.progress.destroy');
     Route::get('/progress-proyek-kreator', [ProjectController::class, 'creativeProgress'])->name('projects.progress.creative');
     Route::post('/progress-proyek-kreator/{id}', [ProjectController::class, 'storeCreativeProgress'])->name('projects.progress.creative.update');
 
@@ -115,6 +117,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/pembayaran/{paymentId}/tolak', [PaymentController::class, 'reject'])->name('admin.payments.reject');
 
 });
+
+// Chatbot Route
+Route::post('/chat/ask', [ChatbotController::class, 'ask'])->name('chat.ask');
 
 // Public Webhook (No Auth)
 Route::post('/payment/midtrans/notification', [EscrowController::class, 'handleMidtransNotification'])->name('midtrans.notification');

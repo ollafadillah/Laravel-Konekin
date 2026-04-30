@@ -11,6 +11,7 @@ class Rating extends Model
 
     protected $fillable = [
         'project_id',
+        'project_title_snapshot',
         'from_user_id', // UMKM
         'to_user_id',   // Creative Worker
         'rating',       // 1-5

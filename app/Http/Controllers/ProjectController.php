@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectApplication;
+use App\Models\ProjectHistory;
 use App\Models\ProjectProgressUpdate;
+use App\Notifications\ProjectApplicationApproved;
 use App\Services\CloudinaryService;
+use App\Services\ProjectArchiveService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -24,15 +27,13 @@ class ProjectController extends Controller
         }
 
         // Only show projects that are not completed and don't have a selected creative worker yet
+        // And project deadline must be in the future
         $query->where('status', '!=', 'completed')
-              ->whereNull('selected_creative_id');
+              ->whereNull('selected_creative_id')
+              ->where('deadline', '>=', now()->startOfDay()->format('Y-m-d'));
 
         $projects = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($project) => $this->decorateProject($project));
-
-        if ($projects->isEmpty()) {
-            $projects = $this->getDummyProjects();
-        }
 
         return view('projects.public-index', compact('projects'));
     }
@@ -50,15 +51,13 @@ class ProjectController extends Controller
         }
 
         // Only show projects that are not completed and don't have a selected creative worker yet
+        // And project deadline must be in the future
         $query->where('status', '!=', 'completed')
-              ->whereNull('selected_creative_id');
+              ->whereNull('selected_creative_id')
+              ->where('deadline', '>=', now()->startOfDay()->format('Y-m-d'));
 
         $projects = $query->orderBy('created_at', 'desc')->get()
             ->map(fn ($project) => $this->decorateProject($project));
-
-        if ($projects->isEmpty()) {
-            $projects = $this->getDummyProjects();
-        }
 
         return view('projects.index', compact('projects'));
     }
@@ -138,7 +137,23 @@ class ProjectController extends Controller
 
     public function show(string $id)
     {
-        $project = $this->decorateProject(Project::findOrFail($id));
+        $project = Project::find($id);
+
+        if (!$project) {
+            // Handle dummy projects so it doesn't throw 404 when clicked
+            $dummyProject = collect($this->getDummyProjects())->firstWhere('id', (int) $id);
+            
+            if ($dummyProject) {
+                $project = $this->decorateProject($dummyProject);
+                $applications = collect();
+                $progressUpdates = collect();
+                return view('projects.show', compact('project', 'applications', 'progressUpdates'));
+            }
+            
+            abort(404);
+        }
+
+        $project = $this->decorateProject($project);
         $applications = ProjectApplication::where('project_id', $project->id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -218,13 +233,15 @@ class ProjectController extends Controller
         return back()->with('success', 'Pengajuan berhasil dikirim ke UMKM.');
     }
 
-    public function progress()
+    public function progress(ProjectArchiveService $archiveService)
     {
         $user = auth()->user();
 
         if (!$user->isUMKM()) {
             return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat melihat progress proyek.');
         }
+
+        $archiveService->syncCompletedProjectsForClient($user->id);
 
         $projects = Project::where('client_id', $user->id)
             ->orderBy('created_at', 'desc')
@@ -241,7 +258,33 @@ class ProjectController extends Controller
                 return $this->decorateProject($project, $project->applications->count());
             });
 
-        return view('projects.progress', compact('projects'));
+        $historyProjects = ProjectHistory::where('client_id', $user->id)
+            ->orderBy('archived_at', 'desc')
+            ->get();
+
+        return view('projects.progress', compact('projects', 'historyProjects'));
+    }
+
+    public function destroyProgressProject(string $id, ProjectArchiveService $archiveService)
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat menghapus proyek.');
+        }
+
+        $project = Project::where('client_id', $user->id)->findOrFail($id);
+
+        $applicationsCount = ProjectApplication::where('project_id', $project->id)->count();
+        if ($applicationsCount > 0 || !empty($project->selected_creative_id)) {
+            return back()->with('error', 'Proyek ini sudah menerima apply atau sedang berjalan, jadi tidak bisa dihapus langsung.');
+        }
+
+        $archiveService->deleteUnfinishedProject($project);
+
+        return redirect()
+            ->route('projects.progress')
+            ->with('success', 'Proyek berhasil dihapus setelah persetujuan UMKM.');
     }
 
     public function approveApplication(string $id, string $applicationId)
@@ -265,6 +308,10 @@ class ProjectController extends Controller
         $application->status = 'approved';
         $application->approved_at = now();
         $application->save();
+
+        if ($creativeWorker = $application->creative) {
+            $creativeWorker->notify(new ProjectApplicationApproved($project, $application));
+        }
 
         $project->selected_creative_id = $application->creative_id;
         $project->selected_creative_name = $application->creative_name;
@@ -371,15 +418,13 @@ class ProjectController extends Controller
             }
 
             // Only show projects that are not completed and don't have a selected creative worker yet
+            // And project deadline must be in the future
             $query->where('status', '!=', 'completed')
-                  ->whereNull('selected_creative_id');
+                  ->whereNull('selected_creative_id')
+                  ->where('deadline', '>=', now()->startOfDay()->format('Y-m-d'));
 
             $projects = $query->orderBy('created_at', 'desc')->get()
                 ->map(fn ($project) => $this->decorateProject($project));
-
-            if ($projects->isEmpty()) {
-                $projects = $this->getDummyProjects();
-            }
 
             return response()->json([
                 'success' => true,
@@ -397,7 +442,19 @@ class ProjectController extends Controller
     public function apiShow($id)
     {
         try {
-            $project = Project::findOrFail($id);
+            $project = Project::find($id);
+
+            if (!$project) {
+                $dummyProject = collect($this->getDummyProjects())->firstWhere('id', (int) $id);
+                if ($dummyProject) {
+                    $project = $dummyProject;
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Proyek tidak ditemukan',
+                    ], 404);
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -407,8 +464,8 @@ class ProjectController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Proyek tidak ditemukan',
-            ], 404);
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -647,7 +704,7 @@ class ProjectController extends Controller
         }
     }
 
-    public function apiUMKMProjectProgress()
+    public function apiUMKMProjectProgress(ProjectArchiveService $archiveService)
     {
         $user = auth()->user();
 
@@ -657,6 +714,8 @@ class ProjectController extends Controller
                 'message' => 'Hanya UMKM yang dapat melihat progress proyek.',
             ], 403);
         }
+
+        $archiveService->syncCompletedProjectsForClient($user->id);
 
         $projects = Project::where('client_id', $user->id)
             ->orderBy('created_at', 'desc')
@@ -694,11 +753,67 @@ class ProjectController extends Controller
                 return $transformed;
             });
 
+        $historyProjects = ProjectHistory::where('client_id', $user->id)
+            ->orderBy('archived_at', 'desc')
+            ->get()
+            ->map(fn ($history) => [
+                'id' => (string) $history->id,
+                'original_project_id' => (string) ($history->original_project_id ?? ''),
+                'title' => $history->title,
+                'category' => $history->category,
+                'budget' => $history->budget,
+                'thumbnail' => $history->thumbnail,
+                'selected_creative_name' => $history->selected_creative_name,
+                'progress_percentage' => (int) ($history->progress_percentage ?? 0),
+                'rating' => isset($history->rating) ? (int) $history->rating : null,
+                'comment' => $history->comment,
+                'archive_reason' => $history->archive_reason,
+                'archived_at' => optional($history->archived_at)->toISOString(),
+                'rated_at' => optional($history->rated_at)->toISOString(),
+            ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Daftar progress proyek UMKM berhasil diambil',
             'data' => $projects,
+            'history' => $historyProjects,
         ], 200);
+    }
+
+    public function apiDestroyProgressProject($id, ProjectArchiveService $archiveService)
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya UMKM yang dapat menghapus proyek.',
+            ], 403);
+        }
+
+        try {
+            $project = Project::where('client_id', $user->id)->findOrFail($id);
+
+            $applicationsCount = ProjectApplication::where('project_id', $project->id)->count();
+            if ($applicationsCount > 0 || !empty($project->selected_creative_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Proyek ini sudah menerima apply atau sedang berjalan, jadi tidak bisa dihapus langsung.',
+                ], 400);
+            }
+
+            $archiveService->deleteUnfinishedProject($project);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Proyek berhasil dihapus setelah persetujuan UMKM.',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus proyek: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function apiGetApplications($id)
@@ -751,12 +866,16 @@ class ProjectController extends Controller
                     'approved_at' => null,
                 ]);
 
-            $application->status = 'approved';
-            $application->approved_at = now();
-            $application->save();
+        $application->status = 'approved';
+        $application->approved_at = now();
+        $application->save();
 
-            $project->selected_creative_id = $application->creative_id;
-            $project->selected_creative_name = $application->creative_name;
+        if ($creativeWorker = $application->creative) {
+            $creativeWorker->notify(new ProjectApplicationApproved($project, $application));
+        }
+
+        $project->selected_creative_id = $application->creative_id;
+        $project->selected_creative_name = $application->creative_name;
             $project->selected_creative_avatar = $application->creative_avatar;
             $project->status = 'hired'; // Mark as hired, waiting for payment
             $project->save();
@@ -778,6 +897,7 @@ class ProjectController extends Controller
     {
         return collect([
             (object) [
+                'id' => 9991,
                 'title' => 'Redesain Identitas Visual "Kopi Kita"',
                 'description' => 'Kami membutuhkan desainer kreatif untuk memperbarui logo dan kemasan produk kopi artisan kami agar lebih modern.',
                 'category' => 'Branding',
@@ -794,6 +914,7 @@ class ProjectController extends Controller
                 'created_at' => now()->subHours(2),
             ],
             (object) [
+                'id' => 9992,
                 'title' => 'Konten Instagram & TikTok "Batik Solo"',
                 'description' => 'Mencari content creator untuk mengelola feed dan membuat video pendek kreatif untuk mempromosikan koleksi terbaru.',
                 'category' => 'Social Media',
@@ -810,6 +931,7 @@ class ProjectController extends Controller
                 'created_at' => now()->subHours(5),
             ],
             (object) [
+                'id' => 9993,
                 'title' => 'Pembuatan Website Katalog "Mebel Jati"',
                 'description' => 'Dibutuhkan web developer untuk membuat website landing page katalog produk mebel yang responsif.',
                 'category' => 'Web Dev',
@@ -865,6 +987,21 @@ class ProjectController extends Controller
                 'completed' => 'Proyek telah selesai 100%.',
                 default => 'Progress proyek siap dilanjutkan dari 0% sampai 100%.',
             };
+
+        // Handle Overdue Logic
+        $deadline = \Illuminate\Support\Carbon::parse($project->deadline);
+        $project->is_overdue = $deadline->isPast() && $status !== 'completed';
+        $project->overdue_reason = null;
+
+        if ($project->is_overdue) {
+            if ($count === 0) {
+                $project->overdue_reason = 'Maaf, tidak ada creative worker yang mengajukan diri (apply) hingga batas waktu berakhir.';
+            } elseif (empty($project->selected_creative_id)) {
+                $project->overdue_reason = 'Batas waktu berakhir namun kamu belum memilih (approve) creative worker untuk proyek ini.';
+            } elseif ($progress < 100) {
+                $project->overdue_reason = 'Proyek terlambat! Creative worker tidak menyelesaikan progres tepat waktu (deadline sudah lewat).';
+            }
+        }
 
         return $project;
     }

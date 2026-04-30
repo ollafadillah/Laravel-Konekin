@@ -33,8 +33,24 @@
         @endif
 
         @forelse($projects as $project)
-            <section class="bg-white rounded-[3rem] border border-[#2563EB]/5 shadow-sm overflow-hidden">
+            <section id="project-{{ $project->id }}" class="bg-white rounded-[3rem] border border-[#2563EB]/5 shadow-sm overflow-hidden scroll-mt-32">
                 <div class="p-8 md:p-10 border-b border-[#2563EB]/5">
+                    
+                    @if($project->is_overdue)
+                        <div class="mb-8 p-6 bg-red-50 border-2 border-red-100 rounded-[2.5rem] flex items-start gap-5 animate-pulse">
+                            <div class="w-12 h-12 rounded-2xl bg-red-500 text-white flex items-center justify-center shrink-0 shadow-xl shadow-red-200">
+                                <i class="fas fa-exclamation-triangle text-xl"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <div class="flex items-center justify-between gap-4 mb-2">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.25em] text-red-500">Notifikasi Keterlambatan Proyek</p>
+                                    <span class="px-3 py-1 rounded-full bg-red-100 text-red-600 text-[9px] font-black uppercase tracking-widest">Sangat Penting</span>
+                                </div>
+                                <p class="text-base font-bold text-red-800 leading-relaxed">{{ $project->overdue_reason }}</p>
+                                <p class="text-xs text-red-600/70 font-medium mt-2 italic">*Silakan hubungi tim support kami atau buat proyek baru jika diperlukan.</p>
+                            </div>
+                        </div>
+                    @endif
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                         <div class="flex gap-5">
                             <div class="w-24 h-24 rounded-[1.8rem] overflow-hidden bg-slate-100 shrink-0">
@@ -72,6 +88,16 @@
                             </div>
                         </div>
                     </div>
+
+                    @if(($project->applications->count() ?? 0) === 0 && empty($project->selected_creative_id) && ($project->status ?? 'open') !== 'completed')
+                        <div class="mt-6 inline-flex items-center gap-3 rounded-full bg-amber-50 border border-amber-200 px-4 py-2 text-amber-700 text-[11px] font-extrabold uppercase tracking-[0.16em]">
+                            <i class="fas fa-circle-info"></i>
+                            Proyek ini belum menerima apply, jadi bisa dihapus bila memang sudah tidak dibutuhkan.
+                            <button type="button" class="ml-2 px-3 py-1.5 rounded-full bg-amber-600 text-white hover:bg-amber-700 transition-all" onclick="openDeleteModal(@js($project->id), @js($project->title))">
+                                Hapus Proyek
+                            </button>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="grid grid-cols-1 xl:grid-cols-[0.7fr_1.3fr] gap-0">
@@ -133,7 +159,7 @@
                                     <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                     <p class="text-xs font-extrabold uppercase tracking-widest">Rating Terkirim</p>
                                 </div>
-                                <p class="text-sm font-medium">Terima kasih! Kamu sudah memberikan feedback untuk creative worker ini.</p>
+                                <p class="text-sm font-medium">Terima kasih! Kamu sudah memberikan feedback untuk creative worker ini. Proyek akan muncul di history setelah halaman ini diperbarui.</p>
                             </div>
                             @endif
 
@@ -245,7 +271,96 @@
                 <a href="{{ route('projects.create') }}" class="inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all">Publikasikan Proyek</a>
             </div>
         @endforelse
+
+        <section class="pt-6">
+            <div class="flex items-center justify-between gap-4 mb-6">
+                <div>
+                    <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2563EB] mb-2">History</p>
+                    <h2 class="font-display text-2xl font-bold text-[#1E3A8A]">Proyek Selesai</h2>
+                </div>
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[11px] font-extrabold uppercase tracking-[0.16em]">
+                    <i class="fas fa-box-archive"></i>
+                    Arsip Proyek
+                </div>
+            </div>
+
+            @forelse($historyProjects ?? collect() as $history)
+                <article class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm p-6 md:p-8 mb-4">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+                        <div class="flex gap-4">
+                            <div class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
+                                <img src="{{ $history->thumbnail ?? 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop' }}" alt="{{ $history->title }}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <span class="px-3 py-1.5 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest">History</span>
+                                    <span class="px-3 py-1.5 rounded-full bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest">Selesai</span>
+                                </div>
+                                <h3 class="font-display text-xl md:text-2xl font-bold text-[#1E3A8A]">{{ $history->title }}</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2 leading-7">{{ $history->description }}</p>
+                                <div class="flex flex-wrap gap-3 mt-4 text-xs font-bold text-[#1E3A8A]/55">
+                                    <span>Dihapus ke history: {{ optional($history->archived_at)->translatedFormat('d M Y, H:i') ?? '-' }}</span>
+                                    <span class="hidden md:inline">•</span>
+                                    <span>Creative: {{ $history->selected_creative_name ?? '-' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="min-w-[220px] rounded-[1.8rem] bg-[#F8FAFC] border border-[#2563EB]/10 p-5">
+                            <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-2">Feedback UMKM</p>
+                            <div class="flex items-center gap-1 mb-3">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <svg class="w-4 h-4 {{ $i <= (int) ($history->rating ?? 0) ? 'text-amber-400' : 'text-slate-200' }} fill-current" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/>
+                                    </svg>
+                                @endfor
+                            </div>
+                            <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7">{{ $history->comment ?: 'UMKM memberikan rating tanpa komentar.' }}</p>
+                            <div class="mt-4 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2563EB]">
+                                <i class="fas fa-box-archive"></i>
+                                Disimpan di history
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            @empty
+                <div class="bg-white rounded-[3rem] border border-dashed border-[#2563EB]/10 p-12 text-center">
+                    <div class="w-16 h-16 mx-auto rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-4">
+                        <i class="fas fa-box-archive text-2xl"></i>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-[#1E3A8A] mb-2">Belum Ada History</h3>
+                    <p class="text-[#1E3A8A]/60 font-medium">Proyek yang sudah selesai dan diberi rating akan otomatis pindah ke sini.</p>
+                </div>
+            @endforelse
+        </section>
     </main>
+
+    <div id="delete-modal" class="fixed inset-0 z-[120] hidden">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+        <div class="relative z-10 flex items-center justify-center min-h-full p-4">
+            <div class="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
+                <div class="p-8 border-b border-slate-100">
+                    <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-5">
+                        <i class="fas fa-triangle-exclamation text-2xl"></i>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-[#1E3A8A] mb-2">Hapus Proyek?</h3>
+                    <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7">Kamu akan menghapus proyek <span id="project-name-modal" class="font-bold text-[#1E3A8A]"></span>. Karena belum ada apply masuk, proyek akan benar-benar hilang dari daftar aktif.</p>
+                </div>
+                <div class="p-6 bg-[#F8FAFC] flex flex-col sm:flex-row gap-3">
+                    <form id="delete-form" action="" method="POST" class="flex-1">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="w-full inline-flex justify-center rounded-2xl bg-amber-600 px-6 py-4 text-white font-bold text-sm hover:bg-amber-700 transition-all">
+                            Ya, Hapus Proyek
+                        </button>
+                    </form>
+                    <button type="button" onclick="closeDeleteModal()" class="flex-1 inline-flex justify-center rounded-2xl border border-slate-200 px-6 py-4 bg-white text-base font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         function setRating(projectId, value) {
             document.getElementById('rating_input_' + projectId).value = value;
@@ -259,6 +374,20 @@
                     star.classList.add('text-white/30');
                 }
             });
+        }
+
+        function openDeleteModal(id, name) {
+            const modal = document.getElementById('delete-modal');
+            const form = document.getElementById('delete-form');
+            const label = document.getElementById('project-name-modal');
+
+            form.action = "{{ url('/progress-proyek') }}/" + id;
+            label.textContent = name;
+            modal.classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
         }
     </script>
 </body>

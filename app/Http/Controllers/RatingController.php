@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Rating;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use App\Services\ProjectArchiveService;
 
 class RatingController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request, ProjectArchiveService $archiveService)
     {
         $validated = $request->validate([
             'project_id' => 'required|string',
@@ -19,7 +20,7 @@ class RatingController extends Controller
         $project = Project::findOrFail($validated['project_id']);
 
         // Ensure only UMKM (client) can rate
-        if (auth()->id() !== $project->client_id) {
+        if ((string) auth()->id() !== (string) $project->client_id) {
             return back()->with('error', 'Hanya UMKM pemilik proyek yang dapat memberikan rating.');
         }
 
@@ -39,15 +40,26 @@ class RatingController extends Controller
             return back()->with('error', 'Kamu sudah memberikan rating untuk proyek ini.');
         }
 
-        Rating::create([
+        $rating = Rating::create([
             'project_id' => $project->id,
+            'project_title_snapshot' => $project->title,
             'from_user_id' => auth()->id(),
             'to_user_id' => $project->selected_creative_id,
             'rating' => $validated['rating'],
             'comment' => $validated['comment'],
         ]);
 
-        return back()->with('success', 'Terima kasih atas ratingnya!');
+        try {
+            $archiveService->archiveCompletedProject($project, $rating);
+        } catch (\Exception $e) {
+            $rating->delete();
+
+            return back()->with('error', 'Rating tersimpan, tapi proyek gagal dipindahkan ke history: ' . $e->getMessage());
+        }
+
+        return redirect()
+            ->route('projects.progress')
+            ->with('success', 'Terima kasih atas ratingnya! Proyek sudah dipindahkan ke history.');
     }
 
     public function apiIndex(Request $request)
@@ -72,7 +84,7 @@ class RatingController extends Controller
                     'comment' => $rating->comment,
                     'from_user_name' => $rating->fromUser->name,
                     'from_user_avatar' => $rating->fromUser->profile_photo ?? 'https://ui-avatars.com/api/?name=' . urlencode($rating->fromUser->name) . '&background=random',
-                    'project_title' => $rating->project->title,
+                    'project_title' => optional($rating->project)->title ?? $rating->project_title_snapshot ?? 'Proyek diarsipkan',
                     'created_at' => $rating->created_at->toISOString(),
                 ];
             });
@@ -84,7 +96,7 @@ class RatingController extends Controller
         ], 200);
     }
 
-    public function apiStore(Request $request)
+    public function apiStore(Request $request, ProjectArchiveService $archiveService)
     {
         $user = auth()->user();
 
@@ -121,15 +133,27 @@ class RatingController extends Controller
 
             $rating = Rating::create([
                 'project_id' => $project->id,
+                'project_title_snapshot' => $project->title,
                 'from_user_id' => $user->id,
                 'to_user_id' => $project->selected_creative_id,
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
             ]);
 
+            try {
+                $archiveService->archiveCompletedProject($project, $rating);
+            } catch (\Exception $archiveException) {
+                $rating->delete();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Rating tersimpan, tetapi proyek gagal dipindahkan ke history: ' . $archiveException->getMessage(),
+                ], 500);
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Terima kasih atas ratingnya!',
+                'message' => 'Terima kasih atas ratingnya! Proyek sudah dipindahkan ke history.',
                 'data' => [
                     'id' => (string) $rating->id,
                     'rating' => (int) $rating->rating,

@@ -53,7 +53,7 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            'email' => strtolower($validated['email']),
             'password' => Hash::make($validated['password']),
             'type' => $validated['type'],
             'phone' => $validated['phone'],
@@ -71,7 +71,14 @@ class AuthController extends Controller
 
     public function showLogin() 
     { 
-        return view('auth.login'); 
+        // Ambil 3 user random (menggunakan shuffle karena MongoDB driver tertentu tidak mendukung inRandomOrder)
+        $previewUsers = User::whereNotNull('type')
+            ->take(50) // Ambil sedikit data saja untuk diacak
+            ->get()
+            ->shuffle()
+            ->take(3);
+
+        return view('auth.login', compact('previewUsers')); 
     }
 
     public function login(Request $request)
@@ -80,6 +87,8 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required',
         ]);
+
+        $credentials['email'] = strtolower($credentials['email']);
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();

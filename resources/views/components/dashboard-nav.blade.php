@@ -21,16 +21,148 @@
 
             <!-- Right Side: Notification & Profile -->
             <div class="flex items-center gap-4">
-                <!-- Notification Bell -->
-                <button class="relative p-2.5 bg-white border border-[#2563EB]/10 rounded-xl hover:bg-[#EFF6FF] transition-all group">
-                    <svg class="w-6 h-6 text-[#1E3A8A]/70 group-hover:text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <span class="absolute top-2.5 right-2.5 flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </span>
-                </button>
+                @php
+                    $user = auth()->user();
+                    $approvalNotifications = \App\Models\ProjectApplication::with(['project.client'])
+                        ->where('creative_id', $user->id)
+                        ->where('status', 'approved')
+                        ->whereNotNull('approved_at')
+                        ->orderBy('approved_at', 'desc')
+                        ->limit(5)
+                        ->get()
+                        ->map(function ($notification) {
+                            $project = $notification->project;
+                            $projectTitle = optional($project)->title ?? 'Proyek';
+                            $client = optional($project)->client;
+                            $clientAvatar = optional($client)->profile_photo
+                                ?? optional($project)->client_avatar
+                                ?? 'https://ui-avatars.com/api/?name=' . urlencode(optional($client)->name ?? 'UMKM') . '&background=random';
+
+                            return (object) [
+                                'id' => (string) $notification->id,
+                                'type' => 'approval',
+                                'title' => 'Lamaran Disetujui',
+                                'message' => 'UMKM telah menerima lamaranmu untuk proyek "' . $projectTitle . '".',
+                                'project_title' => $projectTitle,
+                                'avatar' => $clientAvatar,
+                                'action_url' => route('projects.progress.creative') . '#project-' . $notification->project_id,
+                                'timestamp' => $notification->approved_at ?? $notification->created_at ?? now(),
+                                'level' => 'success',
+                            ];
+                        });
+
+                    $deadlineNotifications = \App\Models\Project::where('selected_creative_id', $user->id)
+                        ->where('status', '!=', 'completed')
+                        ->orderBy('deadline', 'asc')
+                        ->get()
+                        ->map(function ($project) {
+                            $deadline = \Illuminate\Support\Carbon::parse($project->deadline);
+                            $daysLeft = now()->startOfDay()->diffInDays($deadline->copy()->startOfDay(), false);
+
+                            if ($daysLeft > 3) {
+                                return null;
+                            }
+
+                            if ($daysLeft < 0) {
+                                $label = 'Deadline terlewat';
+                                $message = 'Proyek "' . $project->title . '" sudah lewat ' . abs($daysLeft) . ' hari. Segera perbarui progress.';
+                                $level = 'danger';
+                            } elseif ($daysLeft === 0) {
+                                $label = 'Deadline hari ini';
+                                $message = 'Proyek "' . $project->title . '" jatuh tempo hari ini. Jangan lupa kirim update progress.';
+                                $level = 'warning';
+                            } else {
+                                $label = 'Deadline dekat';
+                                $message = 'Proyek "' . $project->title . '" tersisa ' . $daysLeft . ' hari lagi menuju deadline.';
+                                $level = 'warning';
+                            }
+
+                            return (object) [
+                                'id' => 'deadline-' . $project->id,
+                                'type' => 'deadline',
+                                'title' => $label,
+                                'message' => $message,
+                                'project_title' => $project->title,
+                                'action_url' => route('projects.progress.creative') . '#project-' . $project->id,
+                                'timestamp' => $deadline,
+                                'level' => $level,
+                            ];
+                        })
+                        ->filter()
+                        ->values();
+
+                    $creativeNotifications = $approvalNotifications
+                        ->concat($deadlineNotifications)
+                        ->sortByDesc(fn ($item) => optional($item->timestamp)->timestamp ?? now()->timestamp)
+                        ->values();
+
+                    $creativeNotificationCount = $creativeNotifications->count();
+                @endphp
+
+                <!-- Notification Bell & Dropdown -->
+                <div class="relative" id="creative-notif-wrapper">
+                    <button onclick="toggleCreativeNotifDropdown(event)" class="relative p-2.5 bg-white border border-[#2563EB]/10 rounded-xl hover:bg-[#EFF6FF] transition-all group">
+                        <svg class="w-6 h-6 text-[#1E3A8A]/70 group-hover:text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        @if($creativeNotificationCount > 0)
+                            <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex items-center justify-center rounded-full h-5 w-5 bg-red-500 text-[10px] font-bold text-white border-2 border-white">
+                                    {{ $creativeNotificationCount }}
+                                </span>
+                            </span>
+                        @endif
+                    </button>
+
+                    <div id="creative-notif-dropdown" class="absolute hidden right-0 mt-4 w-[22rem] bg-white rounded-[2rem] shadow-2xl shadow-[#1E3A8A]/20 border border-[#2563EB]/10 overflow-hidden z-[60]">
+                        <div class="p-5 border-b border-slate-50 flex items-center justify-between">
+                            <div>
+                                <h3 class="font-display font-bold text-[#1E3A8A]">Notifikasi</h3>
+                                <p class="text-[11px] font-medium text-[#1E3A8A]/45 mt-1">Aktivitas proyek dan pengingat deadline</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-black uppercase tracking-widest">{{ $creativeNotificationCount }} Baru</span>
+                        </div>
+
+                        <div class="max-h-96 overflow-y-auto">
+                            @forelse($creativeNotifications as $notification)
+                                <a href="{{ $notification->action_url }}" class="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
+                                    <div class="flex items-start gap-4">
+                                        @if($notification->type === 'approval')
+                                            <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-blue-100 bg-blue-50">
+                                                <img src="{{ $notification->avatar }}" alt="{{ $notification->project_title }}" class="w-full h-full object-cover">
+                                            </div>
+                                        @else
+                                            <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border {{ $notification->level === 'danger' ? 'bg-red-50 border-red-100 text-red-500' : ($notification->level === 'warning' ? 'bg-amber-50 border-amber-100 text-amber-500' : 'bg-blue-50 border-blue-100 text-blue-500') }} flex items-center justify-center">
+                                                <i class="fas fa-hourglass-half"></i>
+                                            </div>
+                                        @endif
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-[10px] font-black uppercase tracking-widest {{ $notification->level === 'danger' ? 'text-red-500' : ($notification->level === 'warning' ? 'text-amber-500' : 'text-[#2563EB]') }} mb-0.5">
+                                                {{ $notification->title }}
+                                            </p>
+                                            <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">{{ $notification->project_title }}</p>
+                                            <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">{{ $notification->message }}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            @empty
+                                <div class="p-10 text-center">
+                                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                        <i class="fas fa-bell-slash text-2xl"></i>
+                                    </div>
+                                    <p class="text-sm font-bold text-[#1E3A8A]/40 uppercase tracking-[0.2em]">Tidak ada notifikasi</p>
+                                </div>
+                            @endforelse
+                        </div>
+
+                        @if($creativeNotificationCount > 0)
+                            <a href="{{ route('projects.progress.creative') }}" class="block p-4 text-center text-xs font-bold text-[#2563EB] bg-slate-50 hover:bg-[#EFF6FF] transition-all">
+                                Lihat Semua Progress Proyek
+                            </a>
+                        @endif
+                    </div>
+                </div>
 
                 <!-- Profile -->
                 <a href="{{ route('profile.index') }}" class="flex items-center gap-3 pl-4 border-l border-[#2563EB]/10 group/profile cursor-pointer hover:opacity-80 transition-all">
@@ -115,6 +247,12 @@
 </div>
 
 <script>
+    function toggleCreativeNotifDropdown(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('creative-notif-dropdown');
+        dropdown.classList.toggle('hidden');
+    }
+
     function confirmLogout() {
         document.getElementById('logout-modal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -128,7 +266,20 @@
     // Close on escape key
     window.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
+            const notifDropdown = document.getElementById('creative-notif-dropdown');
+            if (notifDropdown) {
+                notifDropdown.classList.add('hidden');
+            }
             closeLogoutModal();
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('creative-notif-dropdown');
+        const wrapper = document.getElementById('creative-notif-wrapper');
+
+        if (dropdown && wrapper && !wrapper.contains(event.target)) {
+            dropdown.classList.add('hidden');
         }
     });
 </script>

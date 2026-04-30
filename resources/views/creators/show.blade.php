@@ -59,7 +59,6 @@
                         <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Portfolio</p>
                         <p class="font-display text-2xl font-bold text-[#1E3A8A]">{{ $portfolios->count() }}</p>
                     </div>
-                    @if($creator->completed_projects_count > 0)
                     <div class="rounded-[1.8rem] bg-white/80 border border-white p-4 text-center shadow-sm">
                         <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Proyek Selesai</p>
                         <p class="font-display text-2xl font-bold text-[#1E3A8A]">{{ $creator->completed_projects_count }}</p>
@@ -71,7 +70,6 @@
                             <p class="font-display text-2xl font-bold text-[#1E3A8A]">{{ $creator->average_rating }}</p>
                         </div>
                     </div>
-                    @endif
                     <div class="rounded-[1.8rem] bg-white/80 border border-white p-4 text-center shadow-sm">
                         <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Status</p>
                         <p class="font-display text-lg font-bold text-[#2563EB]">Aktif</p>
@@ -151,6 +149,60 @@
                             </p>
                         </div>
                     @endif
+                </div>
+
+                <div class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm p-8">
+                    <div class="flex items-center justify-between gap-4 mb-6">
+                        <div>
+                            <p class="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#2563EB] mb-2">Feedback UMKM</p>
+                            <h2 class="font-display text-2xl font-bold text-[#1E3A8A]">Ulasan Terbaru</h2>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <svg class="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/></svg>
+                            <span class="text-sm font-bold text-[#1E3A8A]">{{ $creator->average_rating }}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        @forelse($recentRatings as $rating)
+                            <article class="rounded-[2rem] border border-[#2563EB]/8 bg-[#F8FAFC] p-5">
+                                <div class="flex items-start gap-4">
+                                    <img src="{{ optional($rating->fromUser)->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode(optional($rating->fromUser)->name ?? 'UMKM').'&background=random' }}" alt="{{ optional($rating->fromUser)->name ?? 'UMKM' }}" class="w-12 h-12 rounded-2xl object-cover shrink-0">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                                            <div>
+                                                <p class="font-bold text-[#1E3A8A]">{{ optional($rating->fromUser)->name ?? 'UMKM' }}</p>
+                                                <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#2563EB]">{{ optional($rating->project)->title ?? $rating->project_title_snapshot ?? 'Proyek diarsipkan' }}</p>
+                                            </div>
+                                            <p class="text-[11px] text-[#1E3A8A]/40 font-bold">{{ optional($rating->created_at)->diffForHumans() }}</p>
+                                        </div>
+                                        <div class="flex items-center gap-0.5 mb-3">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <svg class="w-3.5 h-3.5 {{ $i <= $rating->rating ? 'text-amber-400' : 'text-slate-200' }} fill-current" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/>
+                                                </svg>
+                                            @endfor
+                                        </div>
+                                        <p class="text-sm leading-7 text-[#1E3A8A]/65 font-medium">
+                                            {{ $rating->comment ?: 'UMKM ini belum menambahkan komentar.' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </article>
+                        @empty
+                            <div class="rounded-[2rem] bg-[#F8FAFC] border border-dashed border-[#2563EB]/15 p-8 text-center">
+                                <div class="w-14 h-14 rounded-2xl bg-white shadow-sm mx-auto mb-4 flex items-center justify-center">
+                                    <svg class="w-7 h-7 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                    </svg>
+                                </div>
+                                <h3 class="font-display text-xl font-bold text-[#1E3A8A] mb-2">Belum Ada Ulasan</h3>
+                                <p class="text-[#1E3A8A]/60 font-medium max-w-lg mx-auto">
+                                    Begitu UMKM memberi rating setelah proyek selesai, ulasan akan tampil di sini.
+                                </p>
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
 

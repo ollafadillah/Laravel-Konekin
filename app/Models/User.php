@@ -10,6 +10,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;  // Tambahkan ini
 use MongoDB\Laravel\Auth\User as Authenticatable;
 use App\Models\Rating;
 use App\Models\Project;
+use App\Models\ProjectHistory;
 
 class User extends Authenticatable implements JWTSubject  // implements JWTSubject
 {
@@ -31,6 +32,8 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
         'profile_photo',
         'google_id',
         'google_token',
+        'latitude',
+        'longitude',
     ];
 
     protected $hidden = [
@@ -75,20 +78,50 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
         return $this->hasMany(Rating::class, 'to_user_id');
     }
 
+    public function ratingsQuery()
+    {
+        return Rating::where('to_user_id', (string) $this->getKey());
+    }
+
     public function getAverageRatingAttribute()
     {
-        $ratings = $this->ratingsReceived();
-        if ($ratings->count() === 0) {
+        $ratings = $this->ratingsQuery()->get(['rating']);
+
+        if ($ratings->isEmpty()) {
             return 0;
         }
-        return round($ratings->avg('rating'), 1);
+
+        $average = $ratings->avg(function ($rating) {
+            return (float) ($rating->rating ?? 0);
+        });
+
+        return round((float) $average, 1);
+    }
+
+    public function getRatingsCountAttribute()
+    {
+        return $this->ratingsQuery()->count();
+    }
+
+    public function recentRatings(int $limit = 5)
+    {
+        return $this->ratingsQuery()
+            ->with(['fromUser:id,name,profile_photo', 'project:id,title'])
+            ->orderBy('created_at', 'desc')
+            ->limit($limit);
     }
 
     public function getCompletedProjectsCountAttribute()
     {
-        return Project::where('selected_creative_id', $this->id)
+        $activeCompleted = Project::where('selected_creative_id', $this->id)
             ->where('status', 'completed')
             ->count();
+
+        $archivedCompleted = ProjectHistory::where('selected_creative_id', $this->id)
+            ->where('history_type', 'completed')
+            ->count();
+
+        return $activeCompleted + $archivedCompleted;
     }
     /**
      * Get the identifier that will be stored in the JWT.

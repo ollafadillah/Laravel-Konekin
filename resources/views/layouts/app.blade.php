@@ -139,5 +139,8 @@
 
         @include('components.footer')
     </div>
+
+    <!-- Chatbot AI -->
+    @include('components.chatbot')
 </body>
 </html>
