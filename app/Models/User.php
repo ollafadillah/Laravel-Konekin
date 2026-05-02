@@ -34,6 +34,9 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
         'google_token',
         'latitude',
         'longitude',
+        'bank_name',
+        'bank_account_number',
+        'bank_account_name',
     ];
 
     protected $hidden = [

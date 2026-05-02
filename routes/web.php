@@ -33,6 +33,16 @@ Route::get('/tentang-kami', function () {
     return view('about');
 })->name('about');
 
+// Halaman Syarat dan Ketentuan
+Route::get('/syarat-ketentuan', function () {
+    return view('terms-conditions');
+})->name('terms-conditions');
+
+// Halaman Kebijakan Privasi
+Route::get('/kebijakan-privasi', function () {
+    return view('privacy-policy');
+})->name('privacy-policy');
+
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');

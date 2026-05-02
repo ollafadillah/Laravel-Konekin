@@ -210,12 +210,73 @@
                             </div>
                         </div>
 
+                        <!-- Bank Information Section -->
+                        <div class="mt-8 pt-8 border-t border-[var(--primary-color)]/10">
+                            <div class="mb-6 flex items-center gap-3">
+                                <div class="w-10 h-10 bg-[var(--bg-light)] rounded-lg flex items-center justify-center text-[var(--primary-color)] text-lg">
+                                    <i class="fas fa-bank"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-[#1E3A8A]">Informasi Rekening Bank</h4>
+                                    <p class="text-xs text-[#1E3A8A]/60">Untuk pencairan dana dari platform</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Nama Bank -->
+                                <div class="md:col-span-2">
+                                    <label for="bank_name" class="block text-sm font-bold text-[#1E3A8A] mb-3">
+                                        <i class="fas fa-building mr-2 text-[var(--primary-color)]"></i>Nama Bank <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="bank_name" name="bank_name" class="w-full px-5 py-4 rounded-2xl border-2 border-[var(--primary-color)]/10 focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--primary-color)]/10 transition-all @error('bank_name') border-red-500 @enderror" required>
+                                        <option value="">Pilih Bank</option>
+                                        <option value="BCA" {{ old('bank_name') === 'BCA' ? 'selected' : '' }}>BCA (Bank Central Asia)</option>
+                                        <option value="Mandiri" {{ old('bank_name') === 'Mandiri' ? 'selected' : '' }}>Bank Mandiri</option>
+                                        <option value="BNI" {{ old('bank_name') === 'BNI' ? 'selected' : '' }}>BNI (Bank Negara Indonesia)</option>
+                                        <option value="BRI" {{ old('bank_name') === 'BRI' ? 'selected' : '' }}>BRI (Bank Rakyat Indonesia)</option>
+                                        <option value="CIMB Niaga" {{ old('bank_name') === 'CIMB Niaga' ? 'selected' : '' }}>CIMB Niaga</option>
+                                        <option value="Permata" {{ old('bank_name') === 'Permata' ? 'selected' : '' }}>Bank Permata</option>
+                                        <option value="Maybank" {{ old('bank_name') === 'Maybank' ? 'selected' : '' }}>Maybank</option>
+                                        <option value="DBS" {{ old('bank_name') === 'DBS' ? 'selected' : '' }}>DBS Indonesia</option>
+                                        <option value="Danamon" {{ old('bank_name') === 'Danamon' ? 'selected' : '' }}>Bank Danamon</option>
+                                        <option value="OCBC NISP" {{ old('bank_name') === 'OCBC NISP' ? 'selected' : '' }}>OCBC NISP</option>
+                                        <option value="Lainnya" {{ old('bank_name') === 'Lainnya' ? 'selected' : '' }}>Bank Lainnya</option>
+                                    </select>
+                                    @error('bank_name')
+                                        <p class="mt-2 text-sm text-red-600 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i>{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Nomor Rekening -->
+                                <div class="md:col-span-2">
+                                    <label for="bank_account_number" class="block text-sm font-bold text-[#1E3A8A] mb-3">
+                                        <i class="fas fa-credit-card mr-2 text-[var(--primary-color)]"></i>Nomor Rekening <span class="text-red-500">*</span>
+                                    </label>
+                                    <input id="bank_account_number" name="bank_account_number" type="text" class="w-full px-5 py-4 rounded-2xl border-2 border-[var(--primary-color)]/10 focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--primary-color)]/10 transition-all @error('bank_account_number') border-red-500 @enderror" placeholder="Contoh: 123456789" value="{{ old('bank_account_number') }}" required>
+                                    @error('bank_account_number')
+                                        <p class="mt-2 text-sm text-red-600 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i>{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Nama Pemilik Rekening -->
+                                <div class="md:col-span-2">
+                                    <label for="bank_account_name" class="block text-sm font-bold text-[#1E3A8A] mb-3">
+                                        <i class="fas fa-user-check mr-2 text-[var(--primary-color)]"></i>Nama Pemilik Rekening <span class="text-red-500">*</span>
+                                    </label>
+                                    <input id="bank_account_name" name="bank_account_name" type="text" class="w-full px-5 py-4 rounded-2xl border-2 border-[var(--primary-color)]/10 focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--primary-color)]/10 transition-all @error('bank_account_name') border-red-500 @enderror" placeholder="Nama sesuai di rekening bank" value="{{ old('bank_account_name') }}" required>
+                                    @error('bank_account_name')
+                                        <p class="mt-2 text-sm text-red-600 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i>{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Terms & Submit -->
                         <div class="pt-4">
                             <div class="flex items-start gap-3 mb-6">
-                                <input type="checkbox" id="terms" class="mt-1 w-5 h-5 rounded border-2 border-[var(--primary-color)]/20 text-[var(--primary-color)] focus:ring-[var(--primary-color)] cursor-pointer" required>
+                                <input type="checkbox" id="terms" name="terms" class="mt-1 w-5 h-5 rounded border-2 border-[var(--primary-color)]/20 text-[var(--primary-color)] focus:ring-[var(--primary-color)] cursor-pointer" required>
                                 <label for="terms" class="text-sm text-[#1E3A8A]/70 cursor-pointer">
-                                    Saya menyetujui <a href="#" class="text-[var(--primary-color)] font-bold hover:underline">Syarat & Ketentuan</a> dan <a href="#" class="text-[var(--primary-color)] font-bold hover:underline">Kebijakan Privasi</a> Konekin
+                                    Saya setuju dengan <a href="{{ route('terms-conditions') }}" target="_blank" class="text-[var(--primary-color)] font-bold hover:underline">Syarat & Ketentuan</a> dan <a href="{{ route('privacy-policy') }}" target="_blank" class="text-[var(--primary-color)] font-bold hover:underline">Kebijakan Privasi</a> Konekin
                                 </label>
                             </div>
                             

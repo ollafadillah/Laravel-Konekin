@@ -49,6 +49,9 @@ class AuthController extends Controller
             'type' => 'required|in:creative_worker,umkm',
             'phone' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:255',
+            'bank_name' => 'required|string|max:255',
+            'bank_account_number' => 'required|string|max:255',
+            'bank_account_name' => 'required|string|max:255',
         ]);
 
         $user = User::create([
@@ -58,6 +61,9 @@ class AuthController extends Controller
             'type' => $validated['type'],
             'phone' => $validated['phone'],
             'city' => $validated['city'],
+            'bank_name' => $validated['bank_name'],
+            'bank_account_number' => $validated['bank_account_number'],
+            'bank_account_name' => $validated['bank_account_name'],
         ]);
 
         Auth::login($user);
@@ -129,6 +135,9 @@ class AuthController extends Controller
                 'type' => 'required|in:creative_worker,umkm',
                 'phone' => 'nullable|string|max:20',
                 'city' => 'nullable|string|max:255',
+                'bank_name' => 'required|string|max:255',
+                'bank_account_number' => 'required|string|max:255',
+                'bank_account_name' => 'required|string|max:255',
             ]);
 
             $user = User::create([
@@ -138,6 +147,9 @@ class AuthController extends Controller
                 'type' => $validated['type'],
                 'phone' => $validated['phone'],
                 'city' => $validated['city'],
+                'bank_name' => $validated['bank_name'],
+                'bank_account_number' => $validated['bank_account_number'],
+                'bank_account_name' => $validated['bank_account_name'],
             ]);
 
             // Generate JWT token untuk user yang baru registrasi
@@ -154,6 +166,9 @@ class AuthController extends Controller
                         'type' => $user->type,
                         'phone' => $user->phone,
                         'city' => $user->city,
+                        'bank_name' => $user->bank_name,
+                        'bank_account_number' => $user->bank_account_number,
+                        'bank_account_name' => $user->bank_account_name,
                     ],
                     'token' => $token,
                     'token_type' => 'bearer',
@@ -270,6 +285,9 @@ class AuthController extends Controller
                     'type' => $user->type,
                     'phone' => $user->phone,
                     'city' => $user->city,
+                    'bank_name' => $user->bank_name,
+                    'bank_account_number' => $user->bank_account_number,
+                    'bank_account_name' => $user->bank_account_name,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
                 ]

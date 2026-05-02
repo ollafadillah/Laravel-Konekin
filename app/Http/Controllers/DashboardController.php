@@ -202,6 +202,9 @@ class DashboardController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'bio' => 'nullable|string|max:500',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
         ]);
 
         $user->update(array_filter($validated));
@@ -217,6 +220,9 @@ class DashboardController extends Controller
                     'address' => $user->address,
                     'city' => $user->city,
                     'bio' => $user->bio,
+                    'bank_name' => $user->bank_name,
+                    'bank_account_number' => $user->bank_account_number,
+                    'bank_account_name' => $user->bank_account_name,
                 ]
             ]
         ], 200);
