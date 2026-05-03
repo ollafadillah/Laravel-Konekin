@@ -34,7 +34,7 @@ Route::get('/tentang-kami', function () {
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post')->middleware('throttle:usage');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Google Auth
@@ -46,10 +46,10 @@ Route::get('/register-role', function () {
 })->name('register.role');
 
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post')->middleware('throttle:usage');
 
 // Dashboard & Profile & Projects & Portfolio
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/kreator/{id}', [CreatorController::class, 'show'])->name('kreator.show');
 
     Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
@@ -104,7 +104,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Chatbot Route
-Route::post('/chat/ask', [ChatbotController::class, 'ask'])->name('chat.ask');
+Route::post('/chat/ask', [ChatbotController::class, 'ask'])->name('chat.ask')->middleware('throttle:usage');
 
 // Public Webhook (No Auth)
 Route::post('/payment/midtrans/notification', [EscrowController::class, 'handleMidtransNotification'])->name('midtrans.notification');

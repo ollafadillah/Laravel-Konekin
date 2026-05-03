@@ -16,11 +16,11 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:api');  // Ubah dari 'auth:sanctum' ke 'auth:api'
 
 // Auth Routes API
-Route::post('/register', [AuthController::class, 'apiRegister']);
-Route::post('/login', [AuthController::class, 'apiLogin']);
-Route::post('/auth/google', [GoogleController::class, 'apiGoogleLogin']);
+Route::post('/register', [AuthController::class, 'apiRegister'])->middleware('throttle:usage');
+Route::post('/login', [AuthController::class, 'apiLogin'])->middleware('throttle:usage');
+Route::post('/auth/google', [GoogleController::class, 'apiGoogleLogin'])->middleware('throttle:usage');
 
-Route::middleware('auth:api')->group(function () {  // Ubah dari 'auth:sanctum' ke 'auth:api'
+Route::middleware(['auth:api', 'throttle:usage'])->group(function () {  // Ubah dari 'auth:sanctum' ke 'auth:api'
     Route::post('/logout', [AuthController::class, 'apiLogout']);
     Route::get('/profile', [AuthController::class, 'getProfile']);
     Route::post('/refresh', [AuthController::class, 'refreshToken']); // Endpoint baru untuk refresh token

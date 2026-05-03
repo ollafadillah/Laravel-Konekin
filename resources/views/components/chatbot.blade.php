@@ -30,6 +30,25 @@
                     Halo! Saya Konekin AI. Ada yang bisa saya bantu terkait platform Konekin, Creative Worker, atau UMKM?
                 </div>
             </div>
+
+            <!-- Quick Questions -->
+            <div id="ai-quick-questions" class="pl-11 space-y-2">
+                <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#2563EB]/70">Pertanyaan cepat</p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="ai-suggestion-chip px-4 py-2 rounded-full bg-white border border-[#DBEAFE] text-xs font-semibold text-[#1B3FA6] hover:bg-[#EEF4FF] hover:border-[#2563EB]/30 transition-colors" data-question="Bagaimana cara Creative Worker bekerja?">
+                        Bagaimana cara Creative Worker bekerja?
+                    </button>
+                    <button type="button" class="ai-suggestion-chip px-4 py-2 rounded-full bg-white border border-[#DBEAFE] text-xs font-semibold text-[#1B3FA6] hover:bg-[#EEF4FF] hover:border-[#2563EB]/30 transition-colors" data-question="Bagaimana cara UMKM bekerja?">
+                        Bagaimana cara UMKM bekerja?
+                    </button>
+                    <button type="button" class="ai-suggestion-chip px-4 py-2 rounded-full bg-white border border-[#DBEAFE] text-xs font-semibold text-[#1B3FA6] hover:bg-[#EEF4FF] hover:border-[#2563EB]/30 transition-colors" data-question="Bagaimana cara daftar dan mulai di Konekin?">
+                        Bagaimana cara daftar dan mulai di Konekin?
+                    </button>
+                    <button type="button" class="ai-suggestion-chip px-4 py-2 rounded-full bg-white border border-[#DBEAFE] text-xs font-semibold text-[#1B3FA6] hover:bg-[#EEF4FF] hover:border-[#2563EB]/30 transition-colors" data-question="Bagaimana sistem escrow di Konekin?">
+                        Bagaimana sistem escrow di Konekin?
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Chat Input -->
@@ -64,7 +83,25 @@
     document.addEventListener('click', function(e) {
         const toggleBtn = e.target.closest('#toggle-ai-chat');
         const closeBtn = e.target.closest('#close-ai-chat');
+        const suggestionBtn = e.target.closest('.ai-suggestion-chip');
         
+        if (suggestionBtn) {
+            const chatInput = document.getElementById('ai-chat-input');
+            const question = suggestionBtn.dataset.question || suggestionBtn.textContent.trim();
+
+            if (chatInput) {
+                chatInput.value = question;
+                chatInput.focus();
+
+                const form = document.getElementById('ai-chat-form');
+                if (form) {
+                    form.requestSubmit();
+                }
+            }
+
+            return;
+        }
+
         if (toggleBtn || closeBtn) {
             const chatWindow = document.getElementById('ai-chat-window');
             const chatInput = document.getElementById('ai-chat-input');
@@ -81,7 +118,7 @@
                     btn.innerHTML = `<svg class="w-6 h-6 relative z-10 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
                 }
             } else {
-                // Tutup Chat
+                
                 chatWindow.classList.add('hidden');
                 chatWindow.classList.remove('flex');
                 
@@ -130,6 +167,13 @@
                 scrollToBottom();
             }
 
+            function hideQuickQuestions() {
+                const quickQuestions = document.getElementById('ai-quick-questions');
+                if (quickQuestions) {
+                    quickQuestions.classList.add('hidden');
+                }
+            }
+
             function showTyping() {
                 const wrapper = document.createElement('div');
                 wrapper.id = 'ai-typing-indicator';
@@ -155,6 +199,7 @@
 
             // Tambahkan pesan user
             addMessage(message, true);
+            hideQuickQuestions();
             chatInput.value = '';
             chatInput.disabled = true;
             sendBtn.disabled = true;
