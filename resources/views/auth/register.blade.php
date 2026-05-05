@@ -58,6 +58,11 @@
     </style>
 </head>
 <body class="antialiased text-[#1E3A8A] {{ ($type ?? old('type')) === 'umkm' ? 'role-umkm' : 'role-creative' }}">
+    @php
+        $creativeRoleOptions = $creativeRoleOptions ?? config('creative_roles.options', []);
+        $selectedCreativeCategory = old('creative_category');
+        $googleAuthBaseUrl = route('auth.google', ['type' => $type ?? old('type')]);
+    @endphp
     
     <!-- Navbar -->
     <header class="fixed w-full top-0 z-50 transition-all duration-300 backdrop-blur-xl bg-white/70 border-b border-[#2563EB]/10">
@@ -150,6 +155,33 @@
                         @csrf
                         <input type="hidden" name="type" value="{{ $type ?? old('type') }}">
 
+                        @if(($type ?? old('type')) === 'creative_worker')
+                            <div class="space-y-2">
+                                <label for="creative_category" class="block text-sm font-bold text-[#1E3A8A] mb-3">
+                                    <i class="fas fa-layer-group mr-2 text-[var(--primary-color)]"></i>Role Kreatif Utama <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    id="creative_category"
+                                    name="creative_category"
+                                    class="w-full px-5 py-4 rounded-2xl border-2 border-[var(--primary-color)]/10 focus:border-[var(--primary-color)] focus:ring-4 focus:ring-[var(--primary-color)]/10 transition-all bg-white @error('creative_category') border-red-500 @enderror"
+                                    required
+                                >
+                                    <option value="" disabled {{ $selectedCreativeCategory ? '' : 'selected' }}>Pilih role kreatif utama</option>
+                                    @foreach($creativeRoleOptions as $label => $role)
+                                        <option value="{{ $label }}" {{ $selectedCreativeCategory === $label ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="text-xs text-[#1E3A8A]/55 font-medium">
+                                    Role ini akan muncul saat UMKM mencari kreator dan bisa kamu ubah lagi di profil.
+                                </p>
+                                @error('creative_category')
+                                    <p class="mt-2 text-sm text-red-600 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i>{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
+
                         <!-- Grid Form -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Nama Lengkap -->
@@ -233,7 +265,12 @@
                     </div>
 
                     <div class="mt-8">
-                        <a href="{{ route('auth.google', ['type' => $type ?? old('type')]) }}" class="w-full py-4 px-4 bg-white border-2 border-gray-100 text-[#1E3A8A] font-bold rounded-2xl shadow-sm hover:bg-gray-50 hover:border-[var(--primary-color)]/30 transition-all duration-300 flex items-center justify-center gap-3">
+                        <a
+                            id="google-register-link"
+                            href="{{ route('auth.google', ['type' => $type ?? old('type')]) }}"
+                            data-base-url="{{ $googleAuthBaseUrl }}"
+                            class="w-full py-4 px-4 bg-white border-2 border-gray-100 text-[#1E3A8A] font-bold rounded-2xl shadow-sm hover:bg-gray-50 hover:border-[var(--primary-color)]/30 transition-all duration-300 flex items-center justify-center gap-3"
+                        >
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -262,6 +299,35 @@
             </div>
         </div>
     </main>
+
+    <script>
+        function updateGoogleRegisterLink() {
+            const link = document.getElementById('google-register-link');
+            const roleSelect = document.getElementById('creative_category');
+
+            if (!link) {
+                return;
+            }
+
+            const url = new URL(link.dataset.baseUrl || link.href, window.location.origin);
+
+            if (roleSelect && roleSelect.value) {
+                url.searchParams.set('creative_category', roleSelect.value);
+            } else {
+                url.searchParams.delete('creative_category');
+            }
+
+            link.href = url.pathname + url.search;
+        }
+
+        document.addEventListener('change', function (event) {
+            if (event.target && event.target.id === 'creative_category') {
+                updateGoogleRegisterLink();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', updateGoogleRegisterLink);
+    </script>
 
 </body>
 </html>

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectApplication;
+use App\Support\CreativeRoles;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DashboardController extends Controller
 {
@@ -114,7 +116,18 @@ class DashboardController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'bio' => 'nullable|string|max:500',
+            'creative_category' => [
+                Rule::requiredIf(fn () => $user->isCreativeWorker()),
+                'nullable',
+                'string',
+                Rule::in(CreativeRoles::allChoices()),
+            ],
         ]);
+
+        if ($user->isCreativeWorker()) {
+            $validated['creative_category'] = CreativeRoles::normalize($validated['creative_category'] ?? null);
+            $validated['onboarding_completed'] = true;
+        }
 
         $user->update($validated);
 
@@ -202,7 +215,18 @@ class DashboardController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'bio' => 'nullable|string|max:500',
+            'creative_category' => [
+                Rule::requiredIf(fn () => $user->isCreativeWorker()),
+                'nullable',
+                'string',
+                Rule::in(CreativeRoles::allChoices()),
+            ],
         ]);
+
+        if ($user->isCreativeWorker()) {
+            $validated['creative_category'] = CreativeRoles::normalize($validated['creative_category'] ?? null);
+            $validated['onboarding_completed'] = true;
+        }
 
         $user->update(array_filter($validated));
 

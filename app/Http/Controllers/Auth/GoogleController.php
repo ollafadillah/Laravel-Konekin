@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\CreativeRoles;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
@@ -17,6 +18,11 @@ class GoogleController extends Controller
         if ($request->has('type')) {
             session(['google_user_type' => $request->type]);
         }
+
+        if ($request->has('creative_category')) {
+            session(['google_creative_category' => $request->creative_category]);
+        }
+
         return Socialite::driver('google')->stateless()->redirect();
     }
 
@@ -25,6 +31,8 @@ class GoogleController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
             $intendedType = session('google_user_type');
+            $intendedCategory = CreativeRoles::normalize(session('google_creative_category'));
+            $isNewUser = false;
             
             // Normalisasi email ke lowercase untuk konsistensi lookup
             $email = strtolower($googleUser->email);
@@ -60,6 +68,10 @@ class GoogleController extends Controller
                 if (!$user->type && $intendedType) {
                     $user->update(['type' => $intendedType]);
                 }
+
+                if ($user->isCreativeWorker() && !$user->creative_category && $intendedCategory) {
+                    $user->update(['creative_category' => $intendedCategory]);
+                }
                 
                 Auth::login($user, true); // Gunakan remember me agar session lebih awet
                 
@@ -73,12 +85,17 @@ class GoogleController extends Controller
                     'google_id' => (string)$googleUser->id,
                     'google_token' => $googleUser->token,
                     'type' => $intendedType, // Set type jika ada (dari proses registrasi)
+                    'creative_category' => $intendedType === 'creative_worker' ? $intendedCategory : null,
+                    'onboarding_completed' => $intendedType === 'creative_worker' ? false : null,
                     'password' => bcrypt(Str::random(16)),
                     'profile_photo' => $googleUser->avatar,
                 ]);
 
+                $isNewUser = true;
                 Auth::login($user, true);
             }
+
+            session()->forget(['google_user_type', 'google_creative_category']);
 
             // --- Redirection Logic Berdasarkan Role ---
 
@@ -100,10 +117,14 @@ class GoogleController extends Controller
             }
             
             if ($user->isCreativeWorker()) {
-                // Untuk Creative Worker, cek status onboarding
-                if (!$user->onboarding_completed) {
-                    return redirect()->route('onboarding');
+                if ($isNewUser) {
+                    return redirect()->route('profile.index')->with('info', 'Selamat datang! Silakan lengkapi profil kreatif Anda.');
                 }
+
+                if (empty($user->creative_category)) {
+                    return redirect()->route('profile.index')->with('info', 'Selamat datang! Silakan pilih role kreatif utama Anda di profil.');
+                }
+
                 return redirect()->route('dashboard.creative');
             }
 
@@ -144,11 +165,14 @@ class GoogleController extends Controller
 
             if (!$user) {
                 // Buat user baru jika belum ada
+                $creativeCategory = CreativeRoles::normalize($request->input('creative_category'));
                 $user = User::create([
                     'name' => $googleUser->name,
                     'email' => $googleUser->email,
                     'google_id' => $googleUser->id,
                     'type' => $request->input('type'), // Optional: role dikirim dari mobile
+                    'creative_category' => $request->input('type') === 'creative_worker' ? $creativeCategory : null,
+                    'onboarding_completed' => $request->input('type') === 'creative_worker' ? false : null,
                     'password' => bcrypt(Str::random(16)),
                     'profile_photo' => $googleUser->avatar,
                 ]);
@@ -156,6 +180,11 @@ class GoogleController extends Controller
                 // Update data google_id jika belum ada
                 if (!$user->google_id) {
                     $user->update(['google_id' => $googleUser->id]);
+                }
+
+                $creativeCategory = CreativeRoles::normalize($request->input('creative_category'));
+                if ($user->isCreativeWorker() && !$user->creative_category && $creativeCategory) {
+                    $user->update(['creative_category' => $creativeCategory]);
                 }
             }
 
@@ -168,11 +197,12 @@ class GoogleController extends Controller
                 'data' => [
                     'user' => [
                         'id' => (string) $user->_id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'type' => $user->type,
-                        'profile_photo' => $user->profile_photo,
-                    ],
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'type' => $user->type,
+                    'creative_category' => $user->creative_category,
+                    'profile_photo' => $user->profile_photo,
+                ],
                     'token' => $jwtToken,
                     'token_type' => 'bearer',
                     'expires_in' => JWTAuth::factory()->getTTL() * 60

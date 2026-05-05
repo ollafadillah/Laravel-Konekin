@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\CreativeRoles;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class OnboardingController extends Controller
 {
@@ -16,7 +18,10 @@ class OnboardingController extends Controller
             return redirect()->route('dashboard.creative');
         }
 
-        return view('auth.onboarding', compact('user'));
+        return view('auth.onboarding', [
+            'user' => $user,
+            'creativeRoleOptions' => CreativeRoles::options(),
+        ]);
     }
 
     public function store(Request $request)
@@ -28,13 +33,20 @@ class OnboardingController extends Controller
         }
 
         $validated = $request->validate([
-            'creative_category' => 'required|string|in:Graphic Designer,Web Developer,Video Editor,Content Creator,Social Media',
+            'creative_category' => [
+                Rule::requiredIf(fn () => empty($user->creative_category)),
+                'nullable',
+                'string',
+                Rule::in(CreativeRoles::allChoices()),
+            ],
             'skills' => 'required|array|min:1',
             'bio' => 'required|string|min:20|max:500',
         ]);
 
+        $creativeCategory = CreativeRoles::normalize($validated['creative_category'] ?? $user->creative_category);
+
         $user->update([
-            'creative_category' => $validated['creative_category'],
+            'creative_category' => $creativeCategory,
             'skills' => $validated['skills'],
             'bio' => $validated['bio'],
             'onboarding_completed' => true,
@@ -62,13 +74,20 @@ class OnboardingController extends Controller
         }
 
         $validated = $request->validate([
-            'creative_category' => 'required|string|in:Graphic Designer,Web Developer,Video Editor,Content Creator,Social Media',
+            'creative_category' => [
+                Rule::requiredIf(fn () => empty($user->creative_category)),
+                'nullable',
+                'string',
+                Rule::in(CreativeRoles::allChoices()),
+            ],
             'skills' => 'required|array|min:1',
             'bio' => 'required|string|min:20|max:500',
         ]);
 
+        $creativeCategory = CreativeRoles::normalize($validated['creative_category'] ?? $user->creative_category);
+
         $user->update([
-            'creative_category' => $validated['creative_category'],
+            'creative_category' => $creativeCategory,
             'skills' => $validated['skills'],
             'bio' => $validated['bio'],
             'onboarding_completed' => true,
