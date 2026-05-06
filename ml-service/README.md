@@ -1,173 +1,209 @@
 # Konekin ML Service
 
-Flask REST API untuk sistem rekomendasi berbasis Machine Learning pada platform Konekin.
-Menggabungkan data **Freelancer (Creative Workers)** dan **UMKM** menggunakan:
-- **KMeans Clustering** (Elbow Method + Silhouette Score)
-- **Content-Based Filtering** (TF-IDF + Cosine Similarity)
-- **MongoDB** sebagai penyimpanan hasil clustering dan recommendation logs
+> Hybrid **KMeans + TF-IDF** recommendation engine yang menghubungkan UMKM dengan Creative Workers terbaik.
 
 ---
 
-## Struktur Folder
+## Arsitektur
 
 ```
-ml-service/
-├── app.py              # Flask app utama + Blueprint routing (7 endpoints)
-├── config.py           # Konfigurasi terpusat: path, MongoDB, model settings
-├── database.py         # MongoDB singleton manager (PyMongo)
-├── preprocessing.py    # Pipeline preprocessing kedua dataset
-├── clustering.py       # KMeans: Elbow + Silhouette → fit → label semantik
-├── recommender.py      # TF-IDF + Cosine Similarity (CBF)
-├── train.py            # Script training offline (jalankan sekali)
-├── models/             # File .pkl hasil training (auto-created)
-├── data/
-│   ├── freelancer_earnings_bd.csv
-│   └── dataset_umkm.csv
-├── .env.example
+                          ┌───────────────────┐
+      UMKM Profile ──────►│  KMeans Clustering │──► Cluster ID
+                          └───────────────────┘
+                                    │
+                          ┌─────────▼─────────┐
+                          │ CLUSTER_SKILL_MAP  │──► Skill Query String
+                          └───────────────────┘
+                                    │
+                          ┌─────────▼─────────┐
+  CW TF-IDF Matrix ──────►│  Cosine Similarity │──► Top-N CW Recommendations
+                          └───────────────────┘
+```
+
+## Struktur File
+
+```
+konekin-ml-service/
+│
+├── config.py                   # Semua konstanta, path, mapping
+├── app.py                      # Flask REST API
+├── run.py                      # Full training pipeline
 ├── requirements.txt
-└── README.md
+│
+├── src/
+│   ├── __init__.py
+│   ├── preprocessing_umkm.py   # UMKMPreprocessor class
+│   ├── preprocessing_cw.py     # CWPreprocessor class
+│   ├── train_kmeans.py         # KMeans training & evaluation
+│   ├── train_tfidf.py          # TF-IDF training & coverage eval
+│   └── recommend.py            # Recommender class (singleton)
+│
+├── data/
+│   ├── cw_dataset.csv          # Creative Workers (5000 rows)
+│   └── dataset_umkm.csv        # UMKM (13.564 rows)
+│
+└── models/                     # Auto-created after training
+    ├── kmeans_umkm.pkl
+    ├── scaler_umkm.pkl
+    ├── scaler_cw.pkl
+    ├── tfidf_vectorizer.pkl
+    ├── label_encoders.pkl
+    ├── cluster_summary.csv
+    ├── elbow_plot.png
+    └── silhouette_plot.png
 ```
-
----
 
 ## Instalasi
 
-### 1. Buat Virtual Environment
-
 ```bash
-cd ml-service
+# 1. Clone / extract project
+cd konekin-ml-service
+
+# 2. Buat virtual environment
 python -m venv venv
+source venv/bin/activate        # Linux/Mac
+# venv\Scripts\activate         # Windows
 
-# Windows
-venv\Scripts\activate
-
-# Mac/Linux
-source venv/bin/activate
-```
-
-### 2. Install Dependencies
-
-```bash
+# 3. Install dependencies
 pip install -r requirements.txt
-```
 
-### 3. Setup Environment
-
-```bash
-copy .env.example .env   # Windows
-# cp .env.example .env   # Mac/Linux
+# 4. Pastikan dataset ada di folder data/
+ls data/
+# cw_dataset.csv  dataset_umkm.csv
 ```
-
-Edit `.env` sesuai konfigurasi kamu:
-```
-MONGO_URI=mongodb://localhost:27017/konekin_ml
-FLASK_PORT=5000
-```
-
-### 4. Pastikan Dataset Ada
-
-```
-ml-service/data/freelancer_earnings_bd.csv   (1950 rows)
-ml-service/data/dataset_umkm.csv             (13564 rows)
-```
-
----
 
 ## Training
 
-Jalankan **sekali** sebelum menjalankan server:
-
 ```bash
-python train.py
+python run.py
 ```
-
-Proses ini akan:
-1. Load & preprocessing kedua dataset
-2. KMeans clustering dengan Elbow + Silhouette (k=2..10)
-3. TF-IDF vectorizer + cosine similarity matrix
-4. Simpan semua file `.pkl` ke folder `models/`
-5. Populate MongoDB: `freelancer_clusters`, `umkm_clusters`, `cluster_profiles`
 
 Output yang diharapkan:
 ```
-============================================================
-  FASE 1: PREPROCESSING
-============================================================
-[INFO] Freelancer dataset loaded: 1950 rows × 15 cols
-[INFO] UMKM dataset loaded: 13564 rows × 14 cols
+=== Pre-flight checks ===
+  ✓  UMKM dataset: data/dataset_umkm.csv (2.1 MB)
+  ✓  CW dataset:   data/cw_dataset.csv (0.8 MB)
+
+=== 1. UMKM Preprocessing ===
 ...
-============================================================
-  TRAINING SELESAI — 45.2 detik
-============================================================
+=== 2. CW Preprocessing ===
+...
+=== 3. KMeans Clustering ===
+   K | Inertia | Silhouette
+   2 | 45123.2 |     0.3124
+   ...
+>>> Best K = 5  (silhouette = 0.4231)
+
+=== 5. Artifact Summary ===
+  ✓  KMeans model        : models/kmeans_umkm.pkl       (12.3 KB)
+  ✓  TF-IDF Vectorizer   : models/tfidf_vectorizer.pkl  (98.1 KB)
+  ...
+
+  ✓  Training complete in 24.3s
 ```
 
----
-
-## Menjalankan Server
+## Menjalankan API
 
 ```bash
 python app.py
-```
-
-Server berjalan di: `http://localhost:5000`
-
-Untuk production dengan Gunicorn:
-```bash
-gunicorn -w 2 -b 0.0.0.0:5000 "app:create_app()"
+# Server: http://0.0.0.0:5000
 ```
 
 ---
 
 ## API Endpoints
 
-### GET /health
-
-Cek status API, MongoDB, dan model yang ter-load.
-
-```bash
-curl http://localhost:5000/health
-```
-
+### `GET /health`
 ```json
 {
-  "status": "success",
-  "data": {
-    "api": "Konekin ML Service",
-    "version": "1.0.0",
-    "uptime_seconds": 12.5,
-    "mongodb_connected": true,
-    "models_loaded": true,
-    "freelancer_count": 1950,
-    "umkm_count": 13564,
-    "models": ["kmeans_freelancer", "tfidf_vectorizer", "..."]
+  "status": "ok",
+  "service": "konekin-ml-service"
+}
+```
+
+---
+
+### `GET /api/models/status`
+Menampilkan status artifact model yang tersimpan di `models/` dan status cache Flask.
+
+**Response ringkas:**
+```json
+{
+  "success": true,
+  "models_loaded": true,
+  "artifacts_ready": true,
+  "artifacts": {
+    "kmeans_model": {
+      "path": "ml-service/models/kmeans_umkm.pkl",
+      "exists": true,
+      "size_bytes": 55296
+    }
   }
 }
 ```
 
 ---
 
-### GET /clusters/info
+### `POST /api/models/reload`
+Memaksa Flask memuat ulang artifact `.pkl` terbaru dari folder `models/`.
 
-Ambil profil semua cluster dari MongoDB.
-
-```bash
-curl "http://localhost:5000/clusters/info?dataset=freelancer"
-curl "http://localhost:5000/clusters/info?dataset=umkm"
-```
-
+**Response ringkas:**
 ```json
 {
-  "status": "success",
-  "data": [
+  "success": true,
+  "message": "Model artifacts reloaded successfully",
+  "models_loaded": true
+}
+```
+
+---
+
+### `POST /api/recommend`
+Rekomendasikan Creative Worker berdasarkan profil UMKM.
+
+**Request:**
+```json
+{
+  "omset": 50000000,
+  "laba": 10000000,
+  "aset": 20000000,
+  "jenis_usaha": "Perdagangan",
+  "marketplace": "Tokopedia",
+  "status_legalitas": "Terdaftar",
+  "tenaga_kerja_perempuan": 3,
+  "tenaga_kerja_laki_laki": 2,
+  "tahun_berdiri": 2018,
+  "top_n": 10,
+  "min_budget": null,
+  "experience_level": null
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "cluster": 1,
+  "cluster_label": "UMKM Digital & Teknologi",
+  "total_found": 10,
+  "recommendations": [
     {
-      "cluster_id": 0,
-      "cluster_label": "Beginner",
-      "metrics": {
-        "avg_earnings_usd": 12345.6,
-        "avg_client_rating": 3.8,
-        "avg_job_success_rate": 0.72
-      },
-      "total_members": 430
+      "id": 42,
+      "full_name": "Budi Santoso",
+      "email": "budi@example.com",
+      "specific_role": "Full Stack Developer",
+      "job_category": "Full Stack Developer",
+      "skills": "React, Node.js, Laravel, PostgreSQL",
+      "experience_level": "Expert",
+      "experience_years": 5.0,
+      "success_rate_job": 0.92,
+      "client_rating": 4.8,
+      "rehire_rate": 0.75,
+      "jobs_completed": 48,
+      "min_budget_idr": 2000000.0,
+      "hourly_rate_usd": 15.0,
+      "profile_verified": 1,
+      "similarity_score": 0.8241
     }
   ]
 }
@@ -175,251 +211,100 @@ curl "http://localhost:5000/clusters/info?dataset=umkm"
 
 ---
 
-### POST /cluster/freelancer
+### `POST /api/recommend/skills`
+Cari CW langsung berdasarkan skill query.
 
-Predict cluster untuk freelancer baru (tidak disimpan ke DB).
-
-```bash
-curl -X POST http://localhost:5000/cluster/freelancer \
-  -H "Content-Type: application/json" \
-  -d '{
-    "Job_Category": "Web Development",
-    "Platform": "Upwork",
-    "Experience_Level": "Expert",
-    "Client_Region": "North America",
-    "Payment_Method": "Bank Transfer",
-    "Job_Completed": 45,
-    "Earnings_USD": 75000,
-    "Hourly_Rate": 85,
-    "Job_Success_Rate": 0.95,
-    "Client_Rating": 4.8,
-    "Job_Duration_Days": 30,
-    "Project_Type": "Fixed",
-    "Rehire_Rate": 0.7,
-    "Marketing_Spend": 2000
-  }'
-```
-
+**Request:**
 ```json
 {
-  "status": "success",
-  "data": {
-    "cluster_id": 2,
-    "cluster_label": "High Performer",
-    "cluster_profile": {
-      "metrics": { "avg_earnings_usd": 68000, "avg_client_rating": 4.5 }
-    },
-    "input_vs_cluster": {
-      "earnings_usd_input": 75000,
-      "earnings_usd_cluster_avg": 68000,
-      "earnings_usd_diff_pct": 10.29
-    }
-  }
+  "skills": "social media instagram content planning",
+  "top_n": 5
 }
 ```
 
 ---
 
-### POST /cluster/umkm
-
-Predict cluster untuk UMKM baru (tidak disimpan ke DB).
-
-```bash
-curl -X POST http://localhost:5000/cluster/umkm \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jenis_usaha": "Perdagangan",
-    "tenaga_kerja_perempuan": 5,
-    "tenaga_kerja_laki_laki": 3,
-    "aset": 5000000,
-    "omset": 20000000,
-    "marketplace": "Shopee",
-    "kapasitas_produksi": 200,
-    "status_legalitas": "Terdaftar",
-    "tahun_berdiri": 2018,
-    "laba": 8000000,
-    "biaya_karyawan": 3000000,
-    "jumlah_pelanggan": 150
-  }'
-```
-
+### `GET /api/categories`
 ```json
 {
-  "status": "success",
-  "data": {
-    "cluster_id": 1,
-    "cluster_label": "UMKM Berkembang",
-    "cluster_profile": { "metrics": { "avg_omset": 18500000 } },
-    "input_vs_cluster": {
-      "omset_input": 20000000,
-      "omset_cluster_avg": 18500000,
-      "omset_diff_pct": 8.11
-    }
-  }
+  "success": true,
+  "total": 5,
+  "categories": [
+    "Content Creator",
+    "Full Stack Developer",
+    "Graphic Designer",
+    "Social Media Specialist",
+    "Video Editor"
+  ]
 }
 ```
 
 ---
 
-### GET /recommend
-
-Sistem rekomendasi. Tiga tipe:
-
-| `type` | Deskripsi |
-|--------|-----------|
-| `freelancer_similar` | Cari freelancer mirip dengan freelancer tertentu |
-| `umkm_to_freelancer` | Cari freelancer cocok untuk UMKM tertentu |
-| `freelancer_to_umkm` | Cari UMKM cocok untuk freelancer tertentu |
-
-```bash
-# Freelancer mirip dengan Freelancer #101
-curl "http://localhost:5000/recommend?type=freelancer_similar&id=101&top_n=5"
-
-# Freelancer yang cocok untuk UMKM ID 28828567
-curl "http://localhost:5000/recommend?type=umkm_to_freelancer&id=28828567&top_n=5"
-
-# UMKM yang cocok untuk Freelancer #42
-curl "http://localhost:5000/recommend?type=freelancer_to_umkm&id=42&top_n=5"
-```
-
+### `GET /api/stats`
 ```json
 {
-  "status": "success",
-  "data": {
-    "type": "umkm_to_freelancer",
-    "input_id": "28828567",
-    "top_n": 5,
-    "results": [
-      {
-        "id": "101",
-        "name": "Freelancer #101",
-        "job_category": "Design",
-        "platform": "Fiverr",
-        "similarity_score": 0.8742,
-        "cluster_id": 2,
-        "cluster_label": "High Performer"
-      }
-    ],
-    "response_time_ms": 12.4
-  }
+  "success": true,
+  "total_cw": 5000,
+  "total_available": 3241,
+  "total_verified": 2890,
+  "availability_rate": 0.6482,
+  "category_distribution": {
+    "Full Stack Developer": 1012,
+    "Graphic Designer": 987,
+    ...
+  },
+  "avg_client_rating": 4.23,
+  "avg_success_rate": 0.78,
+  "avg_rehire_rate": 0.61
 }
 ```
 
 ---
 
-### GET /clusters/members
-
-Ambil anggota cluster dari MongoDB.
-
-```bash
-curl "http://localhost:5000/clusters/members?dataset=umkm&cluster_id=1&limit=10"
-curl "http://localhost:5000/clusters/members?dataset=freelancer&cluster_id=0&limit=20"
-```
-
----
-
-### GET /data/sample
-
-Sample data untuk debugging.
-
-```bash
-curl "http://localhost:5000/data/sample?dataset=freelancer&n=3"
-curl "http://localhost:5000/data/sample?dataset=umkm&n=5"
-```
-
----
-
-## Integrasi dengan Laravel
-
-### Via Flask API (Http facade)
+## Integrasi dari Laravel
 
 ```php
-use Illuminate\Support\Facades\Http;
-
-// Predict cluster UMKM baru
-$response = Http::post('http://localhost:5000/cluster/umkm', [
+// Contoh di Laravel Controller
+$response = Http::post('http://localhost:5000/api/recommend', [
+    'omset'                  => 50000000,
+    'laba'                   => 10000000,
+    'aset'                   => 20000000,
     'jenis_usaha'            => 'Perdagangan',
-    'omset'                  => 20000000,
-    'laba'                   => 8000000,
-    'aset'                   => 5000000,
-    'marketplace'            => 'Shopee',
+    'marketplace'            => 'Tokopedia',
     'status_legalitas'       => 'Terdaftar',
+    'tenaga_kerja_perempuan' => 3,
+    'tenaga_kerja_laki_laki' => 2,
     'tahun_berdiri'          => 2018,
-    'kapasitas_produksi'     => 200,
-    'jumlah_pelanggan'       => 150,
-    'biaya_karyawan'         => 3000000,
-    'tenaga_kerja_perempuan' => 5,
-    'tenaga_kerja_laki_laki' => 3,
+    'top_n'                  => 10,
 ]);
 
-$data = $response->json('data');
-$cluster = $data['cluster_label']; // "UMKM Berkembang"
-
-// Rekomendasi freelancer untuk UMKM
-$rec = Http::get('http://localhost:5000/recommend', [
-    'type'  => 'umkm_to_freelancer',
-    'id'    => $umkm->id_umkm,
-    'top_n' => 5,
-]);
-
-$freelancers = $rec->json('data.results');
-```
-
-### Akses MongoDB Langsung (jenssegers/mongodb)
-
-Data yang sudah di-training bisa diakses langsung tanpa hit Flask:
-
-```php
-use Illuminate\Support\Facades\DB;
-
-// Ambil profil cluster UMKM
-$profiles = DB::collection('cluster_profiles')
-    ->where('dataset', 'umkm')
-    ->orderBy('cluster_id')
-    ->get();
-
-// Cari UMKM dalam cluster tertentu
-$umkmInCluster = DB::collection('umkm_clusters')
-    ->where('cluster_id', 1)
-    ->limit(20)
-    ->get();
-
-// Log rekomendasi terbaru
-$logs = DB::collection('recommendation_logs')
-    ->where('request_type', 'umkm_to_freelancer')
-    ->orderBy('requested_at', 'desc')
-    ->limit(10)
-    ->get();
+$data = $response->json();
 ```
 
 ---
 
-## MongoDB Collections
+## Filter Opsional
 
-| Collection | Isi | Index |
-|------------|-----|-------|
-| `freelancer_clusters` | Setiap freelancer + cluster info | `freelancer_id` (unique), `cluster_id` |
-| `umkm_clusters` | Setiap UMKM + cluster info | `id_umkm` (unique), `cluster_id` |
-| `cluster_profiles` | Profil per cluster | `(dataset, cluster_id)` unique |
-| `recommendation_logs` | Log setiap request recommend | `request_type`, `requested_at` |
+| Parameter          | Tipe      | Contoh              | Keterangan                              |
+|--------------------|-----------|---------------------|-----------------------------------------|
+| `min_budget`       | `float`   | `5000000`           | Hanya CW dengan min_budget_idr ≤ nilai  |
+| `experience_level` | `string`  | `"Intermediate"`    | `Beginner` / `Intermediate` / `Expert`  |
+| `top_n`            | `int`     | `10`                | Jumlah hasil rekomendasi (default: 10)  |
 
 ---
 
-## Error Codes
+## Cluster Skill Map
 
-| Code | Kondisi |
-|------|---------|
-| 400 | Body tidak valid, field wajib kosong, enum salah |
-| 404 | ID tidak ditemukan |
-| 503 | MongoDB tidak terhubung / model belum di-load |
-| 500 | Internal error (lihat log server) |
+Setelah training selesai, update `CLUSTER_SKILL_MAP` di `config.py`
+sesuai analisis cluster dari `models/cluster_summary.csv`:
 
-Semua error response format JSON:
-```json
-{
-  "status": "error",
-  "data": null,
-  "message": "Field wajib tidak ada: ['omset']",
-  "timestamp": "2025-05-03T05:30:00+00:00"
+```python
+CLUSTER_SKILL_MAP = {
+    0: "social media content graphic design copywriting",
+    1: "full stack web development laravel react postgresql",
+    2: "video editing motion graphic content creator",
+    3: "graphic design branding illustration visual",
+    4: "social media marketing ads content strategy",
 }
 ```

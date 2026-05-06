@@ -48,6 +48,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    'ml' => [
+        'base_url' => env('ML_SERVICE_URL', 'http://127.0.0.1:5000'),
+        'timeout' => env('ML_SERVICE_TIMEOUT', 30),
+        'connect_timeout' => env('ML_SERVICE_CONNECT_TIMEOUT', 5),
+    ],
+
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
     ],

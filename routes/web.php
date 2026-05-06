@@ -9,6 +9,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EscrowController;
 use App\Http\Controllers\AdminEscrowController;
 use App\Http\Controllers\RatingController;
+use App\Http\Controllers\MlRecommendationController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ChatbotController;
@@ -55,6 +56,8 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
     Route::get('/dashboard/creative', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])->name('dashboard.admin');
+    Route::get('/rekomendasi-kreator', [MlRecommendationController::class, 'index'])->name('rekomendasi.kreator');
+    Route::post('/rekomendasi-kreator', [MlRecommendationController::class, 'store'])->name('rekomendasi.kreator.store');
 
     // Admin Management
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');

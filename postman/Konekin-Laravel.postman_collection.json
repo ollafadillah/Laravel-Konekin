@@ -1,0 +1,1202 @@
+{
+  "info": {
+    "_postman_id": "2bbdcfb4-fad1-4d0d-9b62-8a6b1d25c8b3",
+    "name": "Konekin Laravel + Flask API",
+    "description": "Collection for testing Konekin's Laravel API, UMKM/creative worker flows, and the Flask ML service.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register UMKM",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{name_umkm}}\",\n  \"email\": \"{{email_umkm}}\",\n  \"password\": \"{{password}}\",\n  \"password_confirmation\": \"{{password}}\",\n  \"type\": \"umkm\",\n  \"phone\": \"{{phone_umkm}}\",\n  \"city\": \"{{city_umkm}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{laravel_api}}/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status is 201', function () {",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "pm.test('Registration succeeded', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "if (json && json.data && json.data.token) {",
+                  "  pm.environment.set('current_token', json.data.token);",
+                  "  pm.environment.set('token', json.data.token);",
+                  "  pm.environment.set('current_user_id', json.data.user && json.data.user.id ? json.data.user.id : '');",
+                  "  if (json.data.user && json.data.user.type === 'umkm') {",
+                  "    pm.environment.set('umkm_token', json.data.token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Creative Worker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{name_creative}}\",\n  \"email\": \"{{email_creative}}\",\n  \"password\": \"{{password}}\",\n  \"password_confirmation\": \"{{password}}\",\n  \"type\": \"creative_worker\",\n  \"creative_category\": \"{{creative_category}}\",\n  \"phone\": \"{{phone_creative}}\",\n  \"city\": \"{{city_creative}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{laravel_api}}/register"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status is 201', function () {",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "pm.test('Registration succeeded', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "if (json && json.data && json.data.token) {",
+                  "  pm.environment.set('current_token', json.data.token);",
+                  "  pm.environment.set('token', json.data.token);",
+                  "  pm.environment.set('current_user_id', json.data.user && json.data.user.id ? json.data.user.id : '');",
+                  "  if (json.data.user && json.data.user.type === 'creative_worker') {",
+                  "    pm.environment.set('creative_token', json.data.token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login UMKM",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_umkm}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{laravel_api}}/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status is 200', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test('Login succeeded', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "if (json && json.data && json.data.token) {",
+                  "  pm.environment.set('current_token', json.data.token);",
+                  "  pm.environment.set('token', json.data.token);",
+                  "  pm.environment.set('current_user_id', json.data.user && json.data.user.id ? json.data.user.id : '');",
+                  "  if (json.data.user && json.data.user.type === 'umkm') {",
+                  "    pm.environment.set('umkm_token', json.data.token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Creative Worker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_creative}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{laravel_api}}/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status is 200', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test('Login succeeded', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "if (json && json.data && json.data.token) {",
+                  "  pm.environment.set('current_token', json.data.token);",
+                  "  pm.environment.set('token', json.data.token);",
+                  "  pm.environment.set('current_user_id', json.data.user && json.data.user.id ? json.data.user.id : '');",
+                  "  if (json.data.user && json.data.user.type === 'creative_worker') {",
+                  "    pm.environment.set('creative_token', json.data.token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/refresh"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status is 200', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test('Refresh succeeded', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "if (json && json.token) {",
+                  "  pm.environment.set('current_token', json.token);",
+                  "  pm.environment.set('token', json.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/profile"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status is 200', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test('Logout succeeded', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "pm.environment.set('current_token', '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Creative Worker",
+      "item": [
+        {
+          "name": "Creative Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/creative/dashboard"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{name_creative}}\",\n  \"phone\": \"{{phone_creative}}\",\n  \"address\": \"Jl. Kreatif No. 10\",\n  \"city\": \"{{city_creative}}\",\n  \"bio\": \"{{bio_creative}}\",\n  \"creative_category\": \"{{creative_category}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{laravel_api}}/profile/update"
+          }
+        },
+        {
+          "name": "Onboarding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"creative_category\": \"{{creative_category}}\",\n  \"skills\": [\"Adobe Illustrator\", \"Brand Identity\", \"Layout Design\"],\n  \"bio\": \"{{bio_creative}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{laravel_api}}/creative/onboarding"
+          }
+        },
+        {
+          "name": "List Public Projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/projects"
+          }
+        },
+        {
+          "name": "Show Public Project",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/projects/{{project_id}}"
+          }
+        },
+        {
+          "name": "Apply to Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "message",
+                  "value": "Saya tertarik mengerjakan proyek ini dan siap membantu sampai selesai.",
+                  "type": "text"
+                },
+                {
+                  "key": "proposal_file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/projects/{{project_id}}/apply"
+          }
+        },
+        {
+          "name": "Creative Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/creative/projects"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.data && json.data.length > 0 && json.data[0].id) {",
+                  "  pm.environment.set('creative_project_id', json.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Creative Progress",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "progress_percentage",
+                  "value": "50",
+                  "type": "text"
+                },
+                {
+                  "key": "note",
+                  "value": "Progress pengerjaan sudah mencapai setengah dan sedang masuk tahap finalisasi.",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/creative/projects/{{creative_project_id}}/progress"
+          }
+        },
+        {
+          "name": "Creative Ratings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/creative/ratings"
+          }
+        },
+        {
+          "name": "List Portfolios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/portfolios"
+          }
+        },
+        {
+          "name": "Show Portfolio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/portfolios/{{portfolio_id}}"
+          }
+        },
+        {
+          "name": "Create Portfolio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "{{portfolio_title}}",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "{{portfolio_description}}",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/portfolios"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status is 201', function () {",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "pm.test('Portfolio created', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "if (json && json.data && json.data.id) {",
+                  "  pm.environment.set('portfolio_id', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Portfolio",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/portfolios/{{portfolio_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "UMKM",
+      "item": [
+        {
+          "name": "UMKM Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/umkm/dashboard"
+          }
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "{{project_title}}",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "{{project_category}}",
+                  "type": "text"
+                },
+                {
+                  "key": "budget",
+                  "value": "{{project_budget}}",
+                  "type": "text"
+                },
+                {
+                  "key": "deadline",
+                  "value": "{{project_deadline}}",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "{{project_description}}",
+                  "type": "text"
+                },
+                {
+                  "key": "requirements",
+                  "value": "{{project_requirements}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/umkm/projects"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status is 201', function () {",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "pm.test('Project created', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "if (json && json.data && json.data.id) {",
+                  "  pm.environment.set('project_id', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Project Progress List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/umkm/projects/progress"
+          }
+        },
+        {
+          "name": "Get Applications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/umkm/projects/{{project_id}}/applications"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.data && json.data.length > 0 && json.data[0].id) {",
+                  "  pm.environment.set('application_id', json.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/umkm/projects/{{project_id}}/approve/{{application_id}}"
+          }
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/umkm/projects/{{project_id}}"
+          }
+        },
+        {
+          "name": "Simulate Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{laravel_api}}/umkm/projects/{{project_id}}/pay"
+          }
+        },
+        {
+          "name": "Submit Rating",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{current_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_id\": \"{{project_id}}\",\n  \"rating\": {{rating_value}},\n  \"comment\": \"{{rating_comment}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{laravel_api}}/umkm/ratings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flask ML Service",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{flask_ml}}/health"
+          }
+        },
+        {
+          "name": "Models Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{flask_ml}}/api/models/status"
+          }
+        },
+        {
+          "name": "Reload Models",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{flask_ml}}/api/models/reload"
+          }
+        },
+        {
+          "name": "Recommend UMKM",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"omset\": {{flask_omset}},\n  \"laba\": {{flask_laba}},\n  \"aset\": {{flask_aset}},\n  \"jenis_usaha\": \"{{flask_jenis_usaha}}\",\n  \"marketplace\": \"{{flask_marketplace}}\",\n  \"status_legalitas\": \"{{flask_status_legalitas}}\",\n  \"tenaga_kerja_perempuan\": {{flask_tenaga_kerja_perempuan}},\n  \"tenaga_kerja_laki_laki\": {{flask_tenaga_kerja_laki_laki}},\n  \"tahun_berdiri\": {{flask_tahun_berdiri}},\n  \"experience_level\": \"{{flask_experience_level}}\",\n  \"min_budget\": {{flask_min_budget}},\n  \"top_n\": {{flask_top_n}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{flask_ml}}/api/recommend"
+          }
+        },
+        {
+          "name": "Recommend By Skills",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skills\": \"{{skills_query}}\",\n  \"top_n\": {{flask_top_n}},\n  \"min_budget\": {{flask_min_budget}},\n  \"experience_level\": \"{{flask_experience_level}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{flask_ml}}/api/recommend/skills"
+          }
+        },
+        {
+          "name": "Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{flask_ml}}/api/categories"
+          }
+        },
+        {
+          "name": "Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{flask_ml}}/api/stats"
+          }
+        }
+      ]
+    }
+  ]
+}
