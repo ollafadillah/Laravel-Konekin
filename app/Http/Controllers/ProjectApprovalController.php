@@ -61,8 +61,8 @@ class ProjectApprovalController extends Controller
             // Log approval
             Log::info('Project completion approved by UMKM', [
                 'project_id' => $project->id,
-                'umkm_id' => $user->id,
-                'escrow_id' => $escrow->id,
+                'budget' => (int) CurrencyHelper::extract($project->budget),
+                'selected_creative_id' => $project->selected_creative_id,
             ]);
 
             return response()->json([
@@ -309,7 +309,7 @@ class ProjectApprovalController extends Controller
                 'title' => $project->title,
                 'client_name' => $project->client_name,
                 'progress_percentage' => (int) ($project->progress_percentage ?? 0),
-                'budget' => (int) $project->budget,
+                'budget' => (int) CurrencyHelper::extract($project->budget),
                 'escrow' => [
                     'id' => (string) $project->escrowTransaction->id,
                     'status' => $project->escrowTransaction->status,

@@ -14,6 +14,8 @@ use App\Http\Controllers\MlRecommendationController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\PaymentVerificationController;
+use App\Http\Controllers\PaymentReceiptController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
@@ -109,6 +111,7 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
 
     // Admin Payment Verification (separate from escrow)
     Route::get('/admin/verifikasi-resi', [PaymentVerificationController::class, 'index'])->name('admin.payment-verification.index');
+    Route::post('/admin/verifikasi-resi/{escrowId}', [PaymentReceiptController::class, 'adminVerify'])->name('admin.payment.verify');
 
     // Admin Project Approvals (for completion & disbursement)
     Route::get('/admin/project-approvals', function () {

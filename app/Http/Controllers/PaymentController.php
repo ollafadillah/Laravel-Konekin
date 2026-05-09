@@ -202,7 +202,7 @@ class PaymentController extends Controller
         // Update project status to in_progress and create escrow transaction
         $project = Project::find($payment->project_id);
         if ($project) {
-            $amount = (int) $project->budget;
+            $amount = (int) CurrencyHelper::extract($project->budget);
             $platformFee = $amount * 0.10;
             $netAmount = $amount - $platformFee;
 
@@ -224,6 +224,12 @@ class PaymentController extends Controller
                 'escrow_status' => 'held',
                 'escrow_transaction_id' => $escrow->id
             ]);
+
+            // Notify Creative Worker
+            $creative = User::find($project->selected_creative_id);
+            if ($creative) {
+                $creative->notify(new \App\Notifications\EscrowPaymentReceived($project, $escrow));
+            }
         }
 
         Log::info("Payment verified: {$payment->_id}");

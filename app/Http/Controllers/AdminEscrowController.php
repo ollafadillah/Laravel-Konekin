@@ -80,8 +80,8 @@ class AdminEscrowController extends Controller
             $escrow->update(['status' => 'releasing']);
             $project->update(['escrow_status' => 'releasing']);
 
-            // Dispatch Disbursement Job
-            ProcessDisbursement::dispatch($escrow);
+            // Dispatch Disbursement Job (sync untuk langsung dijalankan)
+            ProcessDisbursement::dispatchSync($escrow);
 
             Log::info('Admin approved escrow release', [
                 'escrow_id' => $escrow->id,

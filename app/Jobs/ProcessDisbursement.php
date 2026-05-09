@@ -26,24 +26,39 @@ class ProcessDisbursement implements ShouldQueue
     {
         try {
             // Reload escrow dengan relations yang dibutuhkan
-            $escrow = EscrowTransaction::with(['project', 'payee', 'payer'])->findOrFail($this->escrow->id);
+            $escrow = EscrowTransaction::with(['project', 'payee', 'payer'])->find($this->escrow->id);
+            
+            if (!$escrow) {
+                Log::error('ProcessDisbursement: Escrow not found - ' . $this->escrow->id);
+                return;
+            }
+            
             $payee = $escrow->payee;
             $project = $escrow->project;
 
             // Simulation: No real API call to Midtrans Iris
             Log::info('Simulating disbursement for Escrow ID: ' . $escrow->id);
 
-            // Mocking a short delay to simulate network call
-            // usleep(500000); 
-
+            // Update escrow status
             $escrow->update([
                 'status' => 'released',
                 'disbursement_id' => 'SIM-DISB-' . uniqid(),
                 'disbursement_status' => 'completed',
             ]);
 
+            // Update project status
             if ($project) {
-                $project->update(['escrow_status' => 'released']);
+                $updateData = [
+                    'escrow_status' => 'released',
+                    'status' => 'completed',  // Mark project as completed so UMKM can rate
+                ];
+                
+                $project->update($updateData);
+                
+                Log::info('Project updated to completed', [
+                    'project_id' => $project->id,
+                    'new_status' => 'completed',
+                ]);
             }
             
             // Notify Creative Worker jika ada
@@ -58,7 +73,11 @@ class ProcessDisbursement implements ShouldQueue
 
             Log::info('Disbursement simulated successfully for Escrow ID: ' . $escrow->id);
         } catch (\Exception $e) {
-            Log::error('Disbursement Simulation Error: ' . $e->getMessage());
+            Log::error('Disbursement Simulation Error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'escrow_id' => $this->escrow->id ?? null,
+            ]);
             if (isset($escrow)) {
                 $escrow->update(['disbursement_status' => 'error']);
             }

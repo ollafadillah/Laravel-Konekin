@@ -23,7 +23,7 @@ class EscrowController extends Controller
             return redirect()->route('projects.show', $id)->with('error', 'Pembayaran sudah dilakukan atau proyek belum siap.');
         }
 
-        $amount = (int) $project->budget;
+        $amount = (int) \App\Helpers\CurrencyHelper::extract($project->budget);
         
         return view('projects.checkout', compact('project', 'amount'));
     }
@@ -36,7 +36,7 @@ class EscrowController extends Controller
             return redirect()->back()->with('error', 'Unauthorized.');
         }
 
-        $amount = (int) $project->budget;
+        $amount = (int) \App\Helpers\CurrencyHelper::extract($project->budget);
         $platformFee = $amount * 0.10;
         $netAmount = $amount - $platformFee;
         $orderId = 'SIM-' . $project->id . '-' . time();
@@ -95,7 +95,7 @@ class EscrowController extends Controller
             ], 400);
         }
 
-        $amount = (int) $project->budget;
+        $amount = (int) \App\Helpers\CurrencyHelper::extract($project->budget);
         $platformFee = $amount * 0.10;
         $netAmount = $amount - $platformFee;
         $orderId = 'SIM-' . $project->id . '-' . time();

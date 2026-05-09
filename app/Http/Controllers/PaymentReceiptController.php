@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\EscrowTransaction;
+use App\Models\User;
+use App\Notifications\EscrowPaymentReceived;
+use App\Notifications\PaymentVerified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -56,7 +59,7 @@ class PaymentReceiptController extends Controller
             $receiptPath = $request->file('receipt_image')->store('payment-receipts', 'public');
 
             // Create escrow transaction
-            $amount = (int) $project->budget;
+            $amount = (int) \App\Helpers\CurrencyHelper::extract($project->budget);
             $platformFee = $amount * 0.10;
             $netAmount = $amount - $platformFee;
 
@@ -126,7 +129,17 @@ class PaymentReceiptController extends Controller
                 ]);
 
                 $project = $escrow->project;
-                $project->update(['escrow_status' => 'held']);
+                $project->update([
+                    'status' => 'in_progress',
+                    'escrow_status' => 'held',
+                    'escrow_transaction_id' => $escrow->id
+                ]);
+
+                // Notify Creative Worker
+                $creative = User::find($project->selected_creative_id);
+                if ($creative) {
+                    $creative->notify(new EscrowPaymentReceived($project, $escrow));
+                }
 
                 Log::info('Payment receipt verified by admin', [
                     'escrow_id' => $escrow->id,
