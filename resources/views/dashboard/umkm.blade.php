@@ -100,6 +100,9 @@
                     <h2 class="font-display text-2xl font-bold text-[#1E3A8A]">Kreator Rekomendasi</h2>
                     <a href="{{ route('kreator.index') }}" class="text-[#2563EB] text-sm font-bold hover:underline">Lihat Semua</a>
                 </div>
+                <p class="text-sm text-[#1E3A8A]/60 font-medium -mt-2">
+                    Untuk hasil yang lebih personal berdasarkan data UMKM, buka <a href="{{ route('rekomendasi.kreator') }}" class="text-[#2563EB] font-bold hover:underline">Rekomendasi Kreator AI</a>.
+                </p>
 
                 <!-- Creator Card 1 -->
                 <div class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all flex flex-col md:flex-row gap-6 items-center">
@@ -217,6 +220,15 @@
                             <div>
                                 <h4 class="font-bold text-sm text-[#1E3A8A]">Progress Proyek</h4>
                                 <p class="text-xs text-[#1E3A8A]/60">Pantau apply dan update progress</p>
+                            </div>
+                        </a>
+                        <a href="{{ route('rekomendasi.kreator') }}" class="flex items-center gap-4 bg-white p-5 rounded-3xl border border-[#2563EB]/5 hover:border-[#2563EB]/20 transition-all shadow-sm group">
+                            <div class="p-3 bg-[#F5F3FF] text-[#7C3AED] rounded-2xl group-hover:scale-110 transition-transform">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m6 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-[#1E3A8A]">Rekomendasi Kreator AI</h4>
+                                <p class="text-xs text-[#1E3A8A]/60">Cocokkan UMKM dengan kreator terbaik</p>
                             </div>
                         </a>
                     </div>

@@ -1,0 +1,107 @@
+<?php
+
+return [
+    'options' => [
+        'Full Stack Developer' => [
+            'icon' => 'fa-solid fa-code',
+            'description' => 'Membangun aplikasi web end-to-end dari frontend sampai backend.',
+            'skills' => [
+                'Laravel',
+                'PHP',
+                'React.js',
+                'Next.js',
+                'Node.js',
+                'MySQL',
+                'REST API',
+            ],
+            'aliases' => [
+                'Web Developer',
+                'Frontend Developer',
+                'Backend Developer',
+                'App Developer',
+            ],
+        ],
+        'Graphic Designer' => [
+            'icon' => 'fa-solid fa-pen-nib',
+            'description' => 'Membuat visual branding, layout, dan identitas brand yang konsisten.',
+            'skills' => [
+                'Branding',
+                'Logo Design',
+                'Adobe Illustrator',
+                'Adobe Photoshop',
+                'Layout Design',
+                'Typography',
+            ],
+            'aliases' => [
+                'Desain Grafis',
+                'Illustrator',
+                'Illustration',
+                'UI/UX Designer',
+                'UI UX Designer',
+                'UI/UX Design',
+                'Product Designer',
+            ],
+        ],
+        'Video Editor' => [
+            'icon' => 'fa-solid fa-film',
+            'description' => 'Mengolah footage menjadi video yang rapi, engaging, dan siap publish.',
+            'skills' => [
+                'Video Editing',
+                'Adobe Premiere Pro',
+                'After Effects',
+                'DaVinci Resolve',
+                'Motion Graphics',
+                'Color Grading',
+            ],
+            'aliases' => [
+                'Videographer',
+                'Video Editing',
+                'Videography',
+                'Motion Graphic',
+                'Motion Graphics',
+                'Animator',
+            ],
+        ],
+        'Content Creator' => [
+            'icon' => 'fa-solid fa-camera-retro',
+            'description' => 'Menciptakan konten foto, video, dan storytelling untuk brand dan sosial media.',
+            'skills' => [
+                'Photography',
+                'Videography',
+                'Script Writing',
+                'Copywriting',
+                'Voice Over',
+                'Content Planning',
+            ],
+            'aliases' => [
+                'Creator',
+                'UGC Creator',
+                'Copywriter',
+                'Content Writer',
+                'Content Writing',
+                'Photographer',
+                'Photography',
+                'Fotografer',
+            ],
+        ],
+        'Social Media Specialist' => [
+            'icon' => 'fa-solid fa-hashtag',
+            'description' => 'Mengelola strategi, kalender konten, dan pertumbuhan social media brand.',
+            'skills' => [
+                'Content Planner',
+                'Instagram Ads',
+                'TikTok Marketing',
+                'Analytics',
+                'Community Management',
+                'Copywriting',
+            ],
+            'aliases' => [
+                'Social Media',
+                'Social Media Manager',
+                'Social Media Marketing',
+                'Brand Strategist',
+                'Brand Strategy',
+            ],
+        ],
+    ],
+];

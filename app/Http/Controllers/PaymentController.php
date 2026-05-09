@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\EscrowTransaction;
 use App\Services\CloudinaryService;
 use App\Helpers\CurrencyHelper;
 use App\Notifications\PaymentInvoiceCreated;
@@ -198,10 +199,31 @@ class PaymentController extends Controller
             $umkm->notify(new PaymentVerified($payment));
         }
 
-        // Update project status to completed
+        // Update project status to in_progress and create escrow transaction
         $project = Project::find($payment->project_id);
         if ($project) {
-            $project->update(['status' => 'completed']);
+            $amount = (int) $project->budget;
+            $platformFee = $amount * 0.10;
+            $netAmount = $amount - $platformFee;
+
+            $escrow = EscrowTransaction::create([
+                'project_id' => $project->id,
+                'payer_id' => $project->client_id,
+                'payee_id' => $project->selected_creative_id,
+                'amount' => $amount,
+                'platform_fee' => $platformFee,
+                'net_amount' => $netAmount,
+                'status' => 'held',
+                'midtrans_order_id' => 'MANUAL-' . $project->id . '-' . time(),
+                'midtrans_transaction_id' => 'MANUAL-TX-' . uniqid(),
+                'midtrans_payment_type' => 'manual_transfer',
+            ]);
+
+            $project->update([
+                'status' => 'in_progress',
+                'escrow_status' => 'held',
+                'escrow_transaction_id' => $escrow->id
+            ]);
         }
 
         Log::info("Payment verified: {$payment->_id}");

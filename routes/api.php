@@ -11,6 +11,8 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\EscrowController;
+use App\Http\Controllers\CreativeEscrowController;
+use App\Http\Controllers\ProjectApprovalController;
 
 
 Route::get('/user', function (Request $request) {
@@ -59,4 +61,15 @@ Route::middleware(['auth:api', 'throttle:usage'])->group(function () {  // Ubah 
     Route::post('/umkm/projects/{id}/approve/{applicationId}', [ProjectController::class, 'apiApproveApplication']);
     Route::delete('/umkm/projects/{id}', [ProjectController::class, 'apiDestroyProgressProject']);
     Route::post('/umkm/projects/{id}/pay', [EscrowController::class, 'apiSimulatePayment']);
+    Route::post('/umkm/projects/{id}/approve-completion', [ProjectApprovalController::class, 'approveCompletion']);
+
+    // Creative Worker Escrow & Earnings
+    Route::get('/creative/escrow', [CreativeEscrowController::class, 'index']);
+    Route::get('/creative/escrow/{id}', [CreativeEscrowController::class, 'show']);
+    Route::get('/creative/earnings', [CreativeEscrowController::class, 'earnings']);
+
+    // Admin Project Approval
+    Route::get('/admin/projects/pending-approval', [ProjectApprovalController::class, 'getPendingApproval']);
+    Route::post('/admin/projects/{id}/approve-completion', [ProjectApprovalController::class, 'adminApproveCompletion']);
+    Route::post('/admin/projects/{id}/reject-completion', [ProjectApprovalController::class, 'adminRejectCompletion']);
 });

@@ -6,6 +6,8 @@ use App\Models\Project;
 use App\Models\ProjectApplication;
 use App\Models\ProjectHistory;
 use App\Models\ProjectProgressUpdate;
+use App\Models\Payment;
+use App\Helpers\CurrencyHelper;
 use App\Notifications\ProjectApplicationApproved;
 use App\Services\CloudinaryService;
 use App\Services\ProjectArchiveService;
@@ -317,10 +319,26 @@ class ProjectController extends Controller
         $project->selected_creative_name = $application->creative_name;
         $project->selected_creative_avatar = $application->creative_avatar;
         $project->applications_count = ProjectApplication::where('project_id', $project->id)->count();
-        $project->status = (int) ($project->progress_percentage ?? 0) >= 100 ? 'completed' : 'applied';
+        $project->status = 'hired'; // Set to hired, waiting for payment
         $project->save();
 
-        return back()->with('success', 'Creative worker berhasil disetujui untuk mengerjakan proyek ini.');
+        // Create initial payment record
+        $payment = new Payment([
+            'project_id' => $project->id,
+            'client_id' => $project->client_id,
+            'client_name' => $project->client_name,
+            'client_avatar' => $project->client_avatar,
+            'amount' => CurrencyHelper::extract($project->budget),
+            'currency' => 'IDR',
+            'description' => "Pembayaran untuk proyek: {$project->title}",
+            'status' => 'pending',
+        ]);
+        
+        $payment->payment_number = $payment->generatePaymentNumber();
+        $payment->save();
+
+        // Redirect to payment show view
+        return redirect()->route('payments.show', $payment->_id)->with('success', 'Creative worker disetujui! Silakan upload resi pembayaran untuk memulai proyek.');
     }
 
     public function creativeProgress()

@@ -8,7 +8,9 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EscrowController;
 use App\Http\Controllers\AdminEscrowController;
+use App\Http\Controllers\ProjectApprovalController;
 use App\Http\Controllers\RatingController;
+use App\Http\Controllers\MlRecommendationController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ChatbotController;
@@ -66,6 +68,9 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
     Route::get('/dashboard/creative', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])->name('dashboard.admin');
+    Route::get('/penghasilan', [DashboardController::class, 'creativeEarnings'])->name('earnings.index');
+    Route::get('/rekomendasi-kreator', [MlRecommendationController::class, 'index'])->name('rekomendasi.kreator');
+    Route::post('/rekomendasi-kreator', [MlRecommendationController::class, 'store'])->name('rekomendasi.kreator.store');
 
     // Admin Management
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
@@ -97,14 +102,48 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
     Route::post('/portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
     Route::delete('/portfolio/{id}', [PortfolioController::class, 'destroy'])->name('portfolio.destroy');
-
-    // Escrow Routes
-    Route::get('/proyek/{project}/checkout', [EscrowController::class, 'checkout'])->name('escrow.checkout');
-    Route::post('/proyek/{project}/simulate', [EscrowController::class, 'simulatePayment'])->name('escrow.simulate');
     
     // Admin Escrow
     Route::get('/admin/escrow', [AdminEscrowController::class, 'index'])->name('admin.escrow.index');
-    Route::post('/admin/escrow/{escrow}/release', [AdminEscrowController::class, 'release'])->name('admin.escrow.release');
+    Route::post('/admin/escrow/{id}/release', [AdminEscrowController::class, 'release'])->name('admin.escrow.release');
+
+    // Admin Payment Verification (separate from escrow)
+    Route::get('/admin/verifikasi-resi', [PaymentVerificationController::class, 'index'])->name('admin.payment-verification.index');
+
+    // Admin Project Approvals (for completion & disbursement)
+    Route::get('/admin/project-approvals', function () {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('home')->with('error', 'Akses ditolak.');
+        }
+
+        $escrows = \App\Models\EscrowTransaction::where('status', 'held')
+            ->with(['project', 'payer', 'payee'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        $projects = $escrows
+            ->filter(fn ($escrow) => (int) ($escrow->project->progress_percentage ?? 0) >= 100)
+            ->map(function ($escrow) {
+                return (object) [
+                    'id' => (string) $escrow->project_id,
+                    'title' => $escrow->project->title ?? 'N/A',
+                    'client_name' => $escrow->payer->name ?? 'N/A',
+                    'selected_creative_name' => $escrow->payee->name ?? 'N/A',
+                    'progress_percentage' => (int) ($escrow->project->progress_percentage ?? 0),
+                    'escrow' => $escrow,
+                ];
+            })
+            ->values(); // Reset keys
+
+        $pendingCount = $projects->count();
+        $totalPending = $projects->sum(fn ($p) => (int) $p->escrow->net_amount);
+        $disburssingCount = \App\Models\EscrowTransaction::where('status', 'releasing')->count();
+
+        return view('admin.project-approvals.index', compact('projects', 'pendingCount', 'totalPending', 'disburssingCount'));
+    })->name('admin.project-approvals.index');
+
+    Route::post('/admin/projects/{id}/approve', [ProjectApprovalController::class, 'adminApproveCompletion'])->name('admin.projects.approve');
+    Route::post('/admin/projects/{id}/reject', [ProjectApprovalController::class, 'adminRejectCompletion'])->name('admin.projects.reject');
 
     // Rating Routes
     Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');

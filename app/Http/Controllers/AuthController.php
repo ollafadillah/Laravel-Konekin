@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\CreativeRoles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
@@ -28,16 +30,31 @@ class AuthController extends Controller
                 $user->update(['type' => $type]);
                 
                 if ($user->isCreativeWorker()) {
-                    return redirect()->route('onboarding');
+                    if (empty($user->creative_category)) {
+                        return redirect()->route('profile.index')->with('info', 'Silakan pilih role kreatif utama Anda di profil.');
+                    }
+
+                    return redirect()->route('dashboard.creative');
                 }
                 return redirect()->route('profile.index')->with('info', 'Silakan lengkapi profil UMKM Anda.');
             }
             
+            if ($user->isCreativeWorker()) {
+                if (empty($user->creative_category)) {
+                    return redirect()->route('profile.index')->with('info', 'Silakan pilih role kreatif utama Anda di profil.');
+                }
+
+                return redirect()->route('dashboard.creative');
+            }
+
             // Kalau sudah punya role, lempar ke dashboard
             return $user->isUMKM() ? redirect()->route('dashboard.umkm') : redirect()->route('dashboard.creative');
         }
 
-        return view('auth.register', compact('type'));
+        return view('auth.register', [
+            'type' => $type,
+            'creativeRoleOptions' => CreativeRoles::options(),
+        ]);
     }
 
     public function register(Request $request)
@@ -47,6 +64,12 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'type' => 'required|in:creative_worker,umkm',
+            'creative_category' => [
+                Rule::requiredIf(fn () => $request->input('type') === 'creative_worker'),
+                'nullable',
+                'string',
+                Rule::in(CreativeRoles::allChoices()),
+            ],
             'phone' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:255',
             'bank_name' => 'required|string|max:255',
@@ -54,11 +77,15 @@ class AuthController extends Controller
             'bank_account_name' => 'required|string|max:255',
         ]);
 
+        $creativeCategory = CreativeRoles::normalize($validated['creative_category'] ?? null);
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => strtolower($validated['email']),
             'password' => Hash::make($validated['password']),
             'type' => $validated['type'],
+            'creative_category' => $validated['type'] === 'creative_worker' ? $creativeCategory : null,
+            'onboarding_completed' => $validated['type'] === 'creative_worker' ? false : null,
             'phone' => $validated['phone'],
             'city' => $validated['city'],
             'bank_name' => $validated['bank_name'],
@@ -67,12 +94,12 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
-        
-        if ($user->isUMKM()) {
-            return redirect()->route('profile.index')->with('info', 'Pendaftaran berhasil! Yuk lengkapi profil bisnis Anda.');
+
+        if ($user->isCreativeWorker()) {
+            return redirect()->route('profile.index')->with('info', 'Pendaftaran berhasil! Silakan lengkapi profil kreatif Anda.');
         }
 
-        return redirect()->route('onboarding'); // Creative worker langsung onboarding
+        return redirect()->route('profile.index')->with('info', 'Pendaftaran berhasil! Yuk lengkapi profil bisnis Anda.');
     }
 
     public function showLogin() 
@@ -109,6 +136,10 @@ class AuthController extends Controller
                 return redirect()->route('dashboard.umkm');
             }
             
+            if ($user->isCreativeWorker() && empty($user->creative_category)) {
+                return redirect()->route('profile.index')->with('info', 'Silakan pilih role kreatif utama Anda di profil.');
+            }
+
             return redirect()->route('dashboard.creative');
         }
 
@@ -133,6 +164,12 @@ class AuthController extends Controller
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8|confirmed',
                 'type' => 'required|in:creative_worker,umkm',
+                'creative_category' => [
+                    Rule::requiredIf(fn () => $request->input('type') === 'creative_worker'),
+                    'nullable',
+                    'string',
+                    Rule::in(CreativeRoles::allChoices()),
+                ],
                 'phone' => 'nullable|string|max:20',
                 'city' => 'nullable|string|max:255',
                 'bank_name' => 'required|string|max:255',
@@ -140,11 +177,15 @@ class AuthController extends Controller
                 'bank_account_name' => 'required|string|max:255',
             ]);
 
+            $creativeCategory = CreativeRoles::normalize($validated['creative_category'] ?? null);
+
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'type' => $validated['type'],
+                'creative_category' => $validated['type'] === 'creative_worker' ? $creativeCategory : null,
+                'onboarding_completed' => $validated['type'] === 'creative_worker' ? false : null,
                 'phone' => $validated['phone'],
                 'city' => $validated['city'],
                 'bank_name' => $validated['bank_name'],
@@ -164,6 +205,7 @@ class AuthController extends Controller
                         'name' => $user->name,
                         'email' => $user->email,
                         'type' => $user->type,
+                        'creative_category' => $user->creative_category,
                         'phone' => $user->phone,
                         'city' => $user->city,
                         'bank_name' => $user->bank_name,
@@ -217,6 +259,7 @@ class AuthController extends Controller
                         'name' => $user->name,
                         'email' => $user->email,
                         'type' => $user->type,
+                        'creative_category' => $user->creative_category,
                         'phone' => $user->phone,
                         'city' => $user->city,
                     ],
@@ -283,6 +326,7 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'type' => $user->type,
+                    'creative_category' => $user->creative_category,
                     'phone' => $user->phone,
                     'city' => $user->city,
                     'bank_name' => $user->bank_name,

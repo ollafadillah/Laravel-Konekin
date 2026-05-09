@@ -44,7 +44,7 @@
                     </div>
 
                     <div>
-                        <p class="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#2563EB] mb-2">Creative Worker</p>
+                        <p class="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#2563EB] mb-2">{{ $creator->display_creative_category ?? 'Creative Worker' }}</p>
                         <h1 class="font-display text-3xl md:text-5xl font-bold text-[#1E3A8A] leading-tight">{{ $creator->name }}</h1>
                         <div class="flex flex-wrap items-center gap-3 mt-3 text-sm text-[#1E3A8A]/55 font-medium">
                             <span>{{ $creator->city ?? 'Domisili belum diatur' }}</span>
@@ -95,6 +95,14 @@
                     <p class="text-[#1E3A8A]/68 text-base leading-8 font-medium">
                         {{ $creator->bio ?? 'Kreator ini belum menambahkan bio. Namun kamu tetap bisa melihat identitas dasar dan kumpulan portfolio yang sudah mereka tampilkan di Konekin.' }}
                     </p>
+
+                    @if(!empty($creator->role_skills_preview))
+                        <div class="flex flex-wrap gap-2 mt-6">
+                            @foreach($creator->role_skills_preview as $skill)
+                                <span class="px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-[0.16em]">{{ $skill }}</span>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
 
                 <div class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm p-8">

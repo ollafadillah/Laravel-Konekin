@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pkl
+*.h5
+*.pt
+.env
+datasets/**/*.csv
+datasets/**/*.xlsx
+datasets/**/*.json
+!datasets/**/.gitkeep

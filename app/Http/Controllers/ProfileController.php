@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Services\CloudinaryService;
+use App\Support\CreativeRoles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
@@ -25,7 +27,10 @@ class ProfileController extends Controller
             ? 'profile.umkm.profile'
             : 'profile.creative.profile';
 
-        return view($view, compact('user'));
+        return view($view, [
+            'user' => $user,
+            'creativeRoleOptions' => CreativeRoles::options(),
+        ]);
     }
 
     /**
@@ -42,6 +47,12 @@ class ProfileController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'bio' => 'nullable|string|max:1000',
+            'creative_category' => [
+                Rule::requiredIf(fn () => $user->isCreativeWorker()),
+                'nullable',
+                'string',
+                Rule::in(CreativeRoles::allChoices()),
+            ],
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -51,6 +62,11 @@ class ProfileController extends Controller
         ]);
 
         $data = $request->only(['name', 'phone', 'address', 'city', 'bio', 'latitude', 'longitude', 'bank_code', 'bank_account_number', 'bank_account_name']);
+
+        if ($user->isCreativeWorker()) {
+            $data['creative_category'] = CreativeRoles::normalize($request->input('creative_category'));
+            $data['onboarding_completed'] = true;
+        }
 
         // Handle upload ke Cloudinary jika ada foto baru
         if ($request->hasFile('profile_photo')) {
@@ -97,10 +113,21 @@ class ProfileController extends Controller
                 'address' => 'nullable|string|max:255',
                 'city' => 'nullable|string|max:100',
                 'bio' => 'nullable|string|max:1000',
+                'creative_category' => [
+                    Rule::requiredIf(fn () => $request->user()->isCreativeWorker()),
+                    'nullable',
+                    'string',
+                    Rule::in(CreativeRoles::allChoices()),
+                ],
                 'latitude' => 'nullable|numeric',
                 'longitude' => 'nullable|numeric',
                 'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
+
+            if ($request->user()->isCreativeWorker()) {
+                $validated['creative_category'] = CreativeRoles::normalize($validated['creative_category'] ?? null);
+                $validated['onboarding_completed'] = true;
+            }
 
             if ($request->hasFile('profile_photo')) {
                 $validated['profile_photo'] = $cloudinary->upload($request->file('profile_photo'), [
@@ -145,6 +172,9 @@ class ProfileController extends Controller
             'latitude' => $user->latitude,
             'longitude' => $user->longitude,
             'bio' => $user->bio,
+            'creative_category' => $user->creative_category,
+            'skills' => $user->skills,
+            'onboarding_completed' => (bool) $user->onboarding_completed,
             'profile_photo' => $user->profile_photo,
             'created_at' => optional($user->created_at)?->toISOString(),
             'updated_at' => optional($user->updated_at)?->toISOString(),

@@ -24,13 +24,15 @@ class ProcessDisbursement implements ShouldQueue
 
     public function handle()
     {
-        $escrow = $this->escrow;
-        $payee = $escrow->payee; // Creative Worker
-
-        // Simulation: No real API call to Midtrans Iris
-        Log::info('Simulating disbursement for Escrow ID: ' . $escrow->id);
-
         try {
+            // Reload escrow dengan relations yang dibutuhkan
+            $escrow = EscrowTransaction::with(['project', 'payee', 'payer'])->findOrFail($this->escrow->id);
+            $payee = $escrow->payee;
+            $project = $escrow->project;
+
+            // Simulation: No real API call to Midtrans Iris
+            Log::info('Simulating disbursement for Escrow ID: ' . $escrow->id);
+
             // Mocking a short delay to simulate network call
             // usleep(500000); 
 
@@ -40,15 +42,26 @@ class ProcessDisbursement implements ShouldQueue
                 'disbursement_status' => 'completed',
             ]);
 
-            Project::where('_id', $escrow->project_id)->update(['escrow_status' => 'released']);
+            if ($project) {
+                $project->update(['escrow_status' => 'released']);
+            }
             
-            // Notify Creative Worker
-            $payee->notify(new EscrowFundsReleased($escrow->project, $escrow));
+            // Notify Creative Worker jika ada
+            if ($payee) {
+                try {
+                    $payee->notify(new EscrowFundsReleased($project, $escrow));
+                } catch (\Exception $notifyError) {
+                    Log::error('Notification Error (non-blocking): ' . $notifyError->getMessage());
+                    // Jangan stop proses disbursement hanya karena notifikasi gagal
+                }
+            }
 
             Log::info('Disbursement simulated successfully for Escrow ID: ' . $escrow->id);
         } catch (\Exception $e) {
             Log::error('Disbursement Simulation Error: ' . $e->getMessage());
-            $escrow->update(['disbursement_status' => 'error']);
+            if (isset($escrow)) {
+                $escrow->update(['disbursement_status' => 'error']);
+            }
         }
     }
 }

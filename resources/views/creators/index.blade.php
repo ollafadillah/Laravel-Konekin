@@ -29,6 +29,10 @@
     </style>
 </head>
 <body class="antialiased text-[#1E3A8A]">
+    @php
+        $creativeRoleOptions = $creativeRoleOptions ?? config('creative_roles.options', []);
+        $activeRole = $activeRole ?? request('role', request('skill', 'Semua'));
+    @endphp
     
     <!-- Navbar Selection -->
     @if(auth()->check() && auth()->user()->isUMKM())
@@ -47,21 +51,25 @@
             <p class="text-[#1E3A8A]/60 font-medium text-lg mb-8">Ribuan profesional kreatif siap membantu bisnismu naik kelas. Pilih yang paling sesuai dengan visi bisnismu.</p>
             
             <form action="{{ route('kreator.index') }}" method="GET" class="relative group">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, keahlian, atau domisili..." class="w-full px-8 py-5 rounded-[2.5rem] bg-white border-2 border-[#2563EB]/5 shadow-xl shadow-[#2563EB]/5 focus:border-[#2563EB] outline-none transition-all font-medium text-[#1E3A8A] pr-32">
+                <input type="hidden" name="role" value="{{ $activeRole }}">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, role, atau domisili..." class="w-full px-8 py-5 rounded-[2.5rem] bg-white border-2 border-[#2563EB]/5 shadow-xl shadow-[#2563EB]/5 focus:border-[#2563EB] outline-none transition-all font-medium text-[#1E3A8A] pr-32">
                 <button type="submit" class="absolute right-3 top-3 bottom-3 px-8 bg-[#2563EB] text-white rounded-full font-bold text-sm hover:bg-[#1E3A8A] transition-all">Cari</button>
             </form>
         </div>
 
-        <!-- Categories / Skills Filters -->
+        <!-- Role Filters -->
+        <div class="text-center mb-4">
+            <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#2563EB]">{{ count($creativeRoleOptions) }} kategori inti creative worker</p>
+        </div>
         <div class="flex flex-wrap justify-center gap-3 mb-12">
-            @php
-                $skills = ['Semua', 'Graphic Designer', 'Content Creator', 'Web Developer', 'Videographer', 'Copywriter', 'UI/UX Designer'];
-                $activeSkill = request('skill', 'Semua');
-            @endphp
-            @foreach($skills as $skill)
-                <a href="{{ route('kreator.index', ['skill' => $skill, 'search' => request('search')]) }}" 
-                   class="px-6 py-3 rounded-full font-bold text-sm transition-all {{ $activeSkill == $skill ? 'bg-[#1E3A8A] text-white shadow-lg shadow-[#1E3A8A]/20' : 'bg-white text-[#1E3A8A]/60 hover:bg-[#EFF6FF] border border-[#2563EB]/5' }}">
-                    {{ $skill }}
+            <a href="{{ route('kreator.index', ['role' => 'Semua', 'search' => request('search')]) }}"
+               class="px-6 py-3 rounded-full font-bold text-sm transition-all {{ $activeRole == 'Semua' ? 'bg-[#1E3A8A] text-white shadow-lg shadow-[#1E3A8A]/20' : 'bg-white text-[#1E3A8A]/60 hover:bg-[#EFF6FF] border border-[#2563EB]/5' }}">
+                Semua Role
+            </a>
+            @foreach($creativeRoleOptions as $label => $role)
+                <a href="{{ route('kreator.index', ['role' => $label, 'search' => request('search')]) }}"
+                   class="px-6 py-3 rounded-full font-bold text-sm transition-all {{ $activeRole == $label ? 'bg-[#1E3A8A] text-white shadow-lg shadow-[#1E3A8A]/20' : 'bg-white text-[#1E3A8A]/60 hover:bg-[#EFF6FF] border border-[#2563EB]/5' }}">
+                    {{ $label }}
                 </a>
             @endforeach
         </div>
@@ -78,7 +86,7 @@
                         <div>
                             <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors">{{ $creator->name }}</h3>
                             <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xs font-bold text-[#2563EB] uppercase tracking-wider">Graphic Designer</span>
+                                <span class="text-xs font-bold text-[#2563EB] uppercase tracking-wider">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
                                 <span class="w-1 h-1 bg-[#1E3A8A]/20 rounded-full"></span>
                                 <span class="text-xs font-medium text-[#1E3A8A]/40">{{ $creator->city ?? 'Domisili tidak diatur' }}</span>
                             </div>
@@ -88,9 +96,11 @@
                     <!-- Skills & Stats -->
                     <div class="flex-grow">
                         <div class="flex flex-wrap gap-2 mb-6">
-                            <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">Branding</span>
-                            <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">Logo Design</span>
-                            <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">+3</span>
+                            @forelse(($creator->role_skills_preview ?? []) as $skill)
+                                <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $skill }}</span>
+                            @empty
+                                <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold tracking-widest rounded-full">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
+                            @endforelse
                         </div>
                         
                         <p class="text-[#1E3A8A]/60 text-sm mb-8 line-clamp-2 font-medium leading-relaxed">
@@ -115,8 +125,8 @@
                     <!-- Action Footer -->
                     <div class="pt-6 border-t border-[#2563EB]/5 flex items-center justify-between mt-auto gap-4">
                         <div class="flex flex-col">
-                            <span class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase">Mulai dari</span>
-                            <span class="text-[#1E3A8A] font-display font-bold">Rp 350rb</span>
+                            <span class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase">Role</span>
+                            <span class="text-[#1E3A8A] font-display font-bold">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
                         </div>
                         <div class="flex gap-2">
                             <button class="p-3 bg-[#EFF6FF] text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-xl transition-all" title="Simpan">

@@ -29,6 +29,10 @@
     </style>
 </head>
 <body class="antialiased text-[#1E3A8A]">
+    @php
+        $creativeRoleOptions = $creativeRoleOptions ?? config('creative_roles.options', []);
+        $selectedCreativeCategory = old('creative_category', \App\Support\CreativeRoles::normalize($user->creative_category));
+    @endphp
     
     <!-- Navbar -->
     <x-dashboard-nav />
@@ -51,6 +55,13 @@
             <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 <span class="font-bold text-sm">{{ session('error') }}</span>
+            </div>
+        @endif
+
+        @if(session('info'))
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-2xl flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 18h.01M12 6h.01" /></svg>
+                <span class="font-bold text-sm">{{ session('info') }}</span>
             </div>
         @endif
 
@@ -80,6 +91,35 @@
                 @error('profile_photo')
                     <p class="text-red-500 text-xs mt-2 font-bold">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <!-- Creative Role Section -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm space-y-6">
+                <div class="flex items-center justify-between border-b border-[#2563EB]/5 pb-4">
+                    <h3 class="text-xl font-display font-bold text-[#1E3A8A]">Role Kreatif Utama</h3>
+                    <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] rounded-full text-[10px] font-black uppercase tracking-widest">Visible di pencarian</span>
+                </div>
+
+                <p class="text-sm text-[#1E3A8A]/60 font-medium">
+                    Pilih role yang paling menggambarkan spesialisasimu. Role ini akan tampil saat UMKM mencari kreator di halaman <a href="{{ route('kreator.index') }}" class="text-[#2563EB] font-bold hover:underline">Cari Kreator</a>.
+                </p>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Role Kreatif</label>
+                    <select
+                        name="creative_category"
+                        class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] focus:ring-4 focus:ring-[#2563EB]/5 outline-none transition-all font-medium text-[#1E3A8A] @error('creative_category') border-red-500 @enderror"
+                        required
+                    >
+                        <option value="" disabled {{ $selectedCreativeCategory ? '' : 'selected' }}>Pilih role kreatif utama</option>
+                        @foreach($creativeRoleOptions as $label => $role)
+                            <option value="{{ $label }}" {{ $selectedCreativeCategory === $label ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('creative_category') <p class="text-red-500 text-[10px] font-bold mt-1">{{ $message }}</p> @enderror
+                </div>
             </div>
 
             <!-- General Info Section -->

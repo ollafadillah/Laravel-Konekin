@@ -163,6 +163,18 @@
                     </p>
                 </div>
 
+                <div class="rounded-3xl border border-[#2563EB]/10 bg-gradient-to-r from-white to-[#F8FAFC] p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                    <div>
+                        <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2563EB] mb-2">Rekomendasi Kreator AI</p>
+                        <p class="text-sm text-[#1E3A8A]/70 font-medium leading-7 max-w-2xl">
+                            Belum yakin siapa creative worker yang paling cocok? Buka halaman rekomendasi AI untuk mencocokkan data UMKM dengan kreator terbaik dari model machine learning.
+                        </p>
+                    </div>
+                    <a href="{{ route('rekomendasi.kreator') }}" class="inline-flex items-center justify-center px-6 py-4 rounded-2xl bg-[#2563EB] text-white font-bold text-sm hover:bg-[#1E3A8A] transition-all shadow-lg shadow-[#2563EB]/20 shrink-0">
+                        Buka Rekomendasi
+                    </a>
+                </div>
+
                 <!-- Submit Button -->
                 <button type="submit" class="w-full py-5 bg-[#1E3A8A] text-white rounded-2xl font-bold text-lg hover:bg-[#2563EB] transition-all shadow-xl shadow-[#1E3A8A]/10 active:scale-[0.98]">
                     Publikasikan Proyek Sekarang
