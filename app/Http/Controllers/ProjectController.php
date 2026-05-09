@@ -974,7 +974,7 @@ class ProjectController extends Controller
         $progress = (int) ($project->progress_percentage ?? 0);
         $status = $project->status ?? 'open';
 
-        if ($count === 0) {
+        if ($count === 0 && empty($project->selected_creative_id)) {
             $progress = 0;
             $status = 'open';
         } elseif ($progress >= 100) {
@@ -1050,5 +1050,37 @@ class ProjectController extends Controller
             'created_at' => isset($project->created_at) && $project->created_at ? $project->created_at->toISOString() : null,
             'updated_at' => isset($project->updated_at) && $project->updated_at ? $project->updated_at->toISOString() : null,
         ];
+    }
+    public function acceptInvitation($id)
+    {
+        $user = auth()->user();
+        $project = Project::where('selected_creative_id', $user->id)
+            ->where('status', 'waiting_confirmation')
+            ->findOrFail($id);
+
+        $project->update([
+            'status' => 'hired',
+        ]);
+
+        return redirect()->route('dashboard.creative')
+            ->with('success', 'Selamat! Kamu telah menerima proyek: ' . $project->title . '. Tunggu UMKM melakukan pembayaran escrow sebelum mulai bekerja.');
+    }
+
+    public function rejectInvitation($id)
+    {
+        $user = auth()->user();
+        $project = Project::where('selected_creative_id', $user->id)
+            ->where('status', 'waiting_confirmation')
+            ->findOrFail($id);
+
+        $project->update([
+            'status' => 'open',
+            'selected_creative_id' => null,
+            'selected_creative_name' => null,
+            'selected_creative_avatar' => null,
+        ]);
+
+        return redirect()->route('dashboard.creative')
+            ->with('success', 'Kamu telah menolak tawaran proyek: ' . $project->title);
     }
 }

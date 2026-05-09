@@ -49,9 +49,15 @@ class DashboardController extends Controller
         $averageRating = $user->average_rating;
         $recentRatings = $user->recentRatings(5)->get();
 
+        $invitations = Project::where('selected_creative_id', $user->id)
+            ->where('status', 'waiting_confirmation')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('dashboard.creative', [
             'user' => $user,
             'latestProjects' => $latestProjects,
+            'invitations' => $invitations,
             'activeProjectsCount' => Project::where('selected_creative_id', $user->id)->where('status', 'in_progress')->count(),
             'completedProjectsCount' => $user->completed_projects_count,
             'averageRating' => $averageRating,

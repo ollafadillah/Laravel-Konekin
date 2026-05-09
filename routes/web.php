@@ -73,6 +73,7 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/penghasilan', [DashboardController::class, 'creativeEarnings'])->name('earnings.index');
     Route::get('/rekomendasi-kreator', [MlRecommendationController::class, 'index'])->name('rekomendasi.kreator');
     Route::post('/rekomendasi-kreator', [MlRecommendationController::class, 'store'])->name('rekomendasi.kreator.store');
+    Route::post('/rekomendasi-kreator/hire', [MlRecommendationController::class, 'hire'])->name('rekomendasi.kreator.hire');
 
     // Admin Management
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
@@ -94,6 +95,8 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::post('/proyek', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/proyek/{id}', [ProjectController::class, 'show'])->name('projects.show');
     Route::post('/proyek/{id}/apply', [ProjectController::class, 'apply'])->name('projects.apply');
+    Route::post('/proyek/{id}/accept', [ProjectController::class, 'acceptInvitation'])->name('projects.accept');
+    Route::post('/proyek/{id}/reject', [ProjectController::class, 'rejectInvitation'])->name('projects.reject');
     Route::get('/progress-proyek', [ProjectController::class, 'progress'])->name('projects.progress');
     Route::post('/progress-proyek/{id}/approve/{applicationId}', [ProjectController::class, 'approveApplication'])->name('projects.progress.approve');
     Route::delete('/progress-proyek/{id}', [ProjectController::class, 'destroyProgressProject'])->name('projects.progress.destroy');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Project;
 use App\Services\MlRecommendationService;
 use App\Support\CreativeRoles;
 use Illuminate\Http\Request;
@@ -20,13 +21,40 @@ class MlRecommendationController extends Controller
             return redirect()->route('home')->with('error', 'Hanya UMKM yang dapat mengakses rekomendasi kreator AI.');
         }
 
+        $projects = Project::where('client_id', $user->id)
+            ->whereIn('status', ['open', 'hired'])
+            ->get();
+
         return view('recommendations.creative-workers', [
             'user' => $user,
             'serviceStatus' => $this->safeServiceStatus($service),
             'formOptions' => $this->formOptions(),
             'formValues' => $this->defaultFormValues(),
             'recommendationResult' => session('recommendation_result'),
+            'projects' => $projects,
         ]);
+    }
+
+    public function hire(Request $request)
+    {
+        $request->validate([
+            'project_id' => 'required|string',
+            'creative_id' => 'required|string',
+        ]);
+
+        $project = Project::where('client_id', auth()->id())->findOrFail($request->project_id);
+        $creative = User::where('type', 'creative_worker')->findOrFail($request->creative_id);
+
+        $project->update([
+            'selected_creative_id' => $creative->id,
+            'selected_creative_name' => $creative->name,
+            'selected_creative_avatar' => $creative->profile_photo,
+            'status' => 'waiting_confirmation',
+            'escrow_status' => 'pending',
+        ]);
+
+        return redirect()->route('dashboard.umkm')
+            ->with('success', 'Undangan kerja sama telah dikirim ke ' . $creative->name . '. Silakan tunggu konfirmasi dari Kreator sebelum melanjutkan ke pembayaran.');
     }
 
     public function store(Request $request, MlRecommendationService $service)
@@ -225,7 +253,7 @@ class MlRecommendationController extends Controller
     private function enrichRecommendation(array $item): array
     {
         $matchedUser = $this->resolveCreativeWorker($item);
-        $id = (string) data_get($item, 'id', data_get($matchedUser, 'id', ''));
+        $id = $matchedUser ? (string) $matchedUser->id : (string) data_get($item, 'id', '');
         $name = data_get($matchedUser, 'name', data_get($item, 'full_name', 'Creative Worker'));
         $role = $matchedUser
             ? CreativeRoles::display($matchedUser->creative_category)

@@ -96,6 +96,42 @@
             
             <!-- Recommended Creators (Left 2/3) -->
             <div class="lg:col-span-2 space-y-6">
+                <!-- Hiring Status Section -->
+                @php
+                    $hiringProjects = $projects->filter(fn($p) => in_array($p->status, ['waiting_confirmation', 'hired']));
+                @endphp
+
+                @if($hiringProjects->isNotEmpty())
+                    <div class="space-y-4 mb-10">
+                        <h2 class="font-display text-2xl font-bold text-[#1E3A8A]">Status Kerja Sama</h2>
+                        @foreach($hiringProjects as $project)
+                            <div class="bg-white p-6 rounded-[2.5rem] border-2 {{ $project->status === 'hired' ? 'border-green-200 bg-green-50/30' : 'border-[#2563EB]/10' }} shadow-sm flex flex-col md:flex-row gap-6 items-center">
+                                <div class="flex-grow text-center md:text-left">
+                                    <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
+                                        @if($project->status === 'waiting_confirmation')
+                                            <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-full animate-pulse">Menunggu Konfirmasi Kreator</span>
+                                        @else
+                                            <span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-full">Undangan Diterima</span>
+                                        @endif
+                                    </div>
+                                    <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-1">{{ $project->title }}</h4>
+                                    <p class="text-sm text-[#1E3A8A]/60 font-medium">Kreator: <span class="font-bold text-[#1E3A8A]">{{ $project->selected_creative_name }}</span></p>
+                                </div>
+                                <div class="shrink-0">
+                                    @if($project->status === 'hired')
+                                        <form action="{{ route('payments.generate', $project->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="px-8 py-3 bg-[#1E3A8A] text-white text-sm font-bold rounded-2xl hover:bg-[#2563EB] transition-all shadow-lg shadow-[#1E3A8A]/20">Bayar Sekarang</button>
+                                        </form>
+                                    @else
+                                        <span class="px-6 py-3 bg-slate-100 text-slate-400 text-sm font-bold rounded-2xl cursor-not-allowed">Menunggu...</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
                 <div class="flex justify-between items-center">
                     <h2 class="font-display text-2xl font-bold text-[#1E3A8A]">Kreator Rekomendasi</h2>
                     <a href="{{ route('kreator.index') }}" class="text-[#2563EB] text-sm font-bold hover:underline">Lihat Semua</a>

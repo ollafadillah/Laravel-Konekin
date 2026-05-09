@@ -45,6 +45,7 @@
         $recommendationResult = $recommendationResult ?? session('recommendation_result');
         $serviceStatus = $serviceStatus ?? ['available' => false, 'models_loaded' => false, 'artifacts_ready' => false, 'message' => 'Flask ML service belum aktif.'];
         $formValues = $formValues ?? [];
+        $projects = $projects ?? collect([]);
     @endphp
 
     <main class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -414,14 +415,14 @@
 
                                     <div class="flex items-center gap-3 shrink-0">
                                         @if($worker['profile_url'])
-                                            <a href="{{ $worker['profile_url'] }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all shadow-lg shadow-[#1E3A8A]/10">
+                                            <a href="{{ $worker['profile_url'] }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-slate-100 text-[#1E3A8A] font-bold text-sm hover:bg-slate-200 transition-all">
                                                 Lihat Profil
                                             </a>
-                                        @else
-                                            <span class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-slate-100 text-slate-500 font-bold text-sm">
-                                                Profil belum terhubung
-                                            </span>
                                         @endif
+
+                                        <button onclick="openHireModal('{{ $worker['id'] }}', '{{ $worker['full_name'] }}')" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all shadow-lg shadow-[#1E3A8A]/10">
+                                            Hire Now
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -463,6 +464,64 @@
         </div>
     </footer>
 
+    <!-- Hire Modal -->
+    <div id="hireModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-[#1E3A8A]/40 backdrop-blur-sm" onclick="closeHireModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg p-4">
+            <div class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-[#2563EB]/10">
+                <div class="p-8">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#2563EB] mb-2">Hiring Process</p>
+                            <h3 class="text-2xl font-display font-bold text-[#1E3A8A]">Hire <span id="modalWorkerName"></span></h3>
+                        </div>
+                        <button onclick="closeHireModal()" class="text-slate-400 hover:text-[#1E3A8A] transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    @if($projects->isEmpty())
+                        <div class="p-6 bg-amber-50 rounded-2xl border border-amber-100 mb-6">
+                            <p class="text-sm text-amber-700 font-medium leading-relaxed">
+                                Kamu belum memiliki proyek yang aktif. Silakan buat proyek terlebih dahulu untuk bisa melakukan proses hiring.
+                            </p>
+                            <a href="{{ route('projects.create') }}" class="inline-block mt-4 text-[#2563EB] font-bold text-sm underline">Buat Proyek Sekarang</a>
+                        </div>
+                    @else
+                        <form action="{{ route('rekomendasi.kreator.hire') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="creative_id" id="modalCreativeId">
+                            
+                            <div class="space-y-4 mb-8">
+                                <label class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Pilih Proyek Kamu</label>
+                                <div class="grid grid-cols-1 gap-3">
+                                    @foreach($projects as $project)
+                                        <label class="relative flex items-center p-4 rounded-2xl border-2 border-slate-100 hover:border-[#2563EB]/30 cursor-pointer transition-all has-[:checked]:border-[#2563EB] has-[:checked]:bg-blue-50">
+                                            <input type="radio" name="project_id" value="{{ $project->id }}" class="sr-only" required>
+                                            <div class="flex-grow">
+                                                <p class="font-bold text-[#1E3A8A]">{{ $project->title }}</p>
+                                                <p class="text-xs text-[#1E3A8A]/60 font-medium">Budget: Rp {{ number_format($project->budget, 0, ',', '.') }}</p>
+                                            </div>
+                                            <div class="w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center ml-4 group-has-[:checked]:border-[#2563EB]">
+                                                <div class="w-2.5 h-2.5 rounded-full bg-[#2563EB] scale-0 transition-transform duration-200"></div>
+                                            </div>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full py-4 bg-[#1E3A8A] text-white rounded-2xl font-bold hover:bg-[#2563EB] transition-all shadow-xl shadow-[#1E3A8A]/10">
+                                Konfirmasi & Lanjut ke Pembayaran
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function formatMoneyValue(value) {
             const digits = value.replace(/\D/g, '');
@@ -479,6 +538,19 @@
                 this.value = formatMoneyValue(this.value);
             });
         });
+
+        // Modal Functions
+        function openHireModal(id, name) {
+            document.getElementById('modalCreativeId').value = id;
+            document.getElementById('modalWorkerName').innerText = name;
+            document.getElementById('hireModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeHireModal() {
+            document.getElementById('hireModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
     </script>
 </body>
 </html>
