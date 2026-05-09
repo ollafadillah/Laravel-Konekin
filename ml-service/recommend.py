@@ -229,7 +229,7 @@ class Recommender:
         query = self.get_skill_query(cluster_id)
 
         # 3. Cosine similarity
-        recs, cluster_id = self._score_and_filter(
+        cluster_id, recs = self._score_and_filter(
             query=query,
             top_n=top_n,
             min_budget=min_budget,

@@ -235,11 +235,13 @@ class UMKMPreprocessor:
             if not (c in seen or seen.add(c))
         ]
 
-        X = df[feature_cols].fillna(0).values
+        X = df[feature_cols].fillna(0)
 
         if fit:
             self.scaler = StandardScaler()
             X_scaled = self.scaler.fit_transform(X)
+            # Ensure feature names are stored even if sklearn version is old
+            self.scaler.feature_names_in_ = np.array(feature_cols)
             joblib.dump(self.scaler, SCALER_UMKM_PATH)
             logger.info(f"[UMKM] Scaler fitted & saved → {SCALER_UMKM_PATH}")
         else:
