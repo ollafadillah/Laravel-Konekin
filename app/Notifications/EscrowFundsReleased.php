@@ -4,14 +4,11 @@ namespace App\Notifications;
 
 use App\Models\Project;
 use App\Models\EscrowTransaction;
-use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class EscrowFundsReleased extends Notification
 {
-    use Queueable;
-
     protected $project;
     protected $transaction;
 
@@ -23,7 +20,7 @@ class EscrowFundsReleased extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -37,14 +34,5 @@ class EscrowFundsReleased extends Notification
             ->line('Dana akan sampai di rekening Anda sesuai dengan waktu proses bank.')
             ->action('Lihat Detail Proyek', route('projects.show', $this->project->id))
             ->line('Terima kasih atas kerja keras Anda!');
-    }
-
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'project_id' => $this->project->id,
-            'title' => 'Dana Escrow Dicairkan',
-            'message' => 'Dana untuk proyek ' . $this->project->title . ' telah dikirim ke rekening Anda.',
-        ];
     }
 }

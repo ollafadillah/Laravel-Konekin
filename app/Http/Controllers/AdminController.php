@@ -119,4 +119,45 @@ class AdminController extends Controller
 
         return view('admin.jobs.index', compact('activeProjects'));
     }
+
+    public function payments(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('home')->with('error', 'Akses ditolak.');
+        }
+
+        $status = $request->query('status', 'paid');
+        $query = \App\Models\Payment::query();
+
+        if ($status === 'paid') {
+            // Payments waiting for verification (paid but not verified)
+            $query->where('status', 'paid')->whereNull('verified_at');
+        } elseif ($status === 'verified') {
+            // Verified payments
+            $query->where('status', 'paid')->whereNotNull('verified_at');
+        } elseif ($status === 'failed') {
+            // Rejected payments
+            $query->where('status', 'failed');
+        }
+
+        $payments = $query->with('project')->orderBy('created_at', 'desc')->get();
+
+        // Get counts for tabs
+        $pendingCount = \App\Models\Payment::where('status', 'paid')->whereNull('verified_at')->count();
+        $verifiedCount = \App\Models\Payment::where('status', 'paid')->whereNotNull('verified_at')->count();
+        $rejectedCount = \App\Models\Payment::where('status', 'failed')->count();
+
+        return view('admin.payments.index', compact('payments', 'pendingCount', 'verifiedCount', 'rejectedCount', 'status'));
+    }
+
+    public function paymentDetail($paymentId)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response('Akses ditolak.', 403);
+        }
+
+        $payment = \App\Models\Payment::with('project')->findOrFail($paymentId);
+
+        return view('admin.payments.detail-content', compact('payment'));
+    }
 }

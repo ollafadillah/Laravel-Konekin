@@ -72,6 +72,9 @@ class AuthController extends Controller
             ],
             'phone' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:255',
+            'bank_name' => 'required|string|max:255',
+            'bank_account_number' => 'required|string|max:255',
+            'bank_account_name' => 'required|string|max:255',
         ]);
 
         $creativeCategory = CreativeRoles::normalize($validated['creative_category'] ?? null);
@@ -85,6 +88,9 @@ class AuthController extends Controller
             'onboarding_completed' => $validated['type'] === 'creative_worker' ? false : null,
             'phone' => $validated['phone'],
             'city' => $validated['city'],
+            'bank_name' => $validated['bank_name'],
+            'bank_account_number' => $validated['bank_account_number'],
+            'bank_account_name' => $validated['bank_account_name'],
         ]);
 
         Auth::login($user);
@@ -166,6 +172,9 @@ class AuthController extends Controller
                 ],
                 'phone' => 'nullable|string|max:20',
                 'city' => 'nullable|string|max:255',
+                'bank_name' => 'required|string|max:255',
+                'bank_account_number' => 'required|string|max:255',
+                'bank_account_name' => 'required|string|max:255',
             ]);
 
             $creativeCategory = CreativeRoles::normalize($validated['creative_category'] ?? null);
@@ -179,6 +188,9 @@ class AuthController extends Controller
                 'onboarding_completed' => $validated['type'] === 'creative_worker' ? false : null,
                 'phone' => $validated['phone'],
                 'city' => $validated['city'],
+                'bank_name' => $validated['bank_name'],
+                'bank_account_number' => $validated['bank_account_number'],
+                'bank_account_name' => $validated['bank_account_name'],
             ]);
 
             // Generate JWT token untuk user yang baru registrasi
@@ -196,6 +208,9 @@ class AuthController extends Controller
                         'creative_category' => $user->creative_category,
                         'phone' => $user->phone,
                         'city' => $user->city,
+                        'bank_name' => $user->bank_name,
+                        'bank_account_number' => $user->bank_account_number,
+                        'bank_account_name' => $user->bank_account_name,
                     ],
                     'token' => $token,
                     'token_type' => 'bearer',
@@ -314,6 +329,9 @@ class AuthController extends Controller
                     'creative_category' => $user->creative_category,
                     'phone' => $user->phone,
                     'city' => $user->city,
+                    'bank_name' => $user->bank_name,
+                    'bank_account_number' => $user->bank_account_number,
+                    'bank_account_name' => $user->bank_account_name,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
                 ]

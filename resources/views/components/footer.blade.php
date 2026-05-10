@@ -7,7 +7,9 @@
             <span class="font-bold text-lg text-slate-800">Konekin</span>
         </div>
         <p class="text-sm">© {{ date('Y') }} Konekin. Hak Cipta Dilindungi.</p>
-        <div class="flex space-x-4">
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="{{ route('terms-conditions') }}" class="text-slate-400 hover:text-indigo-600 transition-colors text-sm">Syarat & Ketentuan</a>
+            <a href="{{ route('privacy-policy') }}" class="text-slate-400 hover:text-indigo-600 transition-colors text-sm">Kebijakan Privasi</a>
             <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors">Twitter</a>
             <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors">Instagram</a>
             <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors">LinkedIn</a>

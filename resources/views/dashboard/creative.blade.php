@@ -103,6 +103,52 @@
             </button>
         </div>
 
+        <!-- Invitations Section -->
+        @if(isset($invitations) && $invitations->isNotEmpty())
+            <div class="mb-12">
+                <h2 class="font-display text-2xl font-bold text-[#1E3A8A] mb-6 flex items-center gap-3">
+                    Undangan Proyek Baru 
+                    <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-lg">PENTING</span>
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @foreach($invitations as $invitation)
+                        <div class="bg-gradient-to-br from-white to-[#EFF6FF] p-6 rounded-[2.5rem] border-2 border-[#2563EB]/20 shadow-xl shadow-[#2563EB]/5 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4">
+                                <span class="px-3 py-1 bg-[#2563EB] text-white text-[10px] font-extrabold uppercase tracking-widest rounded-full">Undangan</span>
+                            </div>
+                            <div class="flex items-start gap-4 mb-6">
+                                <img src="{{ $invitation->client_avatar ?? 'https://ui-avatars.com/api/?name='.urlencode($invitation->client_name).'&background=2563EB&color=fff' }}" class="w-14 h-14 rounded-2xl shadow-md border-2 border-white">
+                                <div>
+                                    <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-1">{{ $invitation->title }}</h4>
+                                    <p class="text-sm text-[#1E3A8A]/60 font-medium">Dari: <span class="font-bold text-[#1E3A8A]">{{ $invitation->client_name }}</span></p>
+                                </div>
+                            </div>
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-center gap-2 text-sm font-medium text-[#1E3A8A]/70">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Budget: <span class="font-bold text-[#1E3A8A]">Rp {{ number_format($invitation->budget, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm font-medium text-[#1E3A8A]/70">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
+                                    Deadline: <span class="font-bold text-[#1E3A8A]">{{ \Illuminate\Support\Carbon::parse($invitation->deadline)->translatedFormat('d M Y') }}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <form action="{{ route('projects.accept', $invitation->id) }}" method="POST" class="flex-1">
+                                    @csrf
+                                    <button type="submit" class="w-full py-3 bg-[#1E3A8A] text-white rounded-2xl text-xs font-extrabold uppercase tracking-wider hover:bg-[#2563EB] transition-all shadow-lg shadow-[#1E3A8A]/10">Terima</button>
+                                </form>
+                                <form action="{{ route('projects.reject', $invitation->id) }}" method="POST" class="flex-1">
+                                    @csrf
+                                    <button type="submit" class="w-full py-3 bg-white text-red-500 border border-red-100 rounded-2xl text-xs font-extrabold uppercase tracking-wider hover:bg-red-50 transition-all">Tolak</button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <!-- Content Sections -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             

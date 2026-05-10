@@ -108,6 +108,28 @@
                             </div>
                         </div>
                     </a>
+                    <a href="{{ route('admin.payment-verification.index') }}" class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 hover:border-[#2563EB]/20 shadow-sm hover:shadow-xl transition-all cursor-pointer group">
+                        <div class="flex items-center gap-4">
+                            <div class="p-4 bg-[#FEF3C7] rounded-3xl group-hover:bg-[#F59E0B] group-hover:text-white transition-all text-[#F59E0B]">
+                                <i class="fas fa-file-check text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-[#1E3A8A]">Verifikasi Resi Pembayaran</h4>
+                                <p class="text-sm text-[#1E3A8A]/60">Periksa bukti pembayaran UMKM</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a href="{{ route('admin.escrow.index') }}" class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 hover:border-[#2563EB]/20 shadow-sm hover:shadow-xl transition-all cursor-pointer group">
+                        <div class="flex items-center gap-4">
+                            <div class="p-4 bg-[#DBEAFE] rounded-3xl group-hover:bg-[#3B82F6] group-hover:text-white transition-all text-[#3B82F6]">
+                                <i class="fas fa-check-double text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-[#1E3A8A]">Escrow & Pencairan Dana</h4>
+                                <p class="text-sm text-[#1E3A8A]/60">Kelola dan cairkan dana ke kreator</p>
+                            </div>
+                        </div>
+                    </a>
                     <div class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 hover:border-[#2563EB]/20 shadow-sm hover:shadow-xl transition-all cursor-pointer group">
                         <div class="flex items-center gap-4">
                             <div class="p-4 bg-[#EFF6FF] rounded-3xl group-hover:bg-[#2563EB] group-hover:text-white transition-all text-[#2563EB]">

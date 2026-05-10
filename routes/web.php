@@ -8,11 +8,14 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EscrowController;
 use App\Http\Controllers\AdminEscrowController;
+use App\Http\Controllers\ProjectApprovalController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\MlRecommendationController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\PaymentVerificationController;
+use App\Http\Controllers\PaymentReceiptController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
@@ -21,6 +24,7 @@ Route::get('/', function () {
 })->name('home');
 
 use App\Http\Controllers\CreatorController;
+use App\Http\Controllers\PaymentController;
 
 // Halaman Cari Kreator
 Route::get('/kreator', [CreatorController::class, 'index'])->name('kreator.index');
@@ -32,6 +36,16 @@ Route::get('/umkm', [ProjectController::class, 'publicIndex'])->name('umkm.index
 Route::get('/tentang-kami', function () {
     return view('about');
 })->name('about');
+
+// Halaman Syarat dan Ketentuan
+Route::get('/syarat-ketentuan', function () {
+    return view('terms-conditions');
+})->name('terms-conditions');
+
+// Halaman Kebijakan Privasi
+Route::get('/kebijakan-privasi', function () {
+    return view('privacy-policy');
+})->name('privacy-policy');
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
@@ -56,8 +70,10 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
     Route::get('/dashboard/creative', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])->name('dashboard.admin');
+    Route::get('/penghasilan', [DashboardController::class, 'creativeEarnings'])->name('earnings.index');
     Route::get('/rekomendasi-kreator', [MlRecommendationController::class, 'index'])->name('rekomendasi.kreator');
     Route::post('/rekomendasi-kreator', [MlRecommendationController::class, 'store'])->name('rekomendasi.kreator.store');
+    Route::post('/rekomendasi-kreator/hire', [MlRecommendationController::class, 'hire'])->name('rekomendasi.kreator.hire');
 
     // Admin Management
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
@@ -79,6 +95,8 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::post('/proyek', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/proyek/{id}', [ProjectController::class, 'show'])->name('projects.show');
     Route::post('/proyek/{id}/apply', [ProjectController::class, 'apply'])->name('projects.apply');
+    Route::post('/proyek/{id}/accept', [ProjectController::class, 'acceptInvitation'])->name('projects.accept');
+    Route::post('/proyek/{id}/reject', [ProjectController::class, 'rejectInvitation'])->name('projects.reject');
     Route::get('/progress-proyek', [ProjectController::class, 'progress'])->name('projects.progress');
     Route::post('/progress-proyek/{id}/approve/{applicationId}', [ProjectController::class, 'approveApplication'])->name('projects.progress.approve');
     Route::delete('/progress-proyek/{id}', [ProjectController::class, 'destroyProgressProject'])->name('projects.progress.destroy');
@@ -89,14 +107,49 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
     Route::post('/portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
     Route::delete('/portfolio/{id}', [PortfolioController::class, 'destroy'])->name('portfolio.destroy');
-
-    // Escrow Routes
-    Route::get('/proyek/{project}/checkout', [EscrowController::class, 'checkout'])->name('escrow.checkout');
-    Route::post('/proyek/{project}/simulate', [EscrowController::class, 'simulatePayment'])->name('escrow.simulate');
     
     // Admin Escrow
     Route::get('/admin/escrow', [AdminEscrowController::class, 'index'])->name('admin.escrow.index');
-    Route::post('/admin/escrow/{escrow}/release', [AdminEscrowController::class, 'release'])->name('admin.escrow.release');
+    Route::post('/admin/escrow/{id}/release', [AdminEscrowController::class, 'release'])->name('admin.escrow.release');
+
+    // Admin Payment Verification (separate from escrow)
+    Route::get('/admin/verifikasi-resi', [PaymentVerificationController::class, 'index'])->name('admin.payment-verification.index');
+    Route::post('/admin/verifikasi-resi/{escrowId}', [PaymentReceiptController::class, 'adminVerify'])->name('admin.payment.verify');
+
+    // Admin Project Approvals (for completion & disbursement)
+    Route::get('/admin/project-approvals', function () {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('home')->with('error', 'Akses ditolak.');
+        }
+
+        $escrows = \App\Models\EscrowTransaction::where('status', 'held')
+            ->with(['project', 'payer', 'payee'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        $projects = $escrows
+            ->filter(fn ($escrow) => (int) ($escrow->project->progress_percentage ?? 0) >= 100)
+            ->map(function ($escrow) {
+                return (object) [
+                    'id' => (string) $escrow->project_id,
+                    'title' => $escrow->project->title ?? 'N/A',
+                    'client_name' => $escrow->payer->name ?? 'N/A',
+                    'selected_creative_name' => $escrow->payee->name ?? 'N/A',
+                    'progress_percentage' => (int) ($escrow->project->progress_percentage ?? 0),
+                    'escrow' => $escrow,
+                ];
+            })
+            ->values(); // Reset keys
+
+        $pendingCount = $projects->count();
+        $totalPending = $projects->sum(fn ($p) => (int) $p->escrow->net_amount);
+        $disburssingCount = \App\Models\EscrowTransaction::where('status', 'releasing')->count();
+
+        return view('admin.project-approvals.index', compact('projects', 'pendingCount', 'totalPending', 'disburssingCount'));
+    })->name('admin.project-approvals.index');
+
+    Route::post('/admin/projects/{id}/approve', [ProjectApprovalController::class, 'adminApproveCompletion'])->name('admin.projects.approve');
+    Route::post('/admin/projects/{id}/reject', [ProjectApprovalController::class, 'adminRejectCompletion'])->name('admin.projects.reject');
 
     // Rating Routes
     Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');
@@ -104,6 +157,20 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     // Onboarding Routes
     Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+
+    // Payment Routes
+    Route::get('/pembayaran', [PaymentController::class, 'index'])->name('payments.index');
+    Route::post('/proyek/{projectId}/pembayaran/buat', [PaymentController::class, 'generatePayment'])->name('payments.generate');
+    Route::get('/pembayaran/{paymentId}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::post('/pembayaran/{paymentId}/bukti-upload', [PaymentController::class, 'uploadProof'])->name('payments.upload-proof');
+    Route::post('/pembayaran/{paymentId}/batalkan', [PaymentController::class, 'cancel'])->name('payments.cancel');
+    
+    // Admin Payment Routes
+    Route::get('/admin/pembayaran', [AdminController::class, 'payments'])->name('admin.payments.index');
+    Route::get('/admin/pembayaran/{paymentId}/detail', [AdminController::class, 'paymentDetail'])->name('admin.payments.detail');
+    Route::post('/admin/pembayaran/{paymentId}/verifikasi', [PaymentController::class, 'verify'])->name('admin.payments.verify');
+    Route::post('/admin/pembayaran/{paymentId}/tolak', [PaymentController::class, 'reject'])->name('admin.payments.reject');
+
 });
 
 // Chatbot Route

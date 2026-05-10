@@ -6,6 +6,8 @@ use App\Models\Project;
 use App\Models\ProjectApplication;
 use App\Models\ProjectHistory;
 use App\Models\ProjectProgressUpdate;
+use App\Models\Payment;
+use App\Helpers\CurrencyHelper;
 use App\Notifications\ProjectApplicationApproved;
 use App\Services\CloudinaryService;
 use App\Services\ProjectArchiveService;
@@ -317,10 +319,26 @@ class ProjectController extends Controller
         $project->selected_creative_name = $application->creative_name;
         $project->selected_creative_avatar = $application->creative_avatar;
         $project->applications_count = ProjectApplication::where('project_id', $project->id)->count();
-        $project->status = (int) ($project->progress_percentage ?? 0) >= 100 ? 'completed' : 'applied';
+        $project->status = 'hired'; // Set to hired, waiting for payment
         $project->save();
 
-        return back()->with('success', 'Creative worker berhasil disetujui untuk mengerjakan proyek ini.');
+        // Create initial payment record
+        $payment = new Payment([
+            'project_id' => $project->id,
+            'client_id' => $project->client_id,
+            'client_name' => $project->client_name,
+            'client_avatar' => $project->client_avatar,
+            'amount' => CurrencyHelper::extract($project->budget),
+            'currency' => 'IDR',
+            'description' => "Pembayaran untuk proyek: {$project->title}",
+            'status' => 'pending',
+        ]);
+        
+        $payment->payment_number = $payment->generatePaymentNumber();
+        $payment->save();
+
+        // Redirect to payment show view
+        return redirect()->route('payments.show', $payment->_id)->with('success', 'Creative worker disetujui! Silakan upload resi pembayaran untuk memulai proyek.');
     }
 
     public function creativeProgress()
@@ -956,7 +974,7 @@ class ProjectController extends Controller
         $progress = (int) ($project->progress_percentage ?? 0);
         $status = $project->status ?? 'open';
 
-        if ($count === 0) {
+        if ($count === 0 && empty($project->selected_creative_id)) {
             $progress = 0;
             $status = 'open';
         } elseif ($progress >= 100) {
@@ -1032,5 +1050,37 @@ class ProjectController extends Controller
             'created_at' => isset($project->created_at) && $project->created_at ? $project->created_at->toISOString() : null,
             'updated_at' => isset($project->updated_at) && $project->updated_at ? $project->updated_at->toISOString() : null,
         ];
+    }
+    public function acceptInvitation($id)
+    {
+        $user = auth()->user();
+        $project = Project::where('selected_creative_id', $user->id)
+            ->where('status', 'waiting_confirmation')
+            ->findOrFail($id);
+
+        $project->update([
+            'status' => 'hired',
+        ]);
+
+        return redirect()->route('dashboard.creative')
+            ->with('success', 'Selamat! Kamu telah menerima proyek: ' . $project->title . '. Tunggu UMKM melakukan pembayaran escrow sebelum mulai bekerja.');
+    }
+
+    public function rejectInvitation($id)
+    {
+        $user = auth()->user();
+        $project = Project::where('selected_creative_id', $user->id)
+            ->where('status', 'waiting_confirmation')
+            ->findOrFail($id);
+
+        $project->update([
+            'status' => 'open',
+            'selected_creative_id' => null,
+            'selected_creative_name' => null,
+            'selected_creative_avatar' => null,
+        ]);
+
+        return redirect()->route('dashboard.creative')
+            ->with('success', 'Kamu telah menolak tawaran proyek: ' . $project->title);
     }
 }

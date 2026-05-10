@@ -153,6 +153,17 @@
                                     <button type="submit" class="w-full py-3 bg-white text-[#1E3A8A] rounded-xl text-xs font-extrabold uppercase tracking-widest hover:bg-[#EFF6FF] transition-all shadow-lg">Kirim Rating</button>
                                 </form>
                             </div>
+                            @elseif($project->status !== 'completed' && $project->progress_percentage >= 100)
+                            <div class="rounded-[2.5rem] bg-amber-50 border border-amber-200 p-6 text-amber-800">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <p class="text-xs font-extrabold uppercase tracking-widest">Menunggu Admin</p>
+                                </div>
+                                <p class="text-sm font-medium">Proyek sudah 100% selesai! Admin sedang memproses pencairan dana. Rating akan tersedia setelah admin menyetujui pembayaran. Refresh halaman dalam beberapa saat.</p>
+                                <button type="button" onclick="location.reload()" class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700 transition-all">
+                                    <i class="fas fa-sync mr-2"></i>Refresh Halaman
+                                </button>
+                            </div>
                             @elseif($project->is_rated ?? false)
                             <div class="rounded-[2.5rem] bg-green-50 border border-green-200 p-6 text-green-800">
                                 <div class="flex items-center gap-2 mb-2">
@@ -162,6 +173,8 @@
                                 <p class="text-sm font-medium">Terima kasih! Kamu sudah memberikan feedback untuk creative worker ini. Proyek akan muncul di history setelah halaman ini diperbarui.</p>
                             </div>
                             @endif
+
+
                         </div>
                     </div>
 

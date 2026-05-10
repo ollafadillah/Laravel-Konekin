@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectApplication;
+use App\Models\EscrowTransaction;
 use App\Support\CreativeRoles;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -48,9 +49,15 @@ class DashboardController extends Controller
         $averageRating = $user->average_rating;
         $recentRatings = $user->recentRatings(5)->get();
 
+        $invitations = Project::where('selected_creative_id', $user->id)
+            ->where('status', 'waiting_confirmation')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('dashboard.creative', [
             'user' => $user,
             'latestProjects' => $latestProjects,
+            'invitations' => $invitations,
             'activeProjectsCount' => Project::where('selected_creative_id', $user->id)->where('status', 'in_progress')->count(),
             'completedProjectsCount' => $user->completed_projects_count,
             'averageRating' => $averageRating,
@@ -205,6 +212,33 @@ class DashboardController extends Controller
         ], 200);
     }
 
+    public function creativeEarnings()
+    {
+        $user = auth()->user();
+
+        if (!$user->isCreativeWorker()) {
+            return redirect()->route('home')->with('error', 'Hanya creative worker yang dapat melihat penghasilan.');
+        }
+
+        $transactions = EscrowTransaction::where('payee_id', $user->id)
+            ->with(['project', 'payer'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $totalEarned = $transactions->where('status', 'released')->sum('net_amount');
+        $pendingApproval = $transactions->where('status', 'held')->sum('net_amount');
+        $inDisbursement = $transactions->where('status', 'releasing')->sum('net_amount');
+        $releasedCount = $transactions->where('status', 'released')->count();
+
+        return view('earnings.index', compact(
+            'transactions',
+            'totalEarned',
+            'pendingApproval',
+            'inDisbursement',
+            'releasedCount'
+        ));
+    }
+
     public function apiUpdateProfile(Request $request)
     {
         $user = auth()->user();
@@ -221,6 +255,9 @@ class DashboardController extends Controller
                 'string',
                 Rule::in(CreativeRoles::allChoices()),
             ],
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
         ]);
 
         if ($user->isCreativeWorker()) {
@@ -241,6 +278,9 @@ class DashboardController extends Controller
                     'address' => $user->address,
                     'city' => $user->city,
                     'bio' => $user->bio,
+                    'bank_name' => $user->bank_name,
+                    'bank_account_number' => $user->bank_account_number,
+                    'bank_account_name' => $user->bank_account_name,
                 ]
             ]
         ], 200);
