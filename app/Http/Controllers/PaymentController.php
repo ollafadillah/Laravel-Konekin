@@ -11,6 +11,8 @@ use App\Helpers\CurrencyHelper;
 use App\Notifications\PaymentInvoiceCreated;
 use App\Notifications\PaymentProofSubmitted;
 use App\Notifications\PaymentVerified;
+use App\Notifications\PaymentApproved;
+use App\Notifications\PaymentApprovedToCreative;
 use App\Notifications\PaymentRejected;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -193,14 +195,16 @@ class PaymentController extends Controller
             'verified_by' => auth()->id(),
         ]);
 
+        // Get project for notification
+        $project = Project::find($payment->project_id);
+
         // Send notification to UMKM
         $umkm = User::find($payment->client_id);
-        if ($umkm) {
-            $umkm->notify(new PaymentVerified($payment));
+        if ($umkm && $project) {
+            $umkm->notify(new PaymentApproved($payment, $project));
         }
 
         // Update project status to in_progress and create escrow transaction
-        $project = Project::find($payment->project_id);
         if ($project) {
             $amount = (int) CurrencyHelper::extract($project->budget);
             $platformFee = $amount * 0.10;
@@ -229,6 +233,7 @@ class PaymentController extends Controller
             $creative = User::find($project->selected_creative_id);
             if ($creative) {
                 $creative->notify(new \App\Notifications\EscrowPaymentReceived($project, $escrow));
+                $creative->notify(new PaymentApprovedToCreative($payment, $project));
             }
         }
 

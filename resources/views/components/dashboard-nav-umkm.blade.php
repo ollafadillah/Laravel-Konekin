@@ -42,6 +42,36 @@
                             return $p;
                         });
                     $overdueCount = $overdueProjects->count();
+
+                    // Query payment notifications dari database
+                    $notificationsDataUmkm = \Illuminate\Support\Facades\DB::connection('mongodb')
+                        ->getCollection('notifications')
+                        ->find([
+                            'notifiable_id' => (string) auth()->id(),
+                            'type' => 'App\Notifications\PaymentApproved'
+                        ], ['sort' => ['created_at' => -1], 'limit' => 5])
+                        ->toArray();
+
+                    $paymentNotifications = collect($notificationsDataUmkm)
+                        ->map(function ($notification) {
+                            $data = $notification['data'] ?? [];
+                            
+                            return (object) [
+                                'id' => (string) ($notification['_id'] ?? ''),
+                                'type' => 'payment',
+                                'title' => 'Pembayaran Disetujui',
+                                'message' => $data['message'] ?? 'Pembayaran telah disetujui oleh admin. Dana masuk ke escrow.',
+                                'project_title' => $data['project_title'] ?? 'Proyek',
+                                'timestamp' => $notification['created_at'] ?? now(),
+                                'level' => 'success',
+                                'action_url' => route('payments.show', $data['payment_id'] ?? '') ?: route('dashboard.umkm'),
+                                'payment_id' => $data['payment_id'] ?? '',
+                            ];
+                        })
+                        ->values();
+
+                    $allNotifications = $overdueProjects->concat($paymentNotifications)->values();
+                    $totalNotificationCount = $allNotifications->count();
                 @endphp
 
                 <div class="relative" id="notif-wrapper">
@@ -53,7 +83,7 @@
                             <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                 <span class="relative inline-flex items-center justify-center rounded-full h-5 w-5 bg-red-500 text-[10px] font-bold text-white border-2 border-white">
-                                    {{ $overdueCount }}
+                                    {{ $totalNotificationCount }}
                                 </span>
                             </span>
                         @endif
@@ -65,23 +95,38 @@
                         
                         <div class="p-5 border-b border-slate-50 flex items-center justify-between">
                             <h3 class="font-display font-bold text-[#1E3A8A]">Notifikasi</h3>
-                            <span class="px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-black uppercase tracking-widest">{{ $overdueCount }} Baru</span>
+                            <span class="px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-black uppercase tracking-widest">{{ $totalNotificationCount }} Baru</span>
                         </div>
 
                         <div class="max-h-96 overflow-y-auto">
-                            @forelse($overdueProjects as $project)
-                                <a href="{{ route('projects.progress') }}#project-{{ $project->id }}" class="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
-                                    <div class="flex items-start gap-4">
-                                        <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 shadow-sm border border-slate-200/50">
-                                            <img src="{{ $project->thumbnail }}" alt="{{ $project->title }}" class="w-full h-full object-cover">
+                            @forelse($allNotifications as $notification)
+                                @if($notification->type === 'payment')
+                                    <a href="{{ $notification->action_url }}" class="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100 overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
+                                                <i class="fas fa-check-circle text-lg text-green-500"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] font-black uppercase tracking-widest text-green-600 mb-0.5">✓ {{ $notification->title }}</p>
+                                                <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">{{ $notification->project_title }}</p>
+                                                <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">{{ $notification->message }}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-red-500 mb-0.5">Terlambat</p>
-                                            <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">{{ $project->title }}</p>
-                                            <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">{{ $project->reason }}</p>
+                                    </a>
+                                @else
+                                    <a href="{{ route('projects.progress') }}#project-{{ $notification->id }}" class="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
+                                        <div class="flex items-start gap-4">
+                                            <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 shadow-sm border border-slate-200/50">
+                                                <img src="{{ $notification->thumbnail }}" alt="{{ $notification->title }}" class="w-full h-full object-cover">
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] font-black uppercase tracking-widest text-red-500 mb-0.5">Terlambat</p>
+                                                <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">{{ $notification->title }}</p>
+                                                <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">{{ $notification->reason }}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </a>
+                                    </a>
+                                @endif
                             @empty
                                 <div class="p-10 text-center">
                                     <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
@@ -92,7 +137,7 @@
                             @endforelse
                         </div>
 
-                        @if($overdueCount > 0)
+                        @if($totalNotificationCount > 0)
                             <a href="{{ route('projects.progress') }}" class="block p-4 text-center text-xs font-bold text-[#2563EB] bg-slate-50 hover:bg-[#EFF6FF] transition-all">
                                 Lihat Semua Progress Proyek
                             </a>

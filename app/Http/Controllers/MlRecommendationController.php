@@ -116,6 +116,54 @@ class MlRecommendationController extends Controller
         }
     }
 
+    public function apiRecommend(Request $request, MlRecommendationService $service)
+    {
+        $user = auth()->user();
+
+        if (! $user->isUMKM()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya UMKM yang dapat mengakses rekomendasi kreator AI.',
+            ], 403);
+        }
+
+        try {
+            $payload = [
+                'full_name' => $request->input('full_name', $user->name),
+                'job_category' => $request->input('job_category'),
+                'expected_price_range' => $this->parseMoney($request->input('expected_price_range', '0')),
+                'experience_level' => (int) $request->input('experience_level'),
+                'avg_rating' => (float) $request->input('avg_rating', 0),
+                'total_projects' => (int) $request->input('total_projects', 0),
+                'skills' => $request->input('skills', ''),
+            ];
+
+            $response = $service->getRecommendations($payload);
+            
+            if (! $response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mendapatkan rekomendasi dari sistem AI.',
+                    'debug' => $response->json(),
+                ], 500);
+            }
+
+            $result = $this->buildResult($response->json(), $payload);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rekomendasi berhasil didapatkan.',
+                'data' => $result,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     private function safeServiceStatus(MlRecommendationService $service): array
     {
         try {

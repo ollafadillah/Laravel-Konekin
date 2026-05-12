@@ -91,8 +91,42 @@
                         ->filter()
                         ->values();
 
+                    // Query payment notifications dari database notifications
+                    $notificationsData = \Illuminate\Support\Facades\DB::connection('mongodb')
+                        ->getCollection('notifications')
+                        ->find([
+                            'notifiable_id' => (string) $user->id,
+                            'type' => ['$in' => ['App\Notifications\PaymentApproved', 'App\Notifications\PaymentApprovedToCreative']]
+                        ], ['sort' => ['created_at' => -1], 'limit' => 5])
+                        ->toArray();
+
+                    $paymentNotifications = collect($notificationsData)
+                        ->map(function ($notification) {
+                            $data = $notification['data'] ?? [];
+                            $notificationType = $notification['type'] ?? '';
+                            
+                            $title = str_contains($notificationType, 'Creative') 
+                                ? 'Pembayaran Disetujui (Creative)' 
+                                : 'Pembayaran Disetujui';
+                            
+                            $message = $data['message'] ?? 'Pembayaran telah disetujui oleh admin.';
+
+                            return (object) [
+                                'id' => (string) ($notification['_id'] ?? ''),
+                                'type' => 'payment',
+                                'title' => $title,
+                                'message' => $message,
+                                'project_title' => $data['project_title'] ?? 'Proyek',
+                                'timestamp' => $notification['created_at'] ?? now(),
+                                'level' => 'success',
+                                'action_url' => route('payments.show', $data['payment_id'] ?? '') ?: route('dashboard.creative'),
+                            ];
+                        })
+                        ->values();
+
                     $creativeNotifications = $approvalNotifications
                         ->concat($deadlineNotifications)
+                        ->concat($paymentNotifications)
                         ->sortByDesc(fn ($item) => optional($item->timestamp)->timestamp ?? now()->timestamp)
                         ->values();
 

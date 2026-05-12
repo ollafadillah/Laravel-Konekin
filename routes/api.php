@@ -62,6 +62,7 @@ Route::middleware(['auth:api', 'throttle:usage'])->group(function () {  // Ubah 
     Route::delete('/umkm/projects/{id}', [ProjectController::class, 'apiDestroyProgressProject']);
     Route::post('/umkm/projects/{id}/pay', [EscrowController::class, 'apiSimulatePayment']);
     Route::post('/umkm/projects/{id}/approve-completion', [ProjectApprovalController::class, 'approveCompletion']);
+    Route::post('/rekomendasi-ai', [MlRecommendationController::class, 'apiRecommend']);
 
     // Creative Worker Escrow & Earnings
     Route::get('/creative/escrow', [CreativeEscrowController::class, 'index']);
