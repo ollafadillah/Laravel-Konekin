@@ -8,22 +8,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; }
         .font-display { font-family: 'Space Grotesk', sans-serif; }
-        .glass { background: rgba(255,255,255,.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.3); }
     </style>
 </head>
 <body class="antialiased text-[#1E3A8A]">
     <x-dashboard-nav-umkm />
 
     <main class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-        <div class="max-w-3xl">
-            <h1 class="font-display text-4xl font-bold text-[#1E3A8A] mb-4">Progress Proyek UMKM</h1>
-            <p class="text-[#1E3A8A]/60 font-medium text-lg">Pantau proyek yang sudah dipublikasikan, pilih creative worker terbaik, lalu lihat update progress kerja yang mereka kirimkan.</p>
-        </div>
+        <header class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div class="max-w-3xl">
+                <p class="text-[11px] font-black uppercase tracking-[0.22em] text-[#2563EB] mb-3">Workspace UMKM</p>
+                <h1 class="font-display text-4xl md:text-5xl font-bold text-[#1E3A8A] mb-4">Progress Proyek</h1>
+                <p class="text-[#1E3A8A]/62 font-medium text-lg leading-8">Kelola pelamar, pantau draft, amankan pembayaran escrow, lalu approve hasil akhir dengan alur yang jelas.</p>
+            </div>
+            <a href="{{ route('projects.create') }}" class="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all">
+                <i class="fas fa-plus"></i>
+                Publikasikan Proyek
+            </a>
+        </header>
 
         @if(session('success'))
             <div class="p-4 bg-green-50 border border-green-200 text-green-700 rounded-2xl font-bold text-sm">{{ session('success') }}</div>
@@ -31,228 +38,292 @@
         @if(session('error'))
             <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl font-bold text-sm">{{ session('error') }}</div>
         @endif
+        @if ($errors->any())
+            <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm">
+                <p class="font-bold mb-2">Ada input yang perlu dicek:</p>
+                <ul class="list-disc pl-5 space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         @forelse($projects as $project)
-            <section id="project-{{ $project->id }}" class="bg-white rounded-[3rem] border border-[#2563EB]/5 shadow-sm overflow-hidden scroll-mt-32">
-                <div class="p-8 md:p-10 border-b border-[#2563EB]/5">
-                    
+            @php
+                $status = $project->status ?? 'open';
+                $escrowStatus = $project->escrow_status ?? 'unpaid';
+                $progress = (int) ($project->progress_percentage ?? 0);
+                $applicationsCount = $project->applications->count();
+                $hasWorker = !empty($project->selected_creative_id);
+                $payment = $project->payment ?? null;
+                $isAwaitingPayment = $hasWorker && $progress >= 100 && !in_array($escrowStatus, ['held', 'released', 'disputed'], true);
+                $isReadyForReview = $escrowStatus === 'held' && $progress >= 100 && $status === 'ready_for_review';
+                $stage = !$hasWorker ? 1 : ($progress < 100 ? 2 : ($isAwaitingPayment ? 3 : (in_array($status, ['ready_for_review', 'revision', 'disputed'], true) ? 4 : (in_array($status, ['pending_admin_approval', 'completed'], true) ? 5 : 3))));
+                $steps = [
+                    ['title' => 'Pilih Worker', 'note' => 'Review pelamar'],
+                    ['title' => 'Draft 100%', 'note' => 'Tunggu progress'],
+                    ['title' => 'Bayar Escrow', 'note' => 'VA + bukti'],
+                    ['title' => 'Review Hasil', 'note' => 'Approve/revisi'],
+                    ['title' => 'Admin Release', 'note' => 'Cair/refund'],
+                ];
+            @endphp
+
+            <section id="project-{{ $project->id }}" class="scroll-mt-32 bg-white border border-[#2563EB]/8 rounded-[2rem] shadow-sm overflow-hidden">
+                <div class="p-6 md:p-8 border-b border-[#2563EB]/8">
                     @if($project->is_overdue)
-                        <div class="mb-8 p-6 bg-red-50 border-2 border-red-100 rounded-[2.5rem] flex items-start gap-5 animate-pulse">
-                            <div class="w-12 h-12 rounded-2xl bg-red-500 text-white flex items-center justify-center shrink-0 shadow-xl shadow-red-200">
-                                <i class="fas fa-exclamation-triangle text-xl"></i>
-                            </div>
-                            <div class="flex-grow">
-                                <div class="flex items-center justify-between gap-4 mb-2">
-                                    <p class="text-[10px] font-black uppercase tracking-[0.25em] text-red-500">Notifikasi Keterlambatan Proyek</p>
-                                    <span class="px-3 py-1 rounded-full bg-red-100 text-red-600 text-[9px] font-black uppercase tracking-widest">Sangat Penting</span>
+                        <div class="mb-6 p-5 rounded-2xl bg-red-50 border border-red-200 text-red-800">
+                            <div class="flex items-start gap-4">
+                                <div class="w-11 h-11 rounded-2xl bg-red-600 text-white flex items-center justify-center shrink-0">
+                                    <i class="fas fa-triangle-exclamation"></i>
                                 </div>
-                                <p class="text-base font-bold text-red-800 leading-relaxed">{{ $project->overdue_reason }}</p>
-                                <p class="text-xs text-red-600/70 font-medium mt-2 italic">*Silakan hubungi tim support kami atau buat proyek baru jika diperlukan.</p>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-red-500 mb-1">Keterlambatan Proyek</p>
+                                    <p class="font-bold leading-7">{{ $project->overdue_reason }}</p>
+                                </div>
                             </div>
                         </div>
                     @endif
-                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                        <div class="flex gap-5">
-                            <div class="w-24 h-24 rounded-[1.8rem] overflow-hidden bg-slate-100 shrink-0">
+
+                    <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+                        <div class="flex gap-5 min-w-0">
+                            <div class="w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
                                 @if(($project->media_type ?? null) === 'video' && !empty($project->media_url))
                                     <video src="{{ $project->media_url }}" class="w-full h-full object-cover" muted playsinline></video>
                                 @else
                                     <img src="{{ $project->thumbnail }}" alt="{{ $project->title }}" class="w-full h-full object-cover">
                                 @endif
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <div class="flex flex-wrap gap-2 mb-3">
-                                    <span class="px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest">{{ $project->category }}</span>
-                                    <span class="px-4 py-2 rounded-full bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest">{{ strtoupper($project->status_label ?? str_replace('_', ' ', $project->status ?? 'open')) }}</span>
-                                    @if(!empty($project->media_url))
-                                        <span class="px-4 py-2 rounded-full bg-white border border-[#2563EB]/10 text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest">
-                                            {{ ($project->media_type ?? 'image') === 'video' ? 'Video Brief' : 'Foto Brief' }}
-                                        </span>
+                                    <span class="px-3 py-1.5 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-black uppercase tracking-widest">{{ $project->category }}</span>
+                                    <span class="px-3 py-1.5 rounded-full bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-black uppercase tracking-widest">{{ $project->status_label }}</span>
+                                    <span class="px-3 py-1.5 rounded-full bg-white border border-[#2563EB]/10 text-[#1E3A8A]/60 text-[10px] font-black uppercase tracking-widest">{{ $applicationsCount }} apply</span>
+                                </div>
+                                <h2 class="font-display text-2xl md:text-3xl font-bold text-[#1E3A8A] leading-tight">{{ $project->title }}</h2>
+                                <p class="mt-3 text-sm text-[#1E3A8A]/62 font-medium leading-7">{{ \Illuminate\Support\Str::limit($project->description, 220) }}</p>
+                                <div class="mt-4 flex flex-wrap items-center gap-3 text-xs font-bold text-[#1E3A8A]/55">
+                                    <span><i class="fas fa-calendar mr-1 text-[#2563EB]"></i> Deadline {{ \Illuminate\Support\Carbon::parse($project->deadline)->translatedFormat('d M Y') }}</span>
+                                    <span><i class="fas fa-wallet mr-1 text-[#10B981]"></i> Rp {{ $project->budget }}</span>
+                                    @if(!empty($project->selected_creative_name))
+                                        <span><i class="fas fa-user-check mr-1 text-[#7C3AED]"></i> {{ $project->selected_creative_name }}</span>
                                     @endif
                                 </div>
-                                <h2 class="font-display text-2xl md:text-3xl font-bold text-[#1E3A8A] mb-2">{{ $project->title }}</h2>
-                                <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7 max-w-3xl">{{ $project->description }}</p>
-                                <p class="text-sm text-[#2563EB] font-medium mt-3">{{ $project->progress_summary }}</p>
-                                <p class="text-sm text-[#1E3A8A]/55 font-medium mt-2">Deadline: {{ \Illuminate\Support\Carbon::parse($project->deadline)->translatedFormat('d M Y') }}</p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 lg:w-[260px]">
-                            <div class="rounded-[1.6rem] bg-[#F8FAFC] border border-[#2563EB]/10 p-4 text-center">
-                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Apply</p>
-                                <p class="font-display text-2xl font-bold text-[#1E3A8A]">{{ $project->applications->count() }}</p>
+                        <div class="rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#1E3A8A]/45">Progress</p>
+                                <p class="font-display text-3xl font-bold text-[#2563EB]">{{ $progress }}%</p>
                             </div>
-                            <div class="rounded-[1.6rem] bg-[#F8FAFC] border border-[#2563EB]/10 p-4 text-center">
-                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-1">Progress</p>
-                                <p class="font-display text-2xl font-bold text-[#2563EB]">{{ $project->progress_percentage ?? 0 }}%</p>
+                            <div class="h-3 rounded-full bg-white overflow-hidden border border-[#2563EB]/10">
+                                <div class="h-full bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B]" style="width: {{ $progress }}%"></div>
                             </div>
+                            <p class="mt-3 text-xs text-[#1E3A8A]/60 font-medium leading-6">{{ $project->progress_summary }}</p>
                         </div>
                     </div>
 
-                    @if(($project->applications->count() ?? 0) === 0 && empty($project->selected_creative_id) && ($project->status ?? 'open') !== 'completed')
-                        <div class="mt-6 inline-flex items-center gap-3 rounded-full bg-amber-50 border border-amber-200 px-4 py-2 text-amber-700 text-[11px] font-extrabold uppercase tracking-[0.16em]">
-                            <i class="fas fa-circle-info"></i>
-                            Proyek ini belum menerima apply, jadi bisa dihapus bila memang sudah tidak dibutuhkan.
-                            <button type="button" class="ml-2 px-3 py-1.5 rounded-full bg-amber-600 text-white hover:bg-amber-700 transition-all" onclick="openDeleteModal(@js($project->id), @js($project->title))">
-                                Hapus Proyek
-                            </button>
-                        </div>
-                    @endif
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-5 gap-3">
+                        @foreach($steps as $index => $step)
+                            @php
+                                $stepNumber = $index + 1;
+                                $stateClass = $stepNumber < $stage
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                    : ($stepNumber === $stage ? 'bg-[#EFF6FF] border-[#2563EB] text-[#1E3A8A]' : 'bg-slate-50 border-slate-200 text-slate-400');
+                            @endphp
+                            <div class="rounded-2xl border p-4 {{ $stateClass }}">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-white/80 flex items-center justify-center text-xs font-black">{{ $stepNumber }}</div>
+                                    <div>
+                                        <p class="text-xs font-black uppercase tracking-wider">{{ $step['title'] }}</p>
+                                        <p class="text-[11px] font-semibold opacity-75 mt-0.5">{{ $step['note'] }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 xl:grid-cols-[0.7fr_1.3fr] gap-0">
-                    <div class="p-8 md:p-10 border-b xl:border-b-0 xl:border-r border-[#2563EB]/5">
-                        <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2563EB] mb-4">Ringkasan Proyek</p>
-                        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-4">
-                            <div class="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#0A66C2]" style="width: {{ $project->progress_percentage ?? 0 }}%"></div>
-                        </div>
-                        @if(!empty($project->media_url))
-                            <a href="{{ $project->media_url }}" target="_blank" class="mb-4 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#EFF6FF] text-[#2563EB] text-xs font-bold hover:bg-[#2563EB] hover:text-white transition-all">
-                                {{ ($project->media_type ?? 'image') === 'video' ? 'Buka Video Referensi' : 'Buka Foto Referensi' }}
-                            </a>
-                        @endif
-                        <div class="space-y-4">
-                            <div class="rounded-[1.6rem] bg-[#F8FAFC] border border-[#2563EB]/10 p-5">
-                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-2">Creative Worker Terpilih</p>
-                                @if(!empty($project->selected_creative_name))
-                                    <div class="flex items-center gap-3">
-                                        <img src="{{ $project->selected_creative_avatar }}" alt="{{ $project->selected_creative_name }}" class="w-12 h-12 rounded-2xl object-cover">
-                                        <div>
-                                            <p class="font-bold text-[#1E3A8A]">{{ $project->selected_creative_name }}</p>
-                                            <p class="text-xs text-[#2563EB] font-bold uppercase tracking-[0.16em] mt-1">Sudah Disetujui</p>
-                                        </div>
-                                    </div>
-                                @else
-                                    <p class="text-sm text-[#1E3A8A]/60 font-medium">Belum ada creative worker yang disetujui. Pilih salah satu pelamar di daftar sebelah kanan.</p>
-                                @endif
-                            </div>
-                            <div class="rounded-[1.6rem] bg-[#F8FAFC] border border-[#2563EB]/10 p-5">
-                                <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-2">Catatan Monitoring</p>
-                                <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7">UMKM sekarang hanya memantau progres kerja, melihat file update dari creative worker, dan menyetujui pelamar yang dipilih. Pengubahan angka progress dilakukan dari sisi creative worker.</p>
-                            </div>
+                <div class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-0">
+                    <aside class="p-6 md:p-8 bg-[#FBFDFF] border-b xl:border-b-0 xl:border-r border-[#2563EB]/8 space-y-5">
+                        <div class="rounded-2xl bg-white border border-[#2563EB]/8 p-5">
+                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB] mb-3">Aksi Berikutnya</p>
 
-                            @if($project->status === 'completed' && !($project->is_rated ?? false))
-                            <div class="rounded-[2.5rem] bg-gradient-to-br from-[#2563EB] to-[#1E3A8A] p-6 text-white shadow-xl shadow-[#2563EB]/20">
-                                <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/70 mb-3">Feedback Proyek</p>
-                                <h4 class="text-xl font-display font-bold mb-4">Beri Rating {{ strtok($project->selected_creative_name, ' ') }}</h4>
+                            @if(!$hasWorker && $applicationsCount > 0)
+                                <h3 class="font-display text-xl font-bold mb-2">Pilih creative worker</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 leading-7 mb-4">Buka proposal pelamar, cek kecocokan, lalu setujui satu creative worker untuk mulai kerja.</p>
+                            @elseif(!$hasWorker)
+                                <h3 class="font-display text-xl font-bold mb-2">Menunggu apply</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 leading-7">Proyek belum punya pelamar. Jika belum dibutuhkan, proyek masih bisa dihapus.</p>
+                                <button type="button" class="mt-4 w-full rounded-2xl bg-amber-600 px-5 py-3 text-white text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all" onclick="openDeleteModal(@js($project->id), @js($project->title))">
+                                    Hapus Proyek
+                                </button>
+                            @elseif($progress < 100)
+                                <h3 class="font-display text-xl font-bold mb-2">Pantau pengerjaan</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 leading-7">Creative worker sedang mengirim update. Pembayaran escrow akan diminta setelah draft mencapai 100%.</p>
+                            @elseif($isAwaitingPayment)
+                                <h3 class="font-display text-xl font-bold mb-2">Amankan dana escrow</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 leading-7 mb-4">UMKM wajib membayar setelah draft 100%. Dana ditahan platform, bukan langsung cair ke creative worker.</p>
+                                @if($payment && $payment->status === 'pending')
+                                    <a href="{{ route('payments.show', $payment->_id) }}" class="w-full inline-flex justify-center rounded-2xl bg-amber-600 px-5 py-4 text-white text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all">Buka VA & Upload Bukti</a>
+                                @elseif($payment && $payment->isAwaitingVerification())
+                                    <a href="{{ route('payments.show', $payment->_id) }}" class="w-full inline-flex justify-center rounded-2xl bg-amber-600 px-5 py-4 text-white text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all">Lihat Verifikasi Bukti</a>
+                                @else
+                                    <form action="{{ route('payments.generate', $project->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="w-full rounded-2xl bg-amber-600 px-5 py-4 text-white text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all">Generate VA Escrow</button>
+                                    </form>
+                                @endif
+                            @elseif($isReadyForReview)
+                                <h3 class="font-display text-xl font-bold mb-2">Review hasil akhir</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 leading-7 mb-4">Dana sudah ditahan platform. Setujui jika puas, minta revisi jika masih kurang, atau ajukan dispute jika buntu.</p>
+                                <div class="space-y-3">
+                                    <form action="{{ route('projects.progress.approve-completion', $project->id) }}" method="POST" onsubmit="return confirm('Setujui proyek selesai dan ajukan pencairan dana ke admin?')">
+                                        @csrf
+                                        <button type="submit" class="w-full rounded-2xl bg-[#10B981] px-5 py-4 text-white text-xs font-black uppercase tracking-widest hover:bg-[#059669] transition-all">Setuju, Proyek Selesai</button>
+                                    </form>
+                                    <button type="button" onclick="openRevisionModal(@js($project->id), @js($project->title))" class="w-full rounded-2xl bg-[#EFF6FF] px-5 py-4 text-[#2563EB] text-xs font-black uppercase tracking-widest hover:bg-blue-100 transition-all">Minta Revisi</button>
+                                    <button type="button" onclick="openDisputeModal(@js($project->id), @js($project->title))" class="w-full rounded-2xl bg-red-600 px-5 py-4 text-white text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all">Ajukan Dispute</button>
+                                </div>
+                            @elseif($status === 'revision')
+                                <h3 class="font-display text-xl font-bold mb-2">Revisi berjalan</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 leading-7">Permintaan revisi sudah dikirim. Dana tetap ditahan platform sampai revisi disetujui.</p>
+                                @if(!empty($project->revision_reason))
+                                    <p class="mt-3 rounded-xl bg-[#EFF6FF] p-3 text-xs font-bold text-[#1E3A8A]/70">{{ $project->revision_reason }}</p>
+                                @endif
+                            @elseif($status === 'disputed')
+                                <h3 class="font-display text-xl font-bold mb-2 text-red-700">Dispute aktif</h3>
+                                <p class="text-sm text-red-700/80 leading-7">Dana dibekukan sampai admin/mediator menentukan dana dicairkan atau dikembalikan.</p>
+                            @elseif($status === 'pending_admin_approval')
+                                <h3 class="font-display text-xl font-bold mb-2">Menunggu admin</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 leading-7">UMKM sudah menyetujui hasil. Admin sedang memproses pencairan ke creative worker.</p>
+                            @elseif($status === 'completed' && !($project->is_rated ?? false))
+                                <h3 class="font-display text-xl font-bold mb-2">Beri feedback</h3>
                                 <form action="{{ route('rating.store') }}" method="POST" class="space-y-4">
                                     @csrf
                                     <input type="hidden" name="project_id" value="{{ $project->id }}">
-                                    
-                                    <div class="flex items-center gap-2 mb-2">
+                                    <div class="flex items-center gap-1">
                                         @for($i = 1; $i <= 5; $i++)
-                                            <button type="button" onclick="setRating('{{ $project->id }}', {{ $i }})" class="rating-star-{{ $project->id }} text-white/30 hover:text-amber-400 transition-colors" data-value="{{ $i }}">
-                                                <svg class="w-8 h-8 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/></svg>
+                                            <button type="button" onclick="setRating('{{ $project->id }}', {{ $i }})" class="rating-star-{{ $project->id }} text-slate-300 hover:text-amber-400 transition-colors">
+                                                <svg class="w-7 h-7 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/></svg>
                                             </button>
                                         @endfor
-                                        <input type="hidden" name="rating" id="rating_input_{{ $project->id }}" value="0" required>
                                     </div>
-
-                                    <textarea name="comment" rows="3" class="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:bg-white/20 resize-none transition-all" placeholder="Tulis testimoni singkat (opsional)..."></textarea>
-                                    
-                                    <button type="submit" class="w-full py-3 bg-white text-[#1E3A8A] rounded-xl text-xs font-extrabold uppercase tracking-widest hover:bg-[#EFF6FF] transition-all shadow-lg">Kirim Rating</button>
+                                    <input type="hidden" name="rating" id="rating_input_{{ $project->id }}" value="0" required>
+                                    <textarea name="comment" rows="3" class="w-full rounded-2xl border border-[#2563EB]/10 px-4 py-3 text-sm" placeholder="Tulis feedback opsional..."></textarea>
+                                    <button type="submit" class="w-full rounded-2xl bg-[#1E3A8A] px-5 py-4 text-white text-xs font-black uppercase tracking-widest hover:bg-[#2563EB] transition-all">Kirim Rating</button>
                                 </form>
-                            </div>
-                            @elseif($project->status !== 'completed' && $project->progress_percentage >= 100)
-                            <div class="rounded-[2.5rem] bg-amber-50 border border-amber-200 p-6 text-amber-800">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <p class="text-xs font-extrabold uppercase tracking-widest">Menunggu Admin</p>
-                                </div>
-                                <p class="text-sm font-medium">Proyek sudah 100% selesai! Admin sedang memproses pencairan dana. Rating akan tersedia setelah admin menyetujui pembayaran. Refresh halaman dalam beberapa saat.</p>
-                                <button type="button" onclick="location.reload()" class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700 transition-all">
-                                    <i class="fas fa-sync mr-2"></i>Refresh Halaman
-                                </button>
-                            </div>
-                            @elseif($project->is_rated ?? false)
-                            <div class="rounded-[2.5rem] bg-green-50 border border-green-200 p-6 text-green-800">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    <p class="text-xs font-extrabold uppercase tracking-widest">Rating Terkirim</p>
-                                </div>
-                                <p class="text-sm font-medium">Terima kasih! Kamu sudah memberikan feedback untuk creative worker ini. Proyek akan muncul di history setelah halaman ini diperbarui.</p>
-                            </div>
+                            @else
+                                <h3 class="font-display text-xl font-bold mb-2">Status aman</h3>
+                                <p class="text-sm text-[#1E3A8A]/60 leading-7">Tidak ada aksi mendesak untuk proyek ini.</p>
                             @endif
-
-
                         </div>
-                    </div>
 
-                    <div class="p-8 md:p-10">
-                        <div class="flex items-center justify-between gap-4 mb-6">
-                            <div>
-                                <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2563EB] mb-2">Creative Worker Yang Apply</p>
-                                <h3 class="font-display text-2xl font-bold text-[#1E3A8A]">Daftar Pelamar</h3>
+                        <div class="rounded-2xl bg-white border border-[#2563EB]/8 p-5">
+                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB] mb-3">Ringkasan Dana</p>
+                            <div class="space-y-3 text-sm font-bold">
+                                <div class="flex justify-between gap-4"><span class="text-[#1E3A8A]/55">Budget</span><span>Rp {{ $project->budget }}</span></div>
+                                <div class="flex justify-between gap-4"><span class="text-[#1E3A8A]/55">Escrow</span><span>{{ strtoupper($escrowStatus) }}</span></div>
+                                <div class="flex justify-between gap-4"><span class="text-[#1E3A8A]/55">Pelamar</span><span>{{ $applicationsCount }}</span></div>
                             </div>
-                            <a href="{{ route('projects.show', $project->id) }}" class="px-5 py-3 rounded-2xl bg-[#EFF6FF] text-[#2563EB] text-xs font-bold hover:bg-[#2563EB] hover:text-white transition-all">Lihat Detail</a>
                         </div>
+                    </aside>
 
-                        @forelse($project->applications as $application)
-                            <div class="flex flex-col md:flex-row md:items-start justify-between gap-5 p-5 rounded-[2rem] bg-[#F8FAFC] border border-[#2563EB]/8 {{ !$loop->last ? 'mb-4' : '' }}">
-                                <div class="flex gap-4">
-                                    <img src="{{ $application->creative_avatar }}" alt="{{ $application->creative_name }}" class="w-14 h-14 rounded-2xl object-cover">
-                                    <div>
-                                        <p class="font-bold text-[#1E3A8A]">{{ $application->creative_name }}</p>
-                                        <p class="text-xs font-bold text-[#2563EB] uppercase tracking-[0.16em] mt-1">{{ $application->creative_city ?? 'Creative Worker' }}</p>
-                                        <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7 mt-3">{{ $application->message ?: 'Belum ada pesan pengantar dari creative worker ini.' }}</p>
-                                        @if(!empty($application->proposal_url))
-                                            <a href="{{ $application->proposal_url }}" target="_blank" class="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl bg-white border border-[#2563EB]/10 text-[#2563EB] text-[11px] font-extrabold uppercase tracking-[0.14em] hover:bg-[#2563EB] hover:text-white transition-all">
-                                                Proposal{{ !empty($application->proposal_type) ? ' ' . strtoupper($application->proposal_type) : '' }}
+                    <div class="p-6 md:p-8 space-y-8">
+                        <section>
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB] mb-1">Pelamar</p>
+                                    <h3 class="font-display text-2xl font-bold">Proposal Creative Worker</h3>
+                                </div>
+                                <a href="{{ route('projects.show', $project->id) }}" class="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-[#EFF6FF] text-[#2563EB] text-xs font-bold hover:bg-[#2563EB] hover:text-white transition-all">Lihat Detail</a>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                @forelse($project->applications as $application)
+                                    <article class="rounded-2xl border {{ ($application->status ?? 'applied') === 'approved' ? 'border-emerald-200 bg-emerald-50/40' : 'border-[#2563EB]/8 bg-[#F8FAFC]' }} p-5">
+                                        <div class="flex items-start justify-between gap-4">
+                                            <div class="flex gap-4 min-w-0">
+                                                <img src="{{ $application->creative_avatar }}" alt="{{ $application->creative_name }}" class="w-12 h-12 rounded-2xl object-cover shrink-0">
+                                                <div class="min-w-0">
+                                                    <p class="font-bold text-[#1E3A8A]">{{ $application->creative_name }}</p>
+                                                    <p class="text-[10px] font-black uppercase tracking-widest text-[#2563EB] mt-1">{{ $application->creative_city ?? 'Creative Worker' }}</p>
+                                                </div>
+                                            </div>
+                                            <span class="shrink-0 px-3 py-1.5 rounded-full bg-white border border-[#2563EB]/10 text-[10px] font-black uppercase tracking-widest">{{ $application->status ?? 'applied' }}</span>
+                                        </div>
+
+                                        <p class="mt-4 text-sm text-[#1E3A8A]/62 font-medium leading-7">{{ $application->message ?: 'Belum ada pesan pengantar.' }}</p>
+
+                                        <div class="mt-4 flex flex-wrap gap-2">
+                                            @if(!empty($application->proposal_url))
+                                                <a href="{{ $application->proposal_download_url ?? $application->proposal_url }}" target="_blank" download="{{ $application->proposal_display_name }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#2563EB]/10 text-[#2563EB] text-[11px] font-black uppercase tracking-widest hover:bg-[#2563EB] hover:text-white transition-all">
+                                                    <i class="fas fa-file-arrow-down"></i>
+                                                    {{ strtoupper($application->proposal_type ?? 'FILE') }}
+                                                </a>
+                                                <span class="inline-flex items-center px-3 py-2 rounded-xl bg-white text-[#1E3A8A]/45 text-[11px] font-bold max-w-full truncate">
+                                                    {{ $application->proposal_display_name }}
+                                                </span>
+                                            @endif
+
+                                            @if(($application->status ?? 'applied') !== 'approved')
+                                                <form action="{{ route('projects.progress.approve', [$project->id, $application->id]) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#1E3A8A] text-white text-[11px] font-black uppercase tracking-widest hover:bg-[#2563EB] transition-all">
+                                                        Setujui
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </article>
+                                @empty
+                                    <div class="lg:col-span-2 rounded-2xl bg-[#F8FAFC] border border-dashed border-[#2563EB]/15 p-8 text-center">
+                                        <p class="font-bold">Belum ada apply masuk</p>
+                                        <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2">Proposal creative worker akan muncul di sini setelah mereka apply.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </section>
+
+                        <section>
+                            <div class="mb-5">
+                                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB] mb-1">Riwayat</p>
+                                <h3 class="font-display text-2xl font-bold">Update Progress</h3>
+                            </div>
+
+                            <div class="space-y-4">
+                                @forelse($project->progress_updates as $update)
+                                    <article class="rounded-2xl bg-white border border-[#2563EB]/8 p-5">
+                                        <div class="flex items-center justify-between gap-4">
+                                            <div>
+                                                <p class="font-bold">{{ $update->creative_name }}</p>
+                                                <p class="text-xs text-[#2563EB] font-bold uppercase tracking-widest mt-1">{{ optional($update->created_at)->diffForHumans() ?? 'Baru saja' }}</p>
+                                            </div>
+                                            <span class="px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-black uppercase tracking-widest">{{ $update->progress_percentage }}%</span>
+                                        </div>
+                                        <p class="mt-3 text-sm text-[#1E3A8A]/62 font-medium leading-7">{{ $update->note }}</p>
+                                        @if(!empty($update->media_url))
+                                            <a href="{{ $update->media_url }}" target="_blank" class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#2563EB] text-[11px] font-black uppercase tracking-widest hover:bg-[#2563EB] hover:text-white transition-all">
+                                                <i class="fas fa-up-right-from-square"></i>
+                                                {{ ($update->media_type ?? 'image') === 'video' ? 'Lihat Video' : 'Lihat Foto' }}
                                             </a>
                                         @endif
+                                    </article>
+                                @empty
+                                    <div class="rounded-2xl bg-[#F8FAFC] border border-dashed border-[#2563EB]/15 p-8 text-center">
+                                        <p class="font-bold">Belum ada update progress</p>
+                                        <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2">Update dari creative worker akan tampil sebagai timeline di sini.</p>
                                     </div>
-                                </div>
-                                <div class="shrink-0 text-left md:text-right">
-                                    <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-2">Status Apply</p>
-                                    <span class="inline-flex px-4 py-2 rounded-full bg-white border border-[#2563EB]/10 text-[#1E3A8A] text-[10px] font-extrabold uppercase tracking-[0.16em]">{{ strtoupper($application->status ?? 'applied') }}</span>
-                                    @if(($application->status ?? 'applied') !== 'approved')
-                                        <form action="{{ route('projects.progress.approve', [$project->id, $application->id]) }}" method="POST" class="mt-3">
-                                            @csrf
-                                            <button type="submit" class="px-4 py-2 rounded-xl bg-[#1E3A8A] text-white text-[11px] font-extrabold uppercase tracking-[0.14em] hover:bg-[#2563EB] transition-all">
-                                                Setujui Pelamar
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
+                                @endforelse
                             </div>
-                        @empty
-                            <div class="rounded-[2rem] bg-[#F8FAFC] border border-dashed border-[#2563EB]/15 p-8 text-center">
-                                <p class="font-bold text-[#1E3A8A]">Belum ada apply masuk</p>
-                                <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2">Progress proyek ini masih 0% sampai ada creative worker yang mulai mengajukan diri.</p>
-                            </div>
-                        @endforelse
-
-                        <div class="mt-8 pt-8 border-t border-[#2563EB]/5">
-                            <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2563EB] mb-4">Update Progress Dari Creative Worker</p>
-                            @forelse($project->progress_updates as $update)
-                                <div class="p-5 rounded-[2rem] bg-white border border-[#2563EB]/8 {{ !$loop->last ? 'mb-4' : '' }}">
-                                    <div class="flex items-center justify-between gap-4">
-                                        <div>
-                                            <p class="font-bold text-[#1E3A8A]">{{ $update->creative_name }}</p>
-                                            <p class="text-xs text-[#2563EB] font-bold uppercase tracking-[0.16em] mt-1">{{ optional($update->created_at)->diffForHumans() ?? 'Baru saja' }}</p>
-                                        </div>
-                                        <span class="inline-flex px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-[0.16em]">{{ $update->progress_percentage }}%</span>
-                                    </div>
-                                    <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7 mt-3">{{ $update->note }}</p>
-                                    @if(!empty($update->media_url))
-                                        <a href="{{ $update->media_url }}" target="_blank" class="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#2563EB] text-[11px] font-extrabold uppercase tracking-[0.14em] hover:bg-[#2563EB] hover:text-white transition-all">
-                                            {{ ($update->media_type ?? 'image') === 'video' ? 'Lihat Video Progress' : 'Lihat Foto Progress' }}
-                                        </a>
-                                    @endif
-                                </div>
-                            @empty
-                                <div class="rounded-[2rem] bg-[#F8FAFC] border border-dashed border-[#2563EB]/15 p-8 text-center">
-                                    <p class="font-bold text-[#1E3A8A]">Belum ada update progress</p>
-                                    <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2">Begitu creative worker terpilih mulai mengirim update, progres kerja akan tampil di sini.</p>
-                                </div>
-                            @endforelse
-                        </div>
+                        </section>
                     </div>
                 </div>
             </section>
         @empty
-            <div class="bg-white rounded-[3rem] border border-[#2563EB]/5 shadow-sm p-12 text-center">
-                <h2 class="font-display text-3xl font-bold text-[#1E3A8A] mb-3">Belum Ada Proyek</h2>
+            <div class="bg-white rounded-[2rem] border border-[#2563EB]/8 shadow-sm p-12 text-center">
+                <h2 class="font-display text-3xl font-bold mb-3">Belum Ada Proyek</h2>
                 <p class="text-[#1E3A8A]/60 font-medium mb-6">Mulai publikasi proyek pertamamu, lalu pantau apply dan progresnya dari halaman ini.</p>
                 <a href="{{ route('projects.create') }}" class="inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all">Publikasikan Proyek</a>
             </div>
@@ -261,39 +332,34 @@
         <section class="pt-6">
             <div class="flex items-center justify-between gap-4 mb-6">
                 <div>
-                    <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#2563EB] mb-2">History</p>
-                    <h2 class="font-display text-2xl font-bold text-[#1E3A8A]">Proyek Selesai</h2>
+                    <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB] mb-2">History</p>
+                    <h2 class="font-display text-2xl font-bold">Proyek Selesai</h2>
                 </div>
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[11px] font-extrabold uppercase tracking-[0.16em]">
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[11px] font-black uppercase tracking-widest">
                     <i class="fas fa-box-archive"></i>
-                    Arsip Proyek
-                </div>
+                    Arsip
+                </span>
             </div>
 
             @forelse($historyProjects ?? collect() as $history)
-                <article class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm p-6 md:p-8 mb-4">
+                <article class="bg-white rounded-2xl border border-[#2563EB]/8 shadow-sm p-6 md:p-8 mb-4">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
                         <div class="flex gap-4">
                             <div class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
                                 <img src="{{ $history->thumbnail ?? 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop' }}" alt="{{ $history->title }}" class="w-full h-full object-cover">
                             </div>
                             <div>
-                                <div class="flex flex-wrap gap-2 mb-3">
-                                    <span class="px-3 py-1.5 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest">History</span>
-                                    <span class="px-3 py-1.5 rounded-full bg-slate-100 text-[#1E3A8A]/70 text-[10px] font-extrabold uppercase tracking-widest">Selesai</span>
-                                </div>
-                                <h3 class="font-display text-xl md:text-2xl font-bold text-[#1E3A8A]">{{ $history->title }}</h3>
+                                <h3 class="font-display text-xl md:text-2xl font-bold">{{ $history->title }}</h3>
                                 <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2 leading-7">{{ $history->description }}</p>
                                 <div class="flex flex-wrap gap-3 mt-4 text-xs font-bold text-[#1E3A8A]/55">
-                                    <span>Dihapus ke history: {{ optional($history->archived_at)->translatedFormat('d M Y, H:i') ?? '-' }}</span>
-                                    <span class="hidden md:inline">•</span>
+                                    <span>{{ optional($history->archived_at)->translatedFormat('d M Y, H:i') ?? '-' }}</span>
                                     <span>Creative: {{ $history->selected_creative_name ?? '-' }}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="min-w-[220px] rounded-[1.8rem] bg-[#F8FAFC] border border-[#2563EB]/10 p-5">
-                            <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#1E3A8A]/40 mb-2">Feedback UMKM</p>
+                        <div class="min-w-[220px] rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 p-5">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-[#1E3A8A]/40 mb-2">Feedback UMKM</p>
                             <div class="flex items-center gap-1 mb-3">
                                 @for($i = 1; $i <= 5; $i++)
                                     <svg class="w-4 h-4 {{ $i <= (int) ($history->rating ?? 0) ? 'text-amber-400' : 'text-slate-200' }} fill-current" viewBox="0 0 20 20">
@@ -302,78 +368,127 @@
                                 @endfor
                             </div>
                             <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7">{{ $history->comment ?: 'UMKM memberikan rating tanpa komentar.' }}</p>
-                            <div class="mt-4 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2563EB]">
-                                <i class="fas fa-box-archive"></i>
-                                Disimpan di history
-                            </div>
                         </div>
                     </div>
                 </article>
             @empty
-                <div class="bg-white rounded-[3rem] border border-dashed border-[#2563EB]/10 p-12 text-center">
-                    <div class="w-16 h-16 mx-auto rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-4">
-                        <i class="fas fa-box-archive text-2xl"></i>
-                    </div>
-                    <h3 class="font-display text-2xl font-bold text-[#1E3A8A] mb-2">Belum Ada History</h3>
+                <div class="bg-white rounded-[2rem] border border-dashed border-[#2563EB]/10 p-12 text-center">
+                    <h3 class="font-display text-2xl font-bold mb-2">Belum Ada History</h3>
                     <p class="text-[#1E3A8A]/60 font-medium">Proyek yang sudah selesai dan diberi rating akan otomatis pindah ke sini.</p>
                 </div>
             @endforelse
         </section>
     </main>
 
+    <div id="dispute-modal" class="fixed inset-0 z-[120] hidden">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeDisputeModal()"></div>
+        <div class="relative z-10 flex items-center justify-center min-h-full p-4">
+            <div class="w-full max-w-xl bg-white rounded-[2rem] shadow-2xl overflow-hidden">
+                <div class="p-8 border-b border-slate-100">
+                    <div class="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-5">
+                        <i class="fas fa-scale-balanced text-2xl"></i>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold mb-2">Ajukan Dispute?</h3>
+                    <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7">Gunakan dispute jika hasil/revisi proyek <span id="dispute-project-name" class="font-bold text-[#1E3A8A]"></span> tidak sesuai dan belum ada kesepakatan. Dana akan tetap ditahan sampai admin/mediator memutuskan.</p>
+                </div>
+                <form id="dispute-form" action="" method="POST" class="p-6 bg-[#F8FAFC] space-y-4">
+                    @csrf
+                    <textarea name="reason" rows="5" required minlength="20" class="w-full px-5 py-4 rounded-2xl bg-white border border-red-200 focus:border-red-500 outline-none font-medium" placeholder="Jelaskan masalahnya, revisi mana yang tidak sesuai, dan bukti yang perlu admin cek..."></textarea>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button type="submit" class="flex-1 inline-flex justify-center rounded-2xl bg-red-600 px-6 py-4 text-white font-bold text-sm hover:bg-red-700 transition-all">Kirim Dispute</button>
+                        <button type="button" onclick="closeDisputeModal()" class="flex-1 inline-flex justify-center rounded-2xl border border-slate-200 px-6 py-4 bg-white font-bold text-slate-600 hover:bg-slate-50 transition-all">Batal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="revision-modal" class="fixed inset-0 z-[120] hidden">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeRevisionModal()"></div>
+        <div class="relative z-10 flex items-center justify-center min-h-full p-4">
+            <div class="w-full max-w-xl bg-white rounded-[2rem] shadow-2xl overflow-hidden">
+                <div class="p-8 border-b border-slate-100">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5">
+                        <i class="fas fa-pen-to-square text-2xl"></i>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold mb-2">Minta Revisi</h3>
+                    <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7">Tulis revisi yang dibutuhkan untuk <span id="revision-project-name" class="font-bold text-[#1E3A8A]"></span>. Dana tetap ditahan di platform selama revisi berjalan.</p>
+                </div>
+                <form id="revision-form" action="" method="POST" class="p-6 bg-[#F8FAFC] space-y-4">
+                    @csrf
+                    <textarea name="reason" rows="5" required minlength="10" class="w-full px-5 py-4 rounded-2xl bg-white border border-blue-200 focus:border-blue-500 outline-none font-medium" placeholder="Contoh: warna belum sesuai brand, layout bagian katalog perlu dirapikan..."></textarea>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button type="submit" class="flex-1 inline-flex justify-center rounded-2xl bg-blue-600 px-6 py-4 text-white font-bold text-sm hover:bg-blue-700 transition-all">Kirim Revisi</button>
+                        <button type="button" onclick="closeRevisionModal()" class="flex-1 inline-flex justify-center rounded-2xl border border-slate-200 px-6 py-4 bg-white font-bold text-slate-600 hover:bg-slate-50 transition-all">Batal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div id="delete-modal" class="fixed inset-0 z-[120] hidden">
         <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
         <div class="relative z-10 flex items-center justify-center min-h-full p-4">
-            <div class="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
+            <div class="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden">
                 <div class="p-8 border-b border-slate-100">
                     <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-5">
                         <i class="fas fa-triangle-exclamation text-2xl"></i>
                     </div>
-                    <h3 class="font-display text-2xl font-bold text-[#1E3A8A] mb-2">Hapus Proyek?</h3>
+                    <h3 class="font-display text-2xl font-bold mb-2">Hapus Proyek?</h3>
                     <p class="text-sm text-[#1E3A8A]/60 font-medium leading-7">Kamu akan menghapus proyek <span id="project-name-modal" class="font-bold text-[#1E3A8A]"></span>. Karena belum ada apply masuk, proyek akan benar-benar hilang dari daftar aktif.</p>
                 </div>
                 <div class="p-6 bg-[#F8FAFC] flex flex-col sm:flex-row gap-3">
                     <form id="delete-form" action="" method="POST" class="flex-1">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="w-full inline-flex justify-center rounded-2xl bg-amber-600 px-6 py-4 text-white font-bold text-sm hover:bg-amber-700 transition-all">
-                            Ya, Hapus Proyek
-                        </button>
+                        <button type="submit" class="w-full inline-flex justify-center rounded-2xl bg-amber-600 px-6 py-4 text-white font-bold text-sm hover:bg-amber-700 transition-all">Ya, Hapus Proyek</button>
                     </form>
-                    <button type="button" onclick="closeDeleteModal()" class="flex-1 inline-flex justify-center rounded-2xl border border-slate-200 px-6 py-4 bg-white text-base font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                        Batal
-                    </button>
+                    <button type="button" onclick="closeDeleteModal()" class="flex-1 inline-flex justify-center rounded-2xl border border-slate-200 px-6 py-4 bg-white font-bold text-slate-600 hover:bg-slate-50 transition-all">Batal</button>
                 </div>
             </div>
         </div>
     </div>
+
     <script>
         function setRating(projectId, value) {
             document.getElementById('rating_input_' + projectId).value = value;
             const stars = document.querySelectorAll('.rating-star-' + projectId);
             stars.forEach((star, index) => {
-                if (index < value) {
-                    star.classList.remove('text-white/30');
-                    star.classList.add('text-amber-400');
-                } else {
-                    star.classList.remove('text-amber-400');
-                    star.classList.add('text-white/30');
-                }
+                star.classList.toggle('text-amber-400', index < value);
+                star.classList.toggle('text-slate-300', index >= value);
             });
         }
 
         function openDeleteModal(id, name) {
-            const modal = document.getElementById('delete-modal');
-            const form = document.getElementById('delete-form');
-            const label = document.getElementById('project-name-modal');
-
-            form.action = "{{ url('/progress-proyek') }}/" + id;
-            label.textContent = name;
-            modal.classList.remove('hidden');
+            document.getElementById('delete-form').action = "{{ url('/progress-proyek') }}/" + id;
+            document.getElementById('project-name-modal').textContent = name;
+            document.getElementById('delete-modal').classList.remove('hidden');
         }
 
         function closeDeleteModal() {
             document.getElementById('delete-modal').classList.add('hidden');
+        }
+
+        function openDisputeModal(id, name) {
+            document.getElementById('dispute-form').action = "{{ url('/progress-proyek') }}/" + id + "/dispute";
+            document.getElementById('dispute-project-name').textContent = name || 'ini';
+            document.getElementById('dispute-modal').classList.remove('hidden');
+        }
+
+        function closeDisputeModal() {
+            document.getElementById('dispute-modal').classList.add('hidden');
+            document.getElementById('dispute-form')?.reset();
+        }
+
+        function openRevisionModal(id, name) {
+            document.getElementById('revision-form').action = "{{ url('/progress-proyek') }}/" + id + "/revision";
+            document.getElementById('revision-project-name').textContent = name || 'proyek ini';
+            document.getElementById('revision-modal').classList.remove('hidden');
+        }
+
+        function closeRevisionModal() {
+            document.getElementById('revision-modal').classList.add('hidden');
+            document.getElementById('revision-form')?.reset();
         }
     </script>
 </body>

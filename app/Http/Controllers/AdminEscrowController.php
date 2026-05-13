@@ -21,8 +21,13 @@ class AdminEscrowController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Project pending approval (held escrows - ready for disbursement approval)
         $pendingApprovalEscrows = EscrowTransaction::where('status', 'held')
+            ->with(['project', 'payer', 'payee'])
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->filter(fn ($escrow) => ($escrow->project->status ?? null) === 'pending_admin_approval');
+
+        $disputeEscrows = EscrowTransaction::where('status', 'disputed')
             ->with(['project', 'payer', 'payee'])
             ->orderBy('updated_at', 'desc')
             ->get();
@@ -44,12 +49,15 @@ class AdminEscrowController extends Controller
 
         $pendingApprovalCount = $pendingApprovalProjects->count();
         $totalPending = $pendingApprovalProjects->sum(fn ($p) => (int) $p->escrow->net_amount);
+        $disputeCount = $disputeEscrows->count();
 
         return view('admin.escrow.index', compact(
             'transactions',
             'pendingApprovalProjects',
             'pendingApprovalCount',
-            'totalPending'
+            'totalPending',
+            'disputeEscrows',
+            'disputeCount'
         ));
     }
 

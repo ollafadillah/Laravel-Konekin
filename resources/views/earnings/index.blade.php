@@ -126,7 +126,7 @@
                     <li><strong>1. Held (Aman):</strong> UMKM sudah bayar, dana ditahan platform untuk keamanan kedua belah pihak</li>
                     <li><strong>2. Releasing:</strong> Proyek 100% selesai, admin sedang memproses pencairan dana</li>
                     <li><strong>3. Released (Diterima):</strong> Dana berhasil dikirim ke rekening bank Anda</li>
-                    <li><strong>Platform Fee (10%):</strong> Diskon dari nominal untuk menjaga platform tetap running</li>
+                    <li><strong>Platform Fee (15%):</strong> Potongan dari nominal proyek untuk operasional platform</li>
                 </ul>
             </div>
         </div>

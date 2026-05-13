@@ -47,7 +47,22 @@
         </div>
         <div class="p-4 bg-slate-50 rounded-2xl">
             <div class="text-xs font-bold text-[#1E3A8A]/40 uppercase mb-1">Tanggal Pembayaran</div>
-            <div class="font-bold text-[#1E3A8A]">{{ $payment->payment_date->format('d M Y H:i') }}</div>
+            <div class="font-bold text-[#1E3A8A]">{{ optional($payment->payment_date)->format('d M Y H:i') ?? 'N/A' }}</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4">
+        <div class="p-4 bg-blue-50 rounded-2xl">
+            <div class="text-xs font-bold text-blue-600/60 uppercase mb-1">Platform Fee 15%</div>
+            <div class="font-bold text-blue-700">Rp {{ number_format($payment->platform_fee ?? round($payment->amount * 0.15), 0, ',', '.') }}</div>
+        </div>
+        <div class="p-4 bg-emerald-50 rounded-2xl">
+            <div class="text-xs font-bold text-emerald-600/60 uppercase mb-1">Net Kreator</div>
+            <div class="font-bold text-emerald-700">Rp {{ number_format($payment->net_amount ?? ($payment->amount - round($payment->amount * 0.15)), 0, ',', '.') }}</div>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl">
+            <div class="text-xs font-bold text-[#1E3A8A]/40 uppercase mb-1">Virtual Account</div>
+            <div class="font-bold text-[#1E3A8A]">{{ $payment->virtual_account_bank ?? '-' }} {{ $payment->virtual_account_number ?? '' }}</div>
         </div>
     </div>
 

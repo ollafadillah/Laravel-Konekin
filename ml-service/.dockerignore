@@ -1,0 +1,13 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.log
+*.csv~
+*.pkl~
+venv
+logs
+.env
+notebooks
+scratch

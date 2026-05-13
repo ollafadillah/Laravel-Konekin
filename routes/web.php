@@ -100,6 +100,9 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/progress-proyek', [ProjectController::class, 'progress'])->name('projects.progress');
     Route::post('/progress-proyek/{id}/approve/{applicationId}', [ProjectController::class, 'approveApplication'])->name('projects.progress.approve');
     Route::delete('/progress-proyek/{id}', [ProjectController::class, 'destroyProgressProject'])->name('projects.progress.destroy');
+    Route::post('/progress-proyek/{id}/approve-completion', [ProjectApprovalController::class, 'approveCompletion'])->name('projects.progress.approve-completion');
+    Route::post('/progress-proyek/{id}/revision', [ProjectApprovalController::class, 'requestRevision'])->name('projects.progress.revision');
+    Route::post('/progress-proyek/{id}/dispute', [ProjectApprovalController::class, 'openDispute'])->name('projects.progress.dispute');
     Route::get('/progress-proyek-kreator', [ProjectController::class, 'creativeProgress'])->name('projects.progress.creative');
     Route::post('/progress-proyek-kreator/{id}', [ProjectController::class, 'storeCreativeProgress'])->name('projects.progress.creative.update');
 
@@ -128,7 +131,7 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
             ->get();
 
         $projects = $escrows
-            ->filter(fn ($escrow) => (int) ($escrow->project->progress_percentage ?? 0) >= 100)
+            ->filter(fn ($escrow) => ($escrow->project->status ?? null) === 'pending_admin_approval')
             ->map(function ($escrow) {
                 return (object) [
                     'id' => (string) $escrow->project_id,
@@ -150,6 +153,7 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
 
     Route::post('/admin/projects/{id}/approve', [ProjectApprovalController::class, 'adminApproveCompletion'])->name('admin.projects.approve');
     Route::post('/admin/projects/{id}/reject', [ProjectApprovalController::class, 'adminRejectCompletion'])->name('admin.projects.reject');
+    Route::post('/admin/disputes/{id}/resolve', [ProjectApprovalController::class, 'resolveDispute'])->name('admin.disputes.resolve');
 
     // Rating Routes
     Route::post('/rating', [RatingController::class, 'store'])->name('rating.store');

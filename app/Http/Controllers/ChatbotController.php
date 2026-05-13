@@ -34,7 +34,7 @@ Konekin adalah platform kolaborasi yang menghubungkan Creative Workers (pekerja 
 INFORMASI PLATFORM KONEKIN:
 - Tagline: 'Platform Kolaborasi Masa Depan'.
 - Tujuan: Membantu UMKM mendapatkan talenta kreatif berkualitas (desain, web, video, dll) dan membantu Kreator mendapatkan proyek yang jelas dan aman.
-- Sistem Pembayaran: Menggunakan sistem Escrow (Rekening Bersama) otomatis via Midtrans. UMKM bayar di awal, dana ditahan Konekin, dan baru diteruskan ke Kreator (dipotong fee 10%) setelah proyek selesai. Ini menjamin keamanan kedua belah pihak.
+- Sistem Pembayaran: Menggunakan sistem escrow. Setelah draft/progress proyek 100%, UMKM membayar via Virtual Account, upload bukti transfer, dana ditahan Konekin, lalu baru diteruskan ke Kreator setelah hasil disetujui atau dispute diputuskan admin. Platform mengambil fee 15%.
 
 CARA KERJA UMKM:
 1. Mendaftar & melengkapi profil.

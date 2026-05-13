@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\EscrowTransaction;
 use App\Models\Project;
 use App\Jobs\ProcessDisbursement;
+use App\Helpers\CurrencyHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Notifications\ProjectCompletedForAdmin;
 
 class ProjectApprovalController extends Controller
 {
@@ -37,7 +37,10 @@ class ProjectApprovalController extends Controller
             }
 
             // Validasi ada escrow transaction
-            $escrow = EscrowTransaction::where('project_id', $project->id)->first();
+            $escrow = EscrowTransaction::where('project_id', $project->id)
+                ->where('status', 'held')
+                ->orderBy('updated_at', 'desc')
+                ->first();
             if (!$escrow) {
                 return response()->json([
                     'success' => false,
@@ -53,9 +56,10 @@ class ProjectApprovalController extends Controller
                 ], 400);
             }
 
-            // Update project status ke pending_admin_approval
             $project->update([
-                'status' => 'pending_admin_approval'
+                'status' => 'pending_admin_approval',
+                'completion_approved_at' => now(),
+                'completion_approved_by' => $user->id,
             ]);
 
             // Log approval
@@ -64,6 +68,11 @@ class ProjectApprovalController extends Controller
                 'budget' => (int) CurrencyHelper::extract($project->budget),
                 'selected_creative_id' => $project->selected_creative_id,
             ]);
+
+            if (!request()->expectsJson()) {
+                return redirect()->route('projects.progress')
+                    ->with('success', 'Proyek sudah disetujui selesai. Dana tetap ditahan platform sampai admin mencairkan ke creative worker.');
+            }
 
             return response()->json([
                 'success' => true,
@@ -78,10 +87,185 @@ class ProjectApprovalController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Project Approval Error: ' . $e->getMessage());
+            if (!request()->expectsJson()) {
+                return redirect()->back()->with('error', 'Gagal approve proyek: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal approve proyek: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function openDispute($id, Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return redirect()->back()->with('error', 'Hanya UMKM yang dapat mengajukan dispute.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|min:20|max:1000',
+        ], [
+            'reason.required' => 'Alasan dispute wajib diisi.',
+            'reason.min' => 'Alasan dispute minimal 20 karakter agar admin punya konteks yang cukup.',
+        ]);
+
+        try {
+            $project = Project::where('client_id', $user->id)->findOrFail($id);
+            $escrow = EscrowTransaction::where('project_id', $project->id)
+                ->where('status', 'held')
+                ->orderBy('updated_at', 'desc')
+                ->first();
+
+            if (!$escrow || $escrow->status !== 'held') {
+                return redirect()->back()->with('error', 'Dispute hanya bisa diajukan setelah dana masuk dan ditahan di escrow.');
+            }
+
+            $escrow->update([
+                'status' => 'disputed',
+                'dispute_reason' => $validated['reason'],
+                'dispute_opened_at' => now(),
+                'dispute_opened_by' => $user->id,
+                'disbursement_status' => 'disputed',
+            ]);
+
+            $project->update([
+                'status' => 'disputed',
+                'escrow_status' => 'disputed',
+                'dispute_reason' => $validated['reason'],
+                'dispute_opened_at' => now(),
+                'dispute_opened_by' => $user->id,
+            ]);
+
+            Log::info('Project dispute opened by UMKM', [
+                'project_id' => $project->id,
+                'escrow_id' => $escrow->id,
+                'umkm_id' => $user->id,
+            ]);
+
+            return redirect()->route('projects.progress')
+                ->with('success', 'Dispute berhasil diajukan. Dana tetap ditahan sampai admin/mediator mengambil keputusan.');
+        } catch (\Exception $e) {
+            Log::error('Open Dispute Error: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal mengajukan dispute: ' . $e->getMessage());
+        }
+    }
+
+    public function requestRevision($id, Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->isUMKM()) {
+            return redirect()->back()->with('error', 'Hanya UMKM yang dapat meminta revisi.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|min:10|max:1000',
+        ], [
+            'reason.required' => 'Catatan revisi wajib diisi.',
+            'reason.min' => 'Catatan revisi minimal 10 karakter.',
+        ]);
+
+        try {
+            $project = Project::where('client_id', $user->id)->findOrFail($id);
+            $escrow = EscrowTransaction::where('project_id', $project->id)
+                ->where('status', 'held')
+                ->orderBy('updated_at', 'desc')
+                ->first();
+
+            if (!$escrow) {
+                return redirect()->back()->with('error', 'Revisi setelah draft 100% hanya bisa diminta setelah dana masuk escrow.');
+            }
+
+            $project->update([
+                'status' => 'revision',
+                'revision_requested_at' => now(),
+                'revision_requested_by' => $user->id,
+                'revision_reason' => $validated['reason'],
+            ]);
+
+            Log::info('Project revision requested by UMKM', [
+                'project_id' => $project->id,
+                'escrow_id' => $escrow->id,
+                'umkm_id' => $user->id,
+            ]);
+
+            return redirect()->route('projects.progress')
+                ->with('success', 'Permintaan revisi dikirim. Dana tetap ditahan platform sampai hasil akhir disetujui.');
+        } catch (\Exception $e) {
+            Log::error('Request Revision Error: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal meminta revisi: ' . $e->getMessage());
+        }
+    }
+
+    public function resolveDispute($id, Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->isAdmin()) {
+            return redirect()->back()->with('error', 'Akses ditolak. Hanya admin yang dapat menyelesaikan dispute.');
+        }
+
+        $validated = $request->validate([
+            'resolution' => 'required|in:release,refund',
+            'admin_resolution_notes' => 'required|string|min:10|max:1000',
+        ]);
+
+        try {
+            $escrow = EscrowTransaction::with('project')->findOrFail($id);
+            $project = $escrow->project;
+
+            if ($escrow->status !== 'disputed') {
+                return redirect()->back()->with('error', 'Escrow ini tidak sedang dalam status dispute.');
+            }
+
+            $resolutionData = [
+                'dispute_resolution' => $validated['resolution'],
+                'dispute_resolved_at' => now(),
+                'dispute_resolved_by' => $user->id,
+                'admin_resolution_notes' => $validated['admin_resolution_notes'],
+            ];
+
+            if ($validated['resolution'] === 'release') {
+                $escrow->update(array_merge($resolutionData, [
+                    'status' => 'releasing',
+                    'disbursement_status' => 'approved_after_dispute',
+                ]));
+
+                if ($project) {
+                    $project->update(array_merge($resolutionData, [
+                        'status' => 'completed',
+                        'escrow_status' => 'releasing',
+                    ]));
+                }
+
+                ProcessDisbursement::dispatch($escrow);
+
+                return redirect()->back()->with('success', 'Dispute diselesaikan: dana disetujui untuk dicairkan ke creative worker.');
+            }
+
+            $escrow->update(array_merge($resolutionData, [
+                'status' => 'refunded',
+                'disbursement_status' => 'refunded_to_umkm',
+            ]));
+
+            if ($project) {
+                $project->update(array_merge($resolutionData, [
+                    'status' => 'payment_refunded',
+                    'escrow_status' => 'refunded',
+                ]));
+            }
+
+            return redirect()->back()->with('success', 'Dispute diselesaikan: dana ditandai untuk dikembalikan ke UMKM.');
+        } catch (\Exception $e) {
+            Log::error('Resolve Dispute Error: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal menyelesaikan dispute: ' . $e->getMessage());
         }
     }
 
@@ -100,7 +284,10 @@ class ProjectApprovalController extends Controller
             $project = Project::findOrFail($id);
 
             // Check if project is completed or has held escrow
-            $escrow = EscrowTransaction::where('project_id', $project->id)->first();
+            $escrow = EscrowTransaction::where('project_id', $project->id)
+                ->where('status', 'held')
+                ->orderBy('updated_at', 'desc')
+                ->first();
             if (!$escrow || $escrow->status !== 'held') {
                 return redirect()->back()->with('error', 'Escrow transaction tidak valid atau tidak dalam status held.');
             }
@@ -189,7 +376,10 @@ class ProjectApprovalController extends Controller
         try {
             $project = Project::findOrFail($id);
 
-            $escrow = EscrowTransaction::where('project_id', $project->id)->first();
+            $escrow = EscrowTransaction::where('project_id', $project->id)
+                ->where('status', 'held')
+                ->orderBy('updated_at', 'desc')
+                ->first();
             if (!$escrow || $escrow->status !== 'held') {
                 return response()->json([
                     'success' => false,

@@ -60,7 +60,7 @@ class PaymentReceiptController extends Controller
 
             // Create escrow transaction
             $amount = (int) \App\Helpers\CurrencyHelper::extract($project->budget);
-            $platformFee = $amount * 0.10;
+            $platformFee = (int) round($amount * 0.15);
             $netAmount = $amount - $platformFee;
 
             $escrow = EscrowTransaction::create([

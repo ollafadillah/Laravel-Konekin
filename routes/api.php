@@ -13,6 +13,7 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\EscrowController;
 use App\Http\Controllers\CreativeEscrowController;
 use App\Http\Controllers\ProjectApprovalController;
+use App\Http\Controllers\MlRecommendationController;
 
 
 Route::get('/user', function (Request $request) {

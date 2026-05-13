@@ -382,7 +382,7 @@
                     Konekin menerapkan komisi sebagai berikut:
                 </p>
                 <ul>
-                    <li>Komisi platform: <strong>10%</strong> dari nilai proyek</li>
+                    <li>Komisi platform: <strong>15%</strong> dari nilai proyek</li>
                     <li>Biaya transaksi pembayaran: Sesuai dengan metode yang dipilih</li>
                     <li>Biaya pencairan dana: Sesuai dengan sistem bank atau e-wallet</li>
                 </ul>

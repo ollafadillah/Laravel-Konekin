@@ -1,137 +1,163 @@
-# Stage 1: Builder
-FROM php:8.3-fpm as builder
+# syntax=docker/dockerfile:1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpq-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    supervisor \
-    && rm -rf /var/lib/apt/lists/*
+FROM php:8.3-cli-bookworm AS vendor
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
-    docker-php-ext-install -j$(nproc) \
-    pdo \
-    pdo_mysql \
-    pdo_pgsql \
-    gd \
-    zip \
-    bcmath
-
-# Install MongoDB driver
-RUN apt-get update && apt-get install -y libssl-dev && rm -rf /var/lib/apt/lists/* && \
-    pecl install mongodb && \
-    docker-php-ext-enable mongodb
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Install Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    rm -rf /var/lib/apt/lists/*
-
-# Set working directory
 WORKDIR /app
 
-# Copy application files
-COPY composer.json composer.lock* ./
-COPY package.json package-lock.json* ./
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        git \
+        unzip \
+        $PHPIZE_DEPS \
+        libssl-dev; \
+    pecl install mongodb; \
+    docker-php-ext-enable mongodb; \
+    apt-get purge -y --auto-remove $PHPIZE_DEPS libssl-dev; \
+    rm -rf /var/lib/apt/lists/* /tmp/pear
+
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --no-scripts \
+    --optimize-autoloader
+
+COPY app ./app
+COPY database ./database
+RUN composer dump-autoload \
+    --no-dev \
+    --no-interaction \
+    --optimize
+
+
+FROM node:20-bookworm-slim AS assets
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
 COPY . .
+RUN npm run build
 
-# Install PHP dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# Install Node dependencies and build assets
-RUN npm ci && npm run build
-
-# Generate cache
-RUN php artisan config:cache && \
-    php artisan route:cache
-
-# Stage 2: Production
-FROM php:8.3-fpm
+FROM php:8.3-fpm-bookworm AS app
 
 LABEL maintainer="Konekin"
 
-# Install minimal runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    libpng6 \
-    libjpeg62-turbo \
-    libfreetype6 \
-    libzip4 \
-    ca-certificates \
-    supervisor \
-    nginx \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+ARG UID=1000
+ARG GID=1000
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
-    docker-php-ext-install -j$(nproc) \
-    pdo \
-    pdo_mysql \
-    pdo_pgsql \
-    gd \
-    zip \
-    bcmath
+ENV APP_HOME=/app \
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    PHP_OPCACHE_VALIDATE_TIMESTAMPS=0 \
+    QUEUE_WORKERS=2
 
-# Install MongoDB driver
-RUN apt-get update && apt-get install -y libssl-dev && rm -rf /var/lib/apt/lists/* && \
-    pecl install mongodb && \
-    docker-php-ext-enable mongodb
-
-# Copy PHP configuration
-COPY docker/php/php.ini /usr/local/etc/php/conf.d/app.ini
-COPY docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
-
-# Copy Nginx configuration
-COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY docker/nginx/default.conf /etc/nginx/sites-available/default
-RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-
-# Copy Supervisor configuration
-COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Create non-root user
-RUN useradd -m -u 1000 -s /bin/bash app && \
-    mkdir -p /app && \
-    chown -R app:app /app
-
-# Set working directory
 WORKDIR /app
 
-# Copy application from builder stage
-COPY --from=builder --chown=app:app /app .
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        nginx \
+        supervisor \
+        unzip \
+        libfreetype6 \
+        libjpeg62-turbo \
+        libpng16-16 \
+        libpq5 \
+        libssl3 \
+        libzip4; \
+    apt-get install -y --no-install-recommends \
+        $PHPIZE_DEPS \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libpng-dev \
+        libpq-dev \
+        libssl-dev \
+        libzip-dev; \
+    docker-php-ext-configure gd --with-freetype --with-jpeg; \
+    docker-php-ext-install -j"$(nproc)" \
+        bcmath \
+        gd \
+        pdo \
+        pdo_mysql \
+        pdo_pgsql \
+        zip; \
+    pecl install mongodb; \
+    docker-php-ext-enable mongodb opcache; \
+    apt-get purge -y --auto-remove \
+        $PHPIZE_DEPS \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libpng-dev \
+        libpq-dev \
+        libssl-dev \
+        libzip-dev; \
+    rm -rf /var/lib/apt/lists/* /tmp/pear
 
-# Create required directories with proper permissions
-RUN mkdir -p storage/logs bootstrap/cache && \
-    chown -R app:app storage bootstrap
+RUN set -eux; \
+    groupadd --gid "${GID}" app; \
+    useradd --uid "${UID}" --gid app --create-home --shell /bin/sh app; \
+    mkdir -p \
+        /app \
+        /tmp/nginx/client_temp \
+        /tmp/nginx/proxy_temp \
+        /tmp/nginx/fastcgi_temp \
+        /tmp/nginx/uwsgi_temp \
+        /tmp/nginx/scgi_temp \
+        /tmp/supervisor \
+        /var/log/nginx \
+        /var/log/supervisor \
+        /var/lib/nginx \
+        /run/nginx; \
+    chown -R app:app \
+        /app \
+        /tmp/nginx \
+        /tmp/supervisor \
+        /var/log/nginx \
+        /var/log/supervisor \
+        /var/lib/nginx \
+        /run/nginx
 
-# Fix ownership for Nginx
-RUN chown -R app:app /var/log/nginx /var/run/nginx /var/cache/nginx 2>/dev/null || true
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/app.ini
+COPY docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx/default.conf /etc/nginx/sites-available/default
+COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Switch to non-root user
+RUN set -eux; \
+    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default; \
+    chmod +x /usr/local/bin/entrypoint.sh
+
+COPY --chown=app:app . .
+COPY --from=vendor --chown=app:app /app/vendor ./vendor
+COPY --from=assets --chown=app:app /app/public/build ./public/build
+
+RUN set -eux; \
+    php artisan package:discover --ansi; \
+    mkdir -p \
+        storage/app/public \
+        storage/framework/cache \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        bootstrap/cache; \
+    chown -R app:app storage bootstrap/cache
+
 USER app
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
-
-# Expose port
 EXPOSE 8000
 
-# Run entrypoint
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:8000/health || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

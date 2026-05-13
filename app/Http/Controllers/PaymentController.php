@@ -34,14 +34,35 @@ class PaymentController extends Controller
             return redirect()->back()->with('error', 'Proyek ini bukan milik Anda.');
         }
 
-        // Check if payment already exists
+        if (empty($project->selected_creative_id)) {
+            return redirect()->back()->with('error', 'Pilih creative worker terlebih dahulu sebelum membuat pembayaran.');
+        }
+
+        if ((int) ($project->progress_percentage ?? 0) < 100) {
+            return redirect()->back()->with('error', 'Pembayaran baru bisa dibuat setelah creative worker mengirim draft/progress 100%.');
+        }
+
+        if (in_array($project->escrow_status, ['held', 'released'], true)) {
+            return redirect()->back()->with('error', 'Dana proyek ini sudah masuk escrow.');
+        }
+
         $existingPayment = Payment::where('project_id', $projectId)
             ->whereIn('status', ['pending', 'paid'])
+            ->orderBy('created_at', 'desc')
             ->first();
 
         if ($existingPayment) {
-            return redirect()->back()->with('error', 'Pembayaran untuk proyek ini sudah ada.');
+            return redirect()->route('payments.show', $existingPayment->_id)
+                ->with('success', 'Invoice pembayaran proyek ini sudah tersedia.');
         }
+
+        $amount = (int) CurrencyHelper::extract($project->budget);
+        $platformFee = (int) round($amount * 0.15);
+        $netAmount = $amount - $platformFee;
+        $paymentNumber = (new Payment())->generatePaymentNumber();
+        $vaBank = 'BCA';
+        $vaNumber = Payment::generateVirtualAccountNumber((string) $project->id);
+        $dueAt = now()->addDay();
 
         // Create payment record
         $payment = new Payment([
@@ -49,14 +70,47 @@ class PaymentController extends Controller
             'client_id' => $project->client_id,
             'client_name' => $project->client_name,
             'client_avatar' => $project->client_avatar,
-            'amount' => CurrencyHelper::extract($project->budget),
+            'amount' => $amount,
+            'platform_fee' => $platformFee,
+            'net_amount' => $netAmount,
             'currency' => 'IDR',
-            'description' => "Pembayaran untuk proyek: {$project->title}",
+            'payment_number' => $paymentNumber,
+            'description' => "Pembayaran escrow untuk draft/revisi proyek: {$project->title}",
             'status' => 'pending',
+            'payment_method' => 'virtual_account',
+            'virtual_account_bank' => $vaBank,
+            'virtual_account_number' => $vaNumber,
+            'payment_due_at' => $dueAt,
         ]);
 
-        $payment->payment_number = $payment->generatePaymentNumber();
         $payment->save();
+
+        $escrow = EscrowTransaction::create([
+            'project_id' => $project->id,
+            'payer_id' => $project->client_id,
+            'payee_id' => $project->selected_creative_id,
+            'payment_id' => $payment->id,
+            'amount' => $amount,
+            'platform_fee' => $platformFee,
+            'net_amount' => $netAmount,
+            'status' => 'pending',
+            'midtrans_order_id' => $paymentNumber,
+            'midtrans_transaction_id' => null,
+            'midtrans_payment_type' => 'manual_virtual_account',
+            'virtual_account_bank' => $vaBank,
+            'virtual_account_number' => $vaNumber,
+            'payment_due_at' => $dueAt,
+            'disbursement_status' => 'waiting_payment',
+        ]);
+
+        $payment->update(['escrow_transaction_id' => $escrow->id]);
+
+        $project->update([
+            'status' => 'payment_pending',
+            'escrow_status' => 'pending',
+            'payment_id' => $payment->id,
+            'escrow_transaction_id' => $escrow->id,
+        ]);
 
         // Send notification to UMKM
         $umkm = User::find($project->client_id);
@@ -65,7 +119,7 @@ class PaymentController extends Controller
         }
 
         return redirect()->route('payments.show', $payment->_id)
-            ->with('success', 'Invoice pembayaran berhasil dibuat. Silakan lakukan pembayaran dan upload bukti.');
+            ->with('success', 'VA pembayaran berhasil dibuat otomatis. Silakan transfer dan upload bukti pembayaran.');
     }
 
     /**
@@ -101,7 +155,7 @@ class PaymentController extends Controller
 
         $validated = $request->validate([
             'proof_file' => 'required|file|mimes:pdf,jpg,jpeg,png,gif|max:10240',
-            'payment_method' => 'required|string|in:transfer,card,e-wallet,other',
+            'payment_method' => 'required|string|in:virtual_account,transfer,card,e-wallet,other',
             'notes' => 'nullable|string|max:500',
             'payment_date' => 'required|date|before_or_equal:today',
         ], [
@@ -129,6 +183,14 @@ class PaymentController extends Controller
                 'status' => 'paid',
             ]);
 
+            EscrowTransaction::where('payment_id', $payment->id)->update([
+                'proof_file_url' => $proofUrl,
+                'proof_file_type' => $fileType,
+                'payment_date' => $validated['payment_date'],
+                'status' => 'pending',
+                'disbursement_status' => 'waiting_verification',
+            ]);
+
             // Send notification to admin
             try {
                 $admins = User::where('type', 'admin')->get();
@@ -146,7 +208,7 @@ class PaymentController extends Controller
             Log::info("Payment proof uploaded: {$payment->_id}");
 
             return redirect()->route('payments.show', $payment->_id)
-                ->with('success', 'Bukti pembayaran berhasil di-upload. Admin akan memverifikasi dalam 1x24 jam.');
+                ->with('success', 'Bukti pembayaran berhasil di-upload. Dana akan ditahan di escrow setelah admin memverifikasi.');
         } catch (\Exception $e) {
             Log::error('Payment Proof Upload Error: ' . $e->getMessage());
 
@@ -185,7 +247,7 @@ class PaymentController extends Controller
 
         $payment = Payment::findOrFail($paymentId);
 
-        if (!$payment->isPaid()) {
+        if (!$payment->isPaid() || $payment->isVerified()) {
             return redirect()->back()->with('error', 'Hanya pembayaran dengan status "paid" yang dapat diverifikasi.');
         }
 
@@ -204,27 +266,39 @@ class PaymentController extends Controller
             $umkm->notify(new PaymentApproved($payment, $project));
         }
 
-        // Update project status to in_progress and create escrow transaction
+        // Update project status to ready for UMKM final review and hold funds in escrow
         if ($project) {
             $amount = (int) CurrencyHelper::extract($project->budget);
-            $platformFee = $amount * 0.10;
+            $platformFee = (int) round($amount * 0.15);
             $netAmount = $amount - $platformFee;
 
-            $escrow = EscrowTransaction::create([
-                'project_id' => $project->id,
-                'payer_id' => $project->client_id,
-                'payee_id' => $project->selected_creative_id,
+            $escrow = EscrowTransaction::where('payment_id', $payment->id)->first()
+                ?? EscrowTransaction::where('project_id', $project->id)->where('status', 'pending')->first();
+
+            if (!$escrow) {
+                $escrow = EscrowTransaction::create([
+                    'project_id' => $project->id,
+                    'payer_id' => $project->client_id,
+                    'payee_id' => $project->selected_creative_id,
+                    'payment_id' => $payment->id,
+                    'midtrans_order_id' => $payment->payment_number,
+                    'midtrans_payment_type' => 'manual_virtual_account',
+                ]);
+            }
+
+            $escrow->update([
                 'amount' => $amount,
                 'platform_fee' => $platformFee,
                 'net_amount' => $netAmount,
                 'status' => 'held',
-                'midtrans_order_id' => 'MANUAL-' . $project->id . '-' . time(),
                 'midtrans_transaction_id' => 'MANUAL-TX-' . uniqid(),
-                'midtrans_payment_type' => 'manual_transfer',
+                'verified_at' => now(),
+                'verified_by' => auth()->id(),
+                'disbursement_status' => 'held_by_platform',
             ]);
 
             $project->update([
-                'status' => 'in_progress',
+                'status' => 'ready_for_review',
                 'escrow_status' => 'held',
                 'escrow_transaction_id' => $escrow->id
             ]);
@@ -239,7 +313,7 @@ class PaymentController extends Controller
 
         Log::info("Payment verified: {$payment->_id}");
 
-        return redirect()->back()->with('success', 'Pembayaran berhasil diverifikasi.');
+        return redirect()->back()->with('success', 'Pembayaran berhasil diverifikasi. Dana sudah ditahan di escrow platform.');
     }
 
     /**
@@ -273,6 +347,20 @@ class PaymentController extends Controller
             'rejected_at' => now(),
         ]);
 
+        EscrowTransaction::where('payment_id', $payment->id)->update([
+            'status' => 'rejected',
+            'rejection_reason' => $validated['rejection_reason'],
+            'rejected_at' => now(),
+            'disbursement_status' => 'payment_rejected',
+        ]);
+
+        if ($project = Project::find($payment->project_id)) {
+            $project->update([
+                'status' => 'awaiting_payment',
+                'escrow_status' => 'unpaid',
+            ]);
+        }
+
         Log::info("Payment rejected: {$payment->_id}. Reason: {$validated['rejection_reason']}");
 
         return redirect()->back()->with('success', 'Pembayaran berhasil ditolak.');
@@ -294,6 +382,18 @@ class PaymentController extends Controller
         }
 
         $payment->update(['status' => 'cancelled']);
+
+        EscrowTransaction::where('payment_id', $payment->id)->update([
+            'status' => 'cancelled',
+            'disbursement_status' => 'payment_cancelled',
+        ]);
+
+        if ($project = Project::find($payment->project_id)) {
+            $project->update([
+                'status' => 'awaiting_payment',
+                'escrow_status' => 'unpaid',
+            ]);
+        }
 
         Log::info("Payment cancelled: {$payment->_id}");
 

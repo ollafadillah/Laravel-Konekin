@@ -105,8 +105,8 @@
                                 </span>
                             </td>
                             <td class="px-8 py-6">
-                                <div class="text-sm font-medium">{{ $payment->payment_date->format('d M Y') ?? 'N/A' }}</div>
-                                <div class="text-xs text-[#1E3A8A]/40">{{ $payment->payment_date->format('H:i') ?? 'N/A' }}</div>
+                                <div class="text-sm font-medium">{{ optional($payment->payment_date)->format('d M Y') ?? 'N/A' }}</div>
+                                <div class="text-xs text-[#1E3A8A]/40">{{ optional($payment->payment_date)->format('H:i') ?? 'N/A' }}</div>
                             </td>
                             <td class="px-8 py-6">
                                 @if($payment->status === 'paid' && !$payment->verified_at)

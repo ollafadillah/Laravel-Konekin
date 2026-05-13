@@ -37,7 +37,7 @@ class EscrowController extends Controller
         }
 
         $amount = (int) \App\Helpers\CurrencyHelper::extract($project->budget);
-        $platformFee = $amount * 0.10;
+        $platformFee = (int) round($amount * 0.15);
         $netAmount = $amount - $platformFee;
         $orderId = 'SIM-' . $project->id . '-' . time();
 
@@ -96,7 +96,7 @@ class EscrowController extends Controller
         }
 
         $amount = (int) \App\Helpers\CurrencyHelper::extract($project->budget);
-        $platformFee = $amount * 0.10;
+        $platformFee = (int) round($amount * 0.15);
         $netAmount = $amount - $platformFee;
         $orderId = 'SIM-' . $project->id . '-' . time();
 

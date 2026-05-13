@@ -153,9 +153,9 @@
                     @elseif(auth()->user()->isUMKM())
                         <div class="space-y-3">
                             @if($project->status === 'hired' && ($project->escrow_status ?? '') !== 'held')
-                                <a href="{{ route('escrow.checkout', $project->id) }}" class="w-full inline-flex items-center justify-center px-6 py-4 rounded-2xl bg-[#2563EB] text-white font-bold text-sm hover:bg-[#1E3A8A] transition-all shadow-lg shadow-[#2563EB]/20">
-                                    <i class="fas fa-wallet mr-2"></i> Bayar Escrow (Amankan Dana)
-                                </a>
+                                <div class="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-amber-700 text-xs font-bold leading-6">
+                                    Pembayaran escrow akan muncul setelah creative worker mengirim draft/progress 100%. Dana nantinya ditahan platform sampai hasil disetujui.
+                                </div>
                             @endif
                             <a href="{{ route('projects.progress') }}" class="w-full inline-flex items-center justify-center px-6 py-4 rounded-2xl bg-[#1E3A8A] text-white font-bold text-sm hover:bg-[#2563EB] transition-all">
                                 Lihat Progress Proyek
@@ -174,7 +174,7 @@
                                 <p class="text-xs text-[#2563EB] font-bold uppercase tracking-wider mt-1">{{ $application->creative_city ?? 'Creative Worker' }}</p>
                                 <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2">{{ $application->message ?: 'Belum menambahkan pesan pengantar.' }}</p>
                                 @if(!empty($application->proposal_url))
-                                    <a href="{{ $application->proposal_url }}" target="_blank" class="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#2563EB] text-[11px] font-extrabold uppercase tracking-[0.14em] hover:bg-[#2563EB] hover:text-white transition-all">
+                                    <a href="{{ $application->proposal_download_url ?? $application->proposal_url }}" target="_blank" download="{{ $application->proposal_display_name }}" class="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#2563EB] text-[11px] font-extrabold uppercase tracking-[0.14em] hover:bg-[#2563EB] hover:text-white transition-all">
                                         Lihat Proposal{{ !empty($application->proposal_type) ? ' (' . strtoupper($application->proposal_type) . ')' : '' }}
                                     </a>
                                 @endif

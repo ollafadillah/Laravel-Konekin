@@ -6,8 +6,6 @@ use App\Models\Project;
 use App\Models\ProjectApplication;
 use App\Models\ProjectHistory;
 use App\Models\ProjectProgressUpdate;
-use App\Models\Payment;
-use App\Helpers\CurrencyHelper;
 use App\Notifications\ProjectApplicationApproved;
 use App\Services\CloudinaryService;
 use App\Services\ProjectArchiveService;
@@ -200,10 +198,9 @@ class ProjectController extends Controller
         try {
             $proposalFile = $request->file('proposal_file');
             $proposalType = $proposalFile->getClientOriginalExtension();
-            $proposalUrl = $cloudinary->upload($proposalFile, [
-                'folder' => 'konekin/projects/proposals',
-                'resource_type' => 'raw',
-            ]);
+            $proposalOriginalName = $proposalFile->getClientOriginalName();
+            $proposalMimeType = $proposalFile->getClientMimeType();
+            $proposalUrl = $cloudinary->uploadDocument($proposalFile, 'konekin/projects/proposals');
         } catch (\Exception $e) {
             Log::error('Project Proposal Upload Error: ' . $e->getMessage());
 
@@ -221,6 +218,8 @@ class ProjectController extends Controller
             'message' => $validated['message'],
             'proposal_url' => $proposalUrl,
             'proposal_type' => $proposalType,
+            'proposal_original_name' => $proposalOriginalName,
+            'proposal_mime_type' => $proposalMimeType,
             'status' => 'applied',
             'applied_at' => now(),
         ]);
@@ -256,6 +255,13 @@ class ProjectController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->get();
                 $project->is_rated = \App\Models\Rating::where('project_id', $project->id)->exists();
+                $project->payment = \App\Models\Payment::where('project_id', $project->id)
+                    ->whereIn('status', ['pending', 'paid'])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                $project->escrow = \App\Models\EscrowTransaction::where('project_id', $project->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
 
                 return $this->decorateProject($project, $project->applications->count());
             });
@@ -319,26 +325,12 @@ class ProjectController extends Controller
         $project->selected_creative_name = $application->creative_name;
         $project->selected_creative_avatar = $application->creative_avatar;
         $project->applications_count = ProjectApplication::where('project_id', $project->id)->count();
-        $project->status = 'hired'; // Set to hired, waiting for payment
+        $project->status = 'hired';
+        $project->escrow_status = 'unpaid';
         $project->save();
 
-        // Create initial payment record
-        $payment = new Payment([
-            'project_id' => $project->id,
-            'client_id' => $project->client_id,
-            'client_name' => $project->client_name,
-            'client_avatar' => $project->client_avatar,
-            'amount' => CurrencyHelper::extract($project->budget),
-            'currency' => 'IDR',
-            'description' => "Pembayaran untuk proyek: {$project->title}",
-            'status' => 'pending',
-        ]);
-        
-        $payment->payment_number = $payment->generatePaymentNumber();
-        $payment->save();
-
-        // Redirect to payment show view
-        return redirect()->route('payments.show', $payment->_id)->with('success', 'Creative worker disetujui! Silakan upload resi pembayaran untuk memulai proyek.');
+        return redirect()->to(route('projects.progress') . '#project-' . $project->id)
+            ->with('success', 'Creative worker disetujui. Pekerjaan bisa dimulai, dan pembayaran escrow akan diminta setelah draft/progress 100% dikirim.');
     }
 
     public function creativeProgress()
@@ -416,7 +408,13 @@ class ProjectController extends Controller
         ]);
 
         $project->progress_percentage = $validated['progress_percentage'];
-        $project->status = $validated['progress_percentage'] >= 100 ? 'completed' : 'in_progress';
+        if ((int) $validated['progress_percentage'] >= 100) {
+            $project->status = ($project->escrow_status ?? 'unpaid') === 'held'
+                ? 'ready_for_review'
+                : 'awaiting_payment';
+        } else {
+            $project->status = 'in_progress';
+        }
         $project->save();
 
         return back()->with('success', 'Progress proyek berhasil diperbarui.');
@@ -526,10 +524,9 @@ class ProjectController extends Controller
 
             $proposalFile = $request->file('proposal_file');
             $proposalType = $proposalFile->getClientOriginalExtension();
-            $proposalUrl = $cloudinary->upload($proposalFile, [
-                'folder' => 'konekin/projects/proposals',
-                'resource_type' => 'raw',
-            ]);
+            $proposalOriginalName = $proposalFile->getClientOriginalName();
+            $proposalMimeType = $proposalFile->getClientMimeType();
+            $proposalUrl = $cloudinary->uploadDocument($proposalFile, 'konekin/projects/proposals');
 
             ProjectApplication::create([
                 'project_id' => $project->id,
@@ -540,6 +537,8 @@ class ProjectController extends Controller
                 'message' => $validated['message'],
                 'proposal_url' => $proposalUrl,
                 'proposal_type' => $proposalType,
+                'proposal_original_name' => $proposalOriginalName,
+                'proposal_mime_type' => $proposalMimeType,
                 'status' => 'applied',
                 'applied_at' => now(),
             ]);
@@ -635,7 +634,13 @@ class ProjectController extends Controller
             ]);
 
             $project->progress_percentage = $validated['progress_percentage'];
-            $project->status = $validated['progress_percentage'] >= 100 ? 'completed' : 'in_progress';
+            if ((int) $validated['progress_percentage'] >= 100) {
+                $project->status = ($project->escrow_status ?? 'unpaid') === 'held'
+                    ? 'ready_for_review'
+                    : 'awaiting_payment';
+            } else {
+                $project->status = 'in_progress';
+            }
             $project->save();
 
             return response()->json([
@@ -756,6 +761,9 @@ class ProjectController extends Controller
                     'status' => $app->status,
                     'message' => $app->message,
                     'proposal_url' => $app->proposal_url,
+                    'proposal_download_url' => $app->proposal_download_url,
+                    'proposal_type' => $app->proposal_type,
+                    'proposal_original_name' => $app->proposal_original_name,
                     'applied_at' => $app->applied_at,
                 ]);
 
@@ -851,7 +859,9 @@ class ProjectController extends Controller
                 'status' => $app->status,
                 'message' => $app->message,
                 'proposal_url' => $app->proposal_url,
+                'proposal_download_url' => $app->proposal_download_url,
                 'proposal_type' => $app->proposal_type,
+                'proposal_original_name' => $app->proposal_original_name,
                 'applied_at' => $app->applied_at,
             ]);
 
@@ -895,12 +905,13 @@ class ProjectController extends Controller
         $project->selected_creative_id = $application->creative_id;
         $project->selected_creative_name = $application->creative_name;
             $project->selected_creative_avatar = $application->creative_avatar;
-            $project->status = 'hired'; // Mark as hired, waiting for payment
+            $project->status = 'hired';
+            $project->escrow_status = 'unpaid';
             $project->save();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Creative worker berhasil disetujui. Silakan lakukan pembayaran untuk memulai proyek.',
+                'message' => 'Creative worker berhasil disetujui. Pembayaran escrow akan diminta setelah draft/progress 100% dikirim.',
             ], 200);
 
         } catch (\Exception $e) {
@@ -974,10 +985,22 @@ class ProjectController extends Controller
         $progress = (int) ($project->progress_percentage ?? 0);
         $status = $project->status ?? 'open';
 
+        $preserveStatuses = [
+            'hired',
+            'awaiting_payment',
+            'payment_pending',
+            'ready_for_review',
+            'pending_admin_approval',
+            'revision',
+            'disputed',
+            'completed',
+            'payment_refunded',
+        ];
+
         if ($count === 0 && empty($project->selected_creative_id)) {
             $progress = 0;
             $status = 'open';
-        } elseif ($progress >= 100) {
+        } elseif ($progress >= 100 && !in_array($status, $preserveStatuses, true)) {
             $status = 'completed';
         } elseif ($progress > 0 && $status === 'applied') {
             $status = 'in_progress';
@@ -989,8 +1012,15 @@ class ProjectController extends Controller
         $project->status_label = match ($status) {
             'open' => 'Belum Ada Apply',
             'applied' => 'Sudah Di-apply',
+            'hired' => 'Worker Dipilih',
             'in_progress' => 'Sedang Dikerjakan',
+            'awaiting_payment' => 'Menunggu Pembayaran',
+            'payment_pending' => 'VA Menunggu Transfer',
+            'ready_for_review' => 'Siap Direview',
+            'pending_admin_approval' => 'Menunggu Admin',
             'revision' => 'Revisi',
+            'disputed' => 'Dispute',
+            'payment_refunded' => 'Dana Dikembalikan',
             'completed' => 'Selesai',
             default => ucfirst(str_replace('_', ' ', $status)),
         };
@@ -1000,8 +1030,15 @@ class ProjectController extends Controller
                 'applied' => !empty($project->selected_creative_id)
                     ? 'Creative worker sudah disetujui. Menunggu progres kerja pertama.'
                     : 'Sudah ada apply masuk. Kamu bisa mulai menyeleksi creative worker.',
+                'hired' => 'Creative worker sudah dipilih. Pekerjaan bisa dimulai hingga draft siap direview.',
                 'in_progress' => 'Kolaborasi sedang berjalan. Pantau update proyek hingga selesai.',
+                'awaiting_payment' => 'Draft sudah 100%. UMKM wajib membayar escrow sebelum memberi persetujuan akhir.',
+                'payment_pending' => 'VA pembayaran sudah dibuat. Transfer dan upload bukti agar admin bisa menahan dana di escrow.',
+                'ready_for_review' => 'Dana sudah ditahan platform. Review hasil/revisi, lalu setujui selesai atau ajukan dispute jika ada masalah.',
+                'pending_admin_approval' => 'UMKM sudah menyetujui hasil. Admin sedang memeriksa sebelum dana dicairkan.',
                 'revision' => 'Proyek sedang dalam tahap revisi.',
+                'disputed' => 'Proyek masuk dispute. Admin/mediator akan menentukan dana dicairkan atau dikembalikan.',
+                'payment_refunded' => 'Dispute selesai dan dana dikembalikan ke UMKM.',
                 'completed' => 'Proyek telah selesai 100%.',
                 default => 'Progress proyek siap dilanjutkan dari 0% sampai 100%.',
             };

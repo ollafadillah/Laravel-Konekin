@@ -58,7 +58,7 @@ class MlRecommendationService
             };
         } catch (ConnectionException $exception) {
             throw new RuntimeException(
-                'Flask ML service belum bisa dihubungi. Pastikan `python app.py` sudah berjalan di `ml-service`.',
+                'Flask ML service belum bisa dihubungi. Pastikan service ML sedang berjalan.',
                 503,
                 $exception
             );

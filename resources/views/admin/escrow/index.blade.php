@@ -41,6 +41,9 @@
             <button onclick="switchTab('pending')" id="tab-pending-btn" class="px-6 py-3 font-bold text-sm uppercase tracking-wider border-b-2 border-transparent text-[#1E3A8A]/60 hover:text-[#1E3A8A] transition-all whitespace-nowrap">
                 <i class="fas fa-check-double mr-2"></i> Pending Approval ({{ $pendingApprovalCount }})
             </button>
+            <button onclick="switchTab('disputes')" id="tab-disputes-btn" class="px-6 py-3 font-bold text-sm uppercase tracking-wider border-b-2 border-transparent text-[#1E3A8A]/60 hover:text-[#1E3A8A] transition-all whitespace-nowrap">
+                <i class="fas fa-scale-balanced mr-2"></i> Dispute ({{ $disputeCount ?? 0 }})
+            </button>
         </div>
 
         <!-- Tab: Semua Transaksi -->
@@ -192,6 +195,62 @@
                 </div>
                 @else
                 <div class="p-12 text-center text-[#1E3A8A]/40 font-bold">Tidak ada proyek menunggu approval</div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Tab: Dispute Resolution -->
+        <div id="tab-disputes" class="tab-content hidden">
+            <div class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm overflow-hidden">
+                @if(($disputeCount ?? 0) > 0)
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-slate-50/50 border-b border-[#2563EB]/5">
+                                <th class="px-8 py-6 text-[11px] font-black text-[#1E3A8A]/40 uppercase tracking-widest">Proyek & Pihak</th>
+                                <th class="px-8 py-6 text-[11px] font-black text-[#1E3A8A]/40 uppercase tracking-widest">Alasan Dispute</th>
+                                <th class="px-8 py-6 text-[11px] font-black text-[#1E3A8A]/40 uppercase tracking-widest">Dana Ditahan</th>
+                                <th class="px-8 py-6 text-[11px] font-black text-[#1E3A8A]/40 uppercase tracking-widest">Keputusan Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#2563EB]/5">
+                            @foreach($disputeEscrows as $escrow)
+                            <tr class="hover:bg-slate-50/50 transition-colors align-top">
+                                <td class="px-8 py-6">
+                                    <div class="font-bold text-[#1E3A8A]">{{ $escrow->project->title ?? 'N/A' }}</div>
+                                    <div class="text-xs text-[#1E3A8A]/50 mt-2">UMKM: {{ $escrow->payer->name ?? 'N/A' }}</div>
+                                    <div class="text-xs text-[#1E3A8A]/50">Creative: {{ $escrow->payee->name ?? 'N/A' }}</div>
+                                </td>
+                                <td class="px-8 py-6 max-w-md">
+                                    <p class="text-sm text-[#1E3A8A]/70 font-medium leading-7">{{ $escrow->dispute_reason ?? $escrow->project->dispute_reason ?? '-' }}</p>
+                                    <p class="text-[10px] text-red-500 font-black uppercase tracking-widest mt-3">Dana dibekukan sampai diputuskan</p>
+                                </td>
+                                <td class="px-8 py-6">
+                                    <div class="font-bold text-[#1E3A8A]">Rp {{ number_format($escrow->amount ?? 0, 0, ',', '.') }}</div>
+                                    <div class="text-[9px] text-[#1E3A8A]/40 font-black uppercase">Fee platform 15%: Rp {{ number_format($escrow->platform_fee ?? 0, 0, ',', '.') }}</div>
+                                    <div class="text-[9px] text-[#1E3A8A]/40 font-black uppercase">Net kreator: Rp {{ number_format($escrow->net_amount ?? 0, 0, ',', '.') }}</div>
+                                </td>
+                                <td class="px-8 py-6 min-w-[320px]">
+                                    <form action="{{ route('admin.disputes.resolve', $escrow->id) }}" method="POST" class="space-y-3">
+                                        @csrf
+                                        <select name="resolution" required class="w-full rounded-xl border border-[#2563EB]/20 px-4 py-3 text-sm font-bold">
+                                            <option value="">Pilih keputusan</option>
+                                            <option value="release">Cairkan ke creative worker</option>
+                                            <option value="refund">Kembalikan ke UMKM</option>
+                                        </select>
+                                        <textarea name="admin_resolution_notes" rows="3" required class="w-full rounded-xl border border-[#2563EB]/20 px-4 py-3 text-sm" placeholder="Catatan keputusan admin/mediator..."></textarea>
+                                        <button type="submit" class="w-full px-4 py-3 bg-[#1E3A8A] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#2563EB] transition-all" onclick="return confirm('Selesaikan dispute dengan keputusan ini?')">
+                                            Simpan Keputusan
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="p-12 text-center text-[#1E3A8A]/40 font-bold">Tidak ada dispute aktif</div>
                 @endif
             </div>
         </div>

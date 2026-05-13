@@ -1,55 +1,35 @@
-#!/bin/bash
+#!/bin/sh
+set -eu
 
-# Konekin Docker Quick Start Script
+echo "Konekin Docker Setup"
+echo "===================="
 
-set -e
-
-echo "🐳 Konekin Docker Setup"
-echo "======================"
-
-# Check if Docker is installed
-if ! command -v docker &> /dev/null; then
-    echo "❌ Docker is not installed"
+if ! command -v docker >/dev/null 2>&1; then
+    echo "Docker is not installed or not available in PATH."
     exit 1
 fi
 
-# Check if Docker Compose is installed
-if ! command -v docker-compose &> /dev/null; then
-    echo "❌ Docker Compose is not installed"
+if ! docker compose version >/dev/null 2>&1; then
+    echo "Docker Compose v2 is not available."
     exit 1
 fi
 
-# Create .env.docker if not exists
 if [ ! -f .env.docker ]; then
-    echo "📝 Creating .env.docker file..."
-    cp .env.docker .env.docker
+    echo ".env.docker is missing. Create it from .env.example before running this script."
+    exit 1
 fi
 
-# Prompt for APP_KEY if not set
-if ! grep -q "APP_KEY=base64:" .env.docker; then
-    echo "🔑 Generating APP_KEY..."
-    # We'll set this during first container run
-fi
+echo "Building images..."
+docker compose build
 
-echo "🔨 Building Docker image..."
-docker-compose build
+echo "Starting services..."
+docker compose up -d
 
-echo "🚀 Starting services..."
-docker-compose up -d
+echo "Current containers:"
+docker compose ps
 
-echo "⏳ Waiting for services to be ready..."
-sleep 5
-
-echo "📦 Running migrations..."
-docker-compose exec -T app php artisan migrate --force || true
-
-echo "✅ Setup complete!"
 echo ""
-echo "🌐 Access your application at: http://localhost:8000"
-echo "📊 View logs: docker-compose logs -f app"
-echo "🛑 Stop services: docker-compose down"
-echo ""
-echo "📝 Next steps:"
-echo "1. Update .env.docker with your configuration"
-echo "2. Test: curl http://localhost:8000/health"
-echo "3. Setup your Midtrans and Cloudinary credentials"
+echo "Done."
+echo "Laravel: http://localhost:8000"
+echo "ML service: http://localhost:5000/health"
+echo "Logs: docker compose logs -f app"
