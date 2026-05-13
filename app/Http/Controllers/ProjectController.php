@@ -10,6 +10,7 @@ use App\Notifications\ProjectApplicationApproved;
 use App\Services\CloudinaryService;
 use App\Services\ProjectArchiveService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ProjectController extends Controller
@@ -232,6 +233,32 @@ class ProjectController extends Controller
         $project->save();
 
         return back()->with('success', 'Pengajuan berhasil dikirim ke UMKM.');
+    }
+
+    public function previewProposal(string $applicationId)
+    {
+        $application = ProjectApplication::findOrFail($applicationId);
+        $this->ensureProposalCanBeOpened($application);
+
+        $extension = strtolower($application->proposal_type ?: pathinfo($application->proposal_display_name, PATHINFO_EXTENSION));
+
+        if ($extension === 'pdf') {
+            return $this->serveProposalFile($application, false);
+        }
+
+        return view('projects.proposal-preview', [
+            'application' => $application,
+            'extension' => $extension,
+            'canUseDocumentViewer' => in_array($extension, ['doc', 'docx', 'ppt', 'pptx'], true),
+        ]);
+    }
+
+    public function downloadProposal(string $applicationId)
+    {
+        $application = ProjectApplication::findOrFail($applicationId);
+        $this->ensureProposalCanBeOpened($application);
+
+        return $this->serveProposalFile($application, true);
     }
 
     public function progress(ProjectArchiveService $archiveService)
@@ -1088,6 +1115,64 @@ class ProjectController extends Controller
             'updated_at' => isset($project->updated_at) && $project->updated_at ? $project->updated_at->toISOString() : null,
         ];
     }
+
+    private function ensureProposalCanBeOpened(ProjectApplication $application): void
+    {
+        $user = auth()->user();
+        $project = Project::find($application->project_id);
+
+        if (!$user || !$project || empty($application->proposal_url)) {
+            abort(404);
+        }
+
+        $isProjectOwner = (string) $project->client_id === (string) $user->id;
+        $isApplicant = (string) $application->creative_id === (string) $user->id;
+        $isAdmin = method_exists($user, 'isAdmin') && $user->isAdmin();
+
+        if (!$isProjectOwner && !$isApplicant && !$isAdmin) {
+            abort(403, 'Kamu tidak punya akses ke proposal ini.');
+        }
+    }
+
+    private function serveProposalFile(ProjectApplication $application, bool $asDownload)
+    {
+        $response = Http::timeout(60)->get($application->proposal_url);
+
+        if (!$response->successful()) {
+            Log::warning('Proposal file could not be fetched.', [
+                'application_id' => (string) $application->id,
+                'status' => $response->status(),
+                'url' => $application->proposal_url,
+            ]);
+
+            abort(404, 'File proposal tidak bisa dibuka dari storage.');
+        }
+
+        $fileName = str_replace(['"', '\\', '/', "\r", "\n"], '', $application->proposal_display_name);
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION) ?: ($application->proposal_type ?? 'file'));
+        $contentType = $application->proposal_mime_type ?: $this->proposalMimeType($extension);
+        $disposition = $asDownload ? 'attachment' : 'inline';
+
+        return response($response->body(), 200, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => $disposition . '; filename="' . $fileName . '"',
+            'Cache-Control' => 'private, max-age=300',
+        ]);
+    }
+
+    private function proposalMimeType(string $extension): string
+    {
+        return match (strtolower($extension)) {
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'zip' => 'application/zip',
+            default => 'application/octet-stream',
+        };
+    }
+
     public function acceptInvitation($id)
     {
         $user = auth()->user();

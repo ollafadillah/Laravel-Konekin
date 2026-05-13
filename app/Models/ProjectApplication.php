@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use MongoDB\Laravel\Eloquent\Model;
-use Illuminate\Support\Str;
-
 class ProjectApplication extends Model
 {
     protected $connection = 'mongodb';
@@ -51,14 +49,6 @@ class ProjectApplication extends Model
     {
         if (empty($this->proposal_url)) {
             return null;
-        }
-
-        $extension = pathinfo($this->proposal_display_name, PATHINFO_EXTENSION);
-        $baseName = pathinfo($this->proposal_display_name, PATHINFO_FILENAME);
-        $downloadName = (Str::slug($baseName) ?: 'proposal') . ($extension ? '.' . $extension : '');
-
-        if (str_contains($this->proposal_url, '/raw/upload/')) {
-            return str_replace('/raw/upload/', '/raw/upload/fl_attachment:' . rawurlencode($downloadName) . '/', $this->proposal_url);
         }
 
         return $this->proposal_url;

@@ -14,6 +14,7 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8FAFC; }
         .font-display { font-family: 'Space Grotesk', sans-serif; }
+        .readable-text { overflow-wrap: anywhere; word-break: break-word; }
     </style>
 </head>
 <body class="antialiased text-[#1E3A8A]">
@@ -242,6 +243,12 @@
 
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 @forelse($project->applications as $application)
+                                    @php
+                                        $applicationMessage = $application->message ?: 'Belum ada pesan pengantar.';
+                                        $applicationMessageLimit = 180;
+                                        $isApplicationMessageLong = \Illuminate\Support\Str::length($applicationMessage) > $applicationMessageLimit;
+                                        $applicationMessageId = 'application-message-' . $application->id;
+                                    @endphp
                                     <article class="rounded-2xl border {{ ($application->status ?? 'applied') === 'approved' ? 'border-emerald-200 bg-emerald-50/40' : 'border-[#2563EB]/8 bg-[#F8FAFC]' }} p-5">
                                         <div class="flex items-start justify-between gap-4">
                                             <div class="flex gap-4 min-w-0">
@@ -254,13 +261,23 @@
                                             <span class="shrink-0 px-3 py-1.5 rounded-full bg-white border border-[#2563EB]/10 text-[10px] font-black uppercase tracking-widest">{{ $application->status ?? 'applied' }}</span>
                                         </div>
 
-                                        <p class="mt-4 text-sm text-[#1E3A8A]/62 font-medium leading-7">{{ $application->message ?: 'Belum ada pesan pengantar.' }}</p>
+                                        <p id="{{ $applicationMessageId }}" class="readable-text mt-4 text-sm text-[#1E3A8A]/62 font-medium leading-7">
+                                            @if($isApplicationMessageLong)
+                                                <span data-readable-short>{{ \Illuminate\Support\Str::limit($applicationMessage, $applicationMessageLimit, '') }}</span><span data-readable-full class="hidden">{{ $applicationMessage }}</span><button type="button" class="ml-1 font-black text-[#2563EB] hover:text-[#1E3A8A] transition-colors" data-show-label="...Lihat Selengkapnya" data-hide-label="Sembunyikan" onclick="toggleReadableText(@js($applicationMessageId), this)">...Lihat Selengkapnya</button>
+                                            @else
+                                                {{ $applicationMessage }}
+                                            @endif
+                                        </p>
 
                                         <div class="mt-4 flex flex-wrap gap-2">
                                             @if(!empty($application->proposal_url))
-                                                <a href="{{ $application->proposal_download_url ?? $application->proposal_url }}" target="_blank" download="{{ $application->proposal_display_name }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#2563EB]/10 text-[#2563EB] text-[11px] font-black uppercase tracking-widest hover:bg-[#2563EB] hover:text-white transition-all">
+                                                <a href="{{ route('project-applications.proposal.preview', $application->id) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#2563EB]/10 text-[#2563EB] text-[11px] font-black uppercase tracking-widest hover:bg-[#2563EB] hover:text-white transition-all">
+                                                    <i class="fas fa-file-lines"></i>
+                                                    Lihat {{ strtoupper($application->proposal_type ?? 'FILE') }}
+                                                </a>
+                                                <a href="{{ route('project-applications.proposal.download', $application->id) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#10B981]/20 text-[#059669] text-[11px] font-black uppercase tracking-widest hover:bg-[#10B981] hover:text-white transition-all">
                                                     <i class="fas fa-file-arrow-down"></i>
-                                                    {{ strtoupper($application->proposal_type ?? 'FILE') }}
+                                                    Download
                                                 </a>
                                                 <span class="inline-flex items-center px-3 py-2 rounded-xl bg-white text-[#1E3A8A]/45 text-[11px] font-bold max-w-full truncate">
                                                     {{ $application->proposal_display_name }}
@@ -294,6 +311,12 @@
 
                             <div class="space-y-4">
                                 @forelse($project->progress_updates as $update)
+                                    @php
+                                        $updateNote = $update->note ?: 'Creative worker belum menambahkan catatan progress.';
+                                        $updateNoteLimit = 190;
+                                        $isUpdateNoteLong = \Illuminate\Support\Str::length($updateNote) > $updateNoteLimit;
+                                        $updateNoteId = 'progress-note-' . $update->id;
+                                    @endphp
                                     <article class="rounded-2xl bg-white border border-[#2563EB]/8 p-5">
                                         <div class="flex items-center justify-between gap-4">
                                             <div>
@@ -302,7 +325,13 @@
                                             </div>
                                             <span class="px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-black uppercase tracking-widest">{{ $update->progress_percentage }}%</span>
                                         </div>
-                                        <p class="mt-3 text-sm text-[#1E3A8A]/62 font-medium leading-7">{{ $update->note }}</p>
+                                        <p id="{{ $updateNoteId }}" class="readable-text mt-3 text-sm text-[#1E3A8A]/62 font-medium leading-7">
+                                            @if($isUpdateNoteLong)
+                                                <span data-readable-short>{{ \Illuminate\Support\Str::limit($updateNote, $updateNoteLimit, '') }}</span><span data-readable-full class="hidden">{{ $updateNote }}</span><button type="button" class="ml-1 font-black text-[#2563EB] hover:text-[#1E3A8A] transition-colors" data-show-label="...Lihat Selengkapnya" data-hide-label="Sembunyikan" onclick="toggleReadableText(@js($updateNoteId), this)">...Lihat Selengkapnya</button>
+                                            @else
+                                                {{ $updateNote }}
+                                            @endif
+                                        </p>
                                         @if(!empty($update->media_url))
                                             <a href="{{ $update->media_url }}" target="_blank" class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#2563EB] text-[11px] font-black uppercase tracking-widest hover:bg-[#2563EB] hover:text-white transition-all">
                                                 <i class="fas fa-up-right-from-square"></i>
@@ -450,6 +479,21 @@
     </div>
 
     <script>
+        function toggleReadableText(targetId, button) {
+            const wrapper = document.getElementById(targetId);
+            const shortText = wrapper?.querySelector('[data-readable-short]');
+            const fullText = wrapper?.querySelector('[data-readable-full]');
+
+            if (!wrapper || !shortText || !fullText || !button) {
+                return;
+            }
+
+            const isExpanded = !fullText.classList.contains('hidden');
+            shortText.classList.toggle('hidden', !isExpanded);
+            fullText.classList.toggle('hidden', isExpanded);
+            button.textContent = isExpanded ? button.dataset.showLabel : button.dataset.hideLabel;
+        }
+
         function setRating(projectId, value) {
             document.getElementById('rating_input_' + projectId).value = value;
             const stars = document.querySelectorAll('.rating-star-' + projectId);

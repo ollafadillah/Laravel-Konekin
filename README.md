@@ -1,58 +1,139 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Konekin
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Konekin adalah platform kolaborasi antara UMKM dan creative worker. UMKM dapat mempublikasikan proyek, menerima proposal, memilih creative worker, memantau progress, melakukan pembayaran escrow, meminta revisi, membuka dispute, dan memberi rating setelah proyek selesai.
 
-## About Laravel
+## Ringkasan Fitur
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Autentikasi role UMKM, creative worker, dan admin.
+- Dashboard UMKM, creative worker, dan admin.
+- Publikasi proyek dengan media referensi.
+- Apply project dengan proposal PDF/DOC/DOCX/PPT/PPTX/ZIP.
+- Preview dan download proposal melalui route Laravel yang terproteksi.
+- Progress proyek dari creative worker dengan media bukti.
+- Escrow payment: VA, upload bukti transfer, verifikasi admin, fee platform 15%, dan pencairan ke creative worker.
+- Revision dan dispute resolution.
+- Rating creative worker setelah proyek selesai.
+- Rekomendasi creative worker berbasis ML service Flask.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Laravel 13, PHP 8.3
+- MongoDB Laravel driver
+- Vite dan Tailwind CSS
+- Cloudinary untuk upload media/dokumen
+- Flask ML service untuk rekomendasi KMeans + TF-IDF
+- Docker Compose untuk development dan deployment rootless
 
-## Learning Laravel
+## Struktur Penting
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```text
+app/                  Laravel models, controllers, jobs, notifications, services
+resources/views/      Blade UI
+routes/               Web/API routes
+docker/               PHP, Nginx, Supervisor config
+ml-service/           Flask recommendation service
+database/             Laravel migrations/factories/seeders
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Dokumentasi operasional:
 
-## Contributing
+- [DOCKER.md](DOCKER.md) untuk setup Docker, rootless deployment, dan command operasional.
+- [PAYMENT_FLOW.md](PAYMENT_FLOW.md) untuk alur escrow, payment, revisi, dispute, dan pencairan dana.
+- [ml-service/README.md](ml-service/README.md) untuk detail training dan endpoint ML service.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Setup Lokal Tanpa Docker
 
-## Code of Conduct
+Pastikan PHP 8.3, Composer, Node.js, MongoDB, dan Python tersedia.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+npm run dev
+php artisan serve
+```
 
-## Security Vulnerabilities
+Jalankan queue worker di terminal terpisah:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan queue:work
+```
 
-## License
+Setup ML service:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+cd ml-service
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python run.py
+python app.py
+```
+
+Untuk Linux/Mac, aktivasi venv memakai:
+
+```bash
+source venv/bin/activate
+```
+
+## Setup Dengan Docker
+
+Development:
+
+```bash
+docker compose up --build
+```
+
+Production/rootless:
+
+```bash
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+Baca detail lengkap di [DOCKER.md](DOCKER.md).
+
+## Environment
+
+Minimal variable yang perlu dicek:
+
+```env
+APP_KEY=
+APP_URL=
+DB_CONNECTION=mongodb
+DB_HOST=
+DB_DATABASE=konekin
+ML_SERVICE_URL=http://127.0.0.1:5000
+CLOUDINARY_URL=
+MIDTRANS_SERVER_KEY=
+MIDTRANS_CLIENT_KEY=
+JWT_SECRET=
+```
+
+Jangan commit credential asli. `.env.example` hanya untuk template.
+
+## Command Harian
+
+```bash
+php artisan route:list
+php artisan optimize:clear
+php artisan test
+npm run build
+```
+
+Docker:
+
+```bash
+docker compose ps
+docker compose logs -f app
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan queue:failed
+```
+
+## Catatan Maintenance
+
+- Jangan commit `vendor`, `node_modules`, `ml-service/venv`, cache, log, atau file credential.
+- Proposal dan dokumen user dibuka melalui route Laravel agar aksesnya tetap terproteksi.
+- Payment/escrow memiliki banyak status. Jika menambah flow baru, update [PAYMENT_FLOW.md](PAYMENT_FLOW.md).
+- Setelah mengubah route/config/view di production, jalankan `php artisan optimize:clear` lalu cache ulang jika diperlukan.

@@ -95,6 +95,8 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::post('/proyek', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/proyek/{id}', [ProjectController::class, 'show'])->name('projects.show');
     Route::post('/proyek/{id}/apply', [ProjectController::class, 'apply'])->name('projects.apply');
+    Route::get('/proposal/{applicationId}/preview', [ProjectController::class, 'previewProposal'])->name('project-applications.proposal.preview');
+    Route::get('/proposal/{applicationId}/download', [ProjectController::class, 'downloadProposal'])->name('project-applications.proposal.download');
     Route::post('/proyek/{id}/accept', [ProjectController::class, 'acceptInvitation'])->name('projects.accept');
     Route::post('/proyek/{id}/reject', [ProjectController::class, 'rejectInvitation'])->name('projects.reject');
     Route::get('/progress-proyek', [ProjectController::class, 'progress'])->name('projects.progress');
