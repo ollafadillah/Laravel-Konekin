@@ -68,6 +68,14 @@
             box-shadow: 0 24px 48px rgba(0, 0, 0, 0.06);
             background: rgba(255, 255, 255, 0.85);
         }
+        .earnings-card.bento-hover:hover {
+            background: linear-gradient(to bottom right, #0F172A, #1E3A8A, #0A66C2);
+            box-shadow: 0 24px 48px rgba(37, 99, 235, 0.18);
+        }
+        .portfolio-progress-card.bento-hover:hover {
+            background: linear-gradient(to bottom right, #2563EB, #0A66C2, #1E3A8A);
+            box-shadow: 0 24px 48px rgba(37, 99, 235, 0.18);
+        }
         .text-gradient {
             background-clip: text;
             -webkit-background-clip: text;
@@ -121,7 +129,7 @@
             </div>
 
             <!-- Earnings Card (Span 4) -->
-            <div class="lg:col-span-4 rounded-[2.5rem] p-8 relative overflow-hidden bento-hover bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#0A66C2] text-white shadow-2xl shadow-[#2563EB]/20 border border-[#60A5FA]/25">
+            <div class="lg:col-span-4 rounded-[2.5rem] p-8 relative overflow-hidden bento-hover earnings-card bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#0A66C2] text-white shadow-2xl shadow-[#2563EB]/20 border border-[#60A5FA]/25">
                 <div class="absolute top-0 right-0 w-40 h-40 bg-[#38BDF8]/25 rounded-full blur-3xl"></div>
                 <div class="absolute bottom-0 left-0 w-32 h-32 bg-[#2563EB]/25 rounded-full blur-2xl"></div>
                 
@@ -315,7 +323,7 @@
             <div class="space-y-8">
                 
                 <!-- Portfolio Progress -->
-                <div class="bg-gradient-to-br from-[#2563EB] via-[#0A66C2] to-[#1E3A8A] p-8 rounded-[2.5rem] text-white shadow-2xl shadow-[#2563EB]/20 relative overflow-hidden group bento-hover">
+                <div class="bg-gradient-to-br from-[#2563EB] via-[#0A66C2] to-[#1E3A8A] p-8 rounded-[2.5rem] text-white shadow-2xl shadow-[#2563EB]/20 relative overflow-hidden group bento-hover portfolio-progress-card">
                     <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div class="relative z-10">
                         <div class="flex justify-between items-start mb-6">
