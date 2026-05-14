@@ -44,7 +44,17 @@
                     </div>
 
                     <div>
-                        <p class="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#2563EB] mb-2">{{ $creator->display_creative_category ?? 'Creative Worker' }}</p>
+                        <div class="flex items-center gap-3 mb-2">
+                            <p class="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#2563EB]">{{ $creator->display_creative_category ?? 'Creative Worker' }}</p>
+                            @if($creator->creative_tier)
+                                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full {{ $creator->creative_tier['bg'] }} border border-white shadow-sm" title="{{ $creator->five_star_ratings_count }} ulasan bintang 5">
+                                    <img src="{{ $creator->creative_tier['badge'] }}" alt="Tier Badge" class="w-4 h-4 object-contain">
+                                    <span class="text-[10px] font-extrabold uppercase tracking-wider {{ $creator->creative_tier['color'] }}">
+                                        {{ $creator->creative_tier['name'] }}
+                                    </span>
+                                </div>
+                            @endif
+                        </div>
                         <h1 class="font-display text-3xl md:text-5xl font-bold text-[#1E3A8A] leading-tight">{{ $creator->name }}</h1>
                         <div class="flex flex-wrap items-center gap-3 mt-3 text-sm text-[#1E3A8A]/55 font-medium">
                             <span>{{ $creator->city ?? 'Domisili belum diatur' }}</span>

@@ -111,6 +111,45 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
         return $this->ratingsQuery()->count();
     }
 
+    public function getFiveStarRatingsCountAttribute()
+    {
+        return $this->ratingsQuery()->where('rating', 5)->count();
+    }
+
+    public function getCreativeTierAttribute()
+    {
+        if (!$this->isCreativeWorker()) {
+            return null;
+        }
+
+        $fiveStarCount = $this->five_star_ratings_count;
+
+        if ($fiveStarCount >= 20) {
+            return [
+                'name' => 'Expert',
+                'badge' => asset('images/badges/star-red.jpg'),
+                'color' => 'text-rose-600',
+                'bg' => 'bg-rose-50',
+            ];
+        } elseif ($fiveStarCount >= 10) {
+            return [
+                'name' => 'Intermediate',
+                'badge' => asset('images/badges/star-blue.jpg'),
+                'color' => 'text-blue-600',
+                'bg' => 'bg-blue-50',
+            ];
+        } elseif ($fiveStarCount >= 1) {
+            return [
+                'name' => 'Beginner',
+                'badge' => asset('images/badges/star-yellow.jpg'),
+                'color' => 'text-amber-600',
+                'bg' => 'bg-amber-50',
+            ];
+        }
+
+        return null;
+    }
+
     public function recentRatings(int $limit = 5)
     {
         return $this->ratingsQuery()

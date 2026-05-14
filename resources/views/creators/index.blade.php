@@ -111,18 +111,27 @@
                     {!! $borderDecor !!}
                     <div class="relative z-10 flex flex-col h-full">
                         <!-- Profile Header -->
-                        <div class="flex items-center gap-5 mb-6">
+                        <div class="flex items-start gap-5 mb-6 relative">
                             <div class="w-20 h-20 rounded-[1.5rem] overflow-hidden shrink-0 border-2 border-white shadow-lg shadow-[#2563EB]/10 group-hover:scale-105 transition-transform">
                                 <img src="{{ $creator->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode($creator->name).'&background=2563EB&color=fff' }}" alt="{{ $creator->name }}" class="w-full h-full object-cover">
                             </div>
-                            <div>
-                                <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors">{{ $creator->name }}</h3>
-                                <div class="flex items-center gap-2 mt-1">
+                            <div class="flex-grow pt-1">
+                                <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors pr-8">{{ $creator->name }}</h3>
+                                <div class="flex flex-wrap items-center gap-2 mt-1.5">
                                     <span class="text-xs font-bold text-[#2563EB] uppercase tracking-wider">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
                                     <span class="w-1 h-1 bg-[#1E3A8A]/20 rounded-full"></span>
                                     <span class="text-xs font-medium text-[#1E3A8A]/40">{{ $creator->city ?? 'Domisili tidak diatur' }}</span>
                                 </div>
                             </div>
+
+                            @if($creator->creative_tier)
+                                <div class="absolute top-0 right-0 flex flex-col items-end" title="Tier: {{ $creator->creative_tier['name'] }}">
+                                    <img src="{{ $creator->creative_tier['badge'] }}" alt="Tier Badge" class="w-10 h-10 object-contain drop-shadow-md transition-transform group-hover:scale-110 group-hover:rotate-6">
+                                    <span class="text-[9px] font-extrabold uppercase mt-1 px-2 py-0.5 rounded-full {{ $creator->creative_tier['bg'] }} {{ $creator->creative_tier['color'] }} shadow-sm">
+                                        {{ $creator->creative_tier['name'] }}
+                                    </span>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Skills & Stats -->
