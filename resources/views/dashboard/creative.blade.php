@@ -40,18 +40,18 @@
         }
         .orb-1 {
             width: 400px; height: 400px;
-            background: rgba(99, 102, 241, 0.15); /* Indigo */
+            background: rgba(37, 99, 235, 0.14); /* Konekin Blue */
             top: -100px; left: -100px;
         }
         .orb-2 {
             width: 500px; height: 500px;
-            background: rgba(236, 72, 153, 0.15); /* Pink */
+            background: rgba(14, 165, 233, 0.12); /* Sky Blue */
             bottom: 20%; right: -150px;
             animation-delay: -5s;
         }
         .orb-3 {
             width: 400px; height: 400px;
-            background: rgba(56, 189, 248, 0.15); /* Light Blue */
+            background: rgba(30, 58, 138, 0.10); /* Professional Navy */
             top: 40%; left: 30%;
             animation-delay: -10s;
         }
@@ -75,7 +75,7 @@
         }
     </style>
 </head>
-<body class="antialiased text-[#1E293B] relative min-h-screen">
+<body class="antialiased text-[#1E3A8A] relative min-h-screen">
     
     <!-- Background Orbs -->
     <div class="orb orb-1"></div>
@@ -93,8 +93,8 @@
             
             <!-- Welcome Card (Span 8) -->
             <div class="lg:col-span-8 glass-bento rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden bento-hover group">
-                <div class="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full blur-3xl opacity-10 group-hover:opacity-30 transition-opacity duration-700"></div>
-                <div class="absolute -bottom-20 -left-20 w-60 h-60 bg-gradient-to-tr from-pink-400 to-orange-400 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity duration-700"></div>
+                <div class="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#2563EB] to-[#0EA5E9] rounded-full blur-3xl opacity-10 group-hover:opacity-25 transition-opacity duration-700"></div>
+                <div class="absolute -bottom-20 -left-20 w-60 h-60 bg-gradient-to-tr from-[#1E3A8A] to-[#38BDF8] rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity duration-700"></div>
                 
                 <div class="relative z-10">
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-white shadow-sm mb-6">
@@ -104,13 +104,13 @@
 
                     <h1 class="font-display text-4xl md:text-[3.5rem] leading-[1.1] font-bold mb-4 tracking-tight text-slate-800">
                         Waktunya Berkreasi,<br>
-                        <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-gradient">{{ $user->name }}! ✨</span>
+                        <span class="bg-gradient-to-r from-[#1E3A8A] via-[#2563EB] to-[#0EA5E9] text-gradient">{{ $user->name }}! &#10024;</span>
                     </h1>
                     <p class="text-slate-500 font-medium text-lg max-w-xl mb-10 leading-relaxed">
                         Kanvasmu sudah siap. Mari wujudkan ide-ide liar menjadi karya luar biasa hari ini. Dunia menunggu magismu.
                     </p>
                     <div class="flex flex-wrap gap-4">
-                        <a href="{{ route('projects.index') }}" class="px-8 py-4 bg-slate-900 text-white rounded-full font-bold shadow-xl shadow-slate-900/20 hover:scale-105 hover:bg-black transition-all">
+                        <a href="{{ route('projects.index') }}" class="px-8 py-4 bg-[#1E3A8A] text-white rounded-full font-bold shadow-xl shadow-[#1E3A8A]/20 hover:scale-105 hover:bg-[#2563EB] transition-all">
                             Cari Inspirasi Proyek
                         </a>
                         <a href="{{ route('portfolio.index') }}" class="px-8 py-4 bg-white/80 text-slate-800 rounded-full font-bold shadow-lg shadow-slate-200/50 hover:scale-105 transition-all border border-white">
@@ -121,19 +121,19 @@
             </div>
 
             <!-- Earnings Card (Span 4) -->
-            <div class="lg:col-span-4 rounded-[2.5rem] p-8 relative overflow-hidden bento-hover bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl shadow-indigo-900/20 border border-indigo-500/20">
-                <div class="absolute top-0 right-0 w-40 h-40 bg-indigo-500/30 rounded-full blur-3xl"></div>
-                <div class="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-2xl"></div>
+            <div class="lg:col-span-4 rounded-[2.5rem] p-8 relative overflow-hidden bento-hover bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#0A66C2] text-white shadow-2xl shadow-[#2563EB]/20 border border-[#60A5FA]/25">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-[#38BDF8]/25 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 w-32 h-32 bg-[#2563EB]/25 rounded-full blur-2xl"></div>
                 
                 <div class="relative z-10 flex flex-col h-full justify-between">
                     <div>
                         <div class="flex justify-between items-start mb-4">
                             <div class="p-3.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
-                                <svg class="w-6 h-6 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <svg class="w-6 h-6 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             </div>
-                            <span class="px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-indigo-200 border border-white/10">Total</span>
+                            <span class="px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-sky-100 border border-white/10">Total</span>
                         </div>
-                        <h3 class="text-indigo-200 text-sm font-bold uppercase tracking-wider mt-4 mb-1">Pendapatan Diterima</h3>
+                        <h3 class="text-sky-100 text-sm font-bold uppercase tracking-wider mt-4 mb-1">Pendapatan Diterima</h3>
                     </div>
                     <div>
                         <p class="text-[2.5rem] leading-none font-display font-bold text-white mb-2">Rp {{ number_format($user->escrowEarnings()->sum('amount'), 0, ',', '.') }}</p>
@@ -157,7 +157,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <!-- Active Projects -->
             <div class="glass-bento p-6 rounded-[2.5rem] bento-hover flex items-center gap-5">
-                <div class="w-16 h-16 rounded-[1.25rem] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/30 text-white">
+                <div class="w-16 h-16 rounded-[1.25rem] bg-gradient-to-br from-[#2563EB] to-[#0A66C2] flex items-center justify-center shrink-0 shadow-lg shadow-[#2563EB]/30 text-white">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                 </div>
                 <div>
@@ -285,7 +285,7 @@
                                     <span class="text-xs font-bold text-slate-400">{{ optional($project->created_at)->diffForHumans() ?? 'Baru saja' }}</span>
                                 </div>
                                 
-                                <h4 class="text-xl font-display font-bold text-slate-800 mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors">{{ $project->title }}</h4>
+                                <h4 class="text-xl font-display font-bold text-slate-800 mb-2 line-clamp-2 group-hover:text-[#2563EB] transition-colors">{{ $project->title }}</h4>
                                 <p class="text-sm text-slate-500 line-clamp-2 mb-4">{{ $project->description }}</p>
                                 
                                 <div class="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
@@ -293,7 +293,7 @@
                                         <span class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Budget</span>
                                         <span class="text-lg font-display font-extrabold text-slate-800">Rp {{ $project->budget }}</span>
                                     </div>
-                                    <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center group-hover:bg-indigo-600 group-hover:shadow-lg group-hover:shadow-indigo-600/30 transition-all">
+                                    <div class="w-10 h-10 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center group-hover:bg-[#2563EB] group-hover:shadow-lg group-hover:shadow-[#2563EB]/30 transition-all">
                                         <svg class="w-4 h-4 -rotate-45 group-hover:rotate-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                                     </div>
                                 </div>
@@ -302,7 +302,7 @@
                     @empty
                         <div class="md:col-span-2 glass-bento p-16 rounded-[3rem] text-center border-dashed border-2 border-slate-200">
                             <div class="w-24 h-24 mx-auto mb-6 bg-white rounded-[2rem] shadow-sm flex items-center justify-center">
-                                <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                <svg class="w-10 h-10 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                             </div>
                             <h4 class="text-2xl font-display font-bold text-slate-800 mb-3">Kanvas Masih Kosong</h4>
                             <p class="text-slate-500 font-medium max-w-md mx-auto">Begitu UMKM mempublikasikan proyek baru yang sesuai dengan keahlianmu, daftar inspirasi akan muncul di sini.</p>
@@ -315,7 +315,7 @@
             <div class="space-y-8">
                 
                 <!-- Portfolio Progress -->
-                <div class="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-600/20 relative overflow-hidden group bento-hover">
+                <div class="bg-gradient-to-br from-[#2563EB] via-[#0A66C2] to-[#1E3A8A] p-8 rounded-[2.5rem] text-white shadow-2xl shadow-[#2563EB]/20 relative overflow-hidden group bento-hover">
                     <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div class="relative z-10">
                         <div class="flex justify-between items-start mb-6">
@@ -324,15 +324,15 @@
                             </div>
                             <span class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-white border border-white/20">Level Up</span>
                         </div>
-                        <h4 class="text-3xl font-display font-bold mb-2">85% <span class="text-lg text-indigo-200 font-medium">Lengkap</span></h4>
-                        <p class="text-sm text-indigo-100 mb-8 leading-relaxed">Portofoliomu sudah terlihat luar biasa. Tambahkan sedikit lagi untuk menarik lebih banyak klien UMKM.</p>
+                        <h4 class="text-3xl font-display font-bold mb-2">85% <span class="text-lg text-sky-100 font-medium">Lengkap</span></h4>
+                        <p class="text-sm text-blue-50 mb-8 leading-relaxed">Portofoliomu sudah terlihat luar biasa. Tambahkan sedikit lagi untuk menarik lebih banyak klien UMKM.</p>
                         
                         <div class="w-full h-2 bg-black/20 rounded-full mb-8 overflow-hidden">
                             <div class="w-[85%] h-full bg-gradient-to-r from-emerald-300 to-emerald-400 rounded-full relative">
                                 <div class="absolute inset-0 bg-white/30 w-full animate-pulse"></div>
                             </div>
                         </div>
-                        <a href="{{ route('profile.index') }}" class="block w-full py-4 bg-white text-indigo-700 text-center rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all shadow-xl shadow-black/10">Sempurnakan Profil</a>
+                        <a href="{{ route('profile.index') }}" class="block w-full py-4 bg-white text-[#1E3A8A] text-center rounded-2xl text-sm font-bold hover:bg-[#EFF6FF] transition-all shadow-xl shadow-black/10">Sempurnakan Profil</a>
                     </div>
                 </div>
 
@@ -340,7 +340,7 @@
                 <div class="glass-bento rounded-[2.5rem] p-8 bento-hover">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="font-display text-xl font-bold text-slate-800">Suara Klien</h2>
-                        <span class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <span class="p-2 bg-[#EFF6FF] text-[#2563EB] rounded-xl">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         </span>
                     </div>
@@ -358,7 +358,7 @@
                                                 @endfor
                                             </div>
                                         </div>
-                                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2 truncate">{{ optional($rating->project)->title ?? $rating->project_title_snapshot ?? 'Proyek diarsipkan' }}</p>
+                                        <p class="text-[10px] font-black uppercase tracking-widest text-[#2563EB] mb-2 truncate">{{ optional($rating->project)->title ?? $rating->project_title_snapshot ?? 'Proyek diarsipkan' }}</p>
                                         <p class="text-xs text-slate-600 font-medium leading-relaxed">
                                             "{{ $rating->comment ?: 'Pekerjaan yang memuaskan.' }}"
                                         </p>
@@ -367,7 +367,7 @@
                             </div>
                         @empty
                             <div class="p-8 text-center bg-white/50 rounded-[2rem] border border-white border-dashed">
-                                <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white shadow-sm flex items-center justify-center text-indigo-400">
+                                <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white shadow-sm flex items-center justify-center text-[#2563EB]">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                                 </div>
                                 <h4 class="font-bold text-slate-800 text-sm mb-1">Belum ada ulasan</h4>
@@ -385,14 +385,14 @@
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeRatingsModal()"></div>
 
         <div class="relative min-h-screen flex items-center justify-center px-4 py-8">
-            <div class="w-full max-w-2xl rounded-[3rem] bg-white shadow-2xl shadow-indigo-900/20 overflow-hidden relative">
-                <div class="px-8 sm:px-12 pt-12 pb-8 bg-gradient-to-br from-indigo-50 to-white relative">
+            <div class="w-full max-w-2xl rounded-[3rem] bg-white shadow-2xl shadow-[#1E3A8A]/20 overflow-hidden relative">
+                <div class="px-8 sm:px-12 pt-12 pb-8 bg-gradient-to-br from-[#EFF6FF] to-white relative">
                     <button type="button" onclick="closeRatingsModal()" class="absolute top-6 right-6 w-12 h-12 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center justify-center">
                         <span class="sr-only">Tutup</span>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
 
-                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-indigo-100 shadow-sm mb-6">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#2563EB]/10 shadow-sm mb-6">
                         <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
                         <span class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-600">Reputasi Kualitas</span>
                     </div>
@@ -410,14 +410,14 @@
 
                 <div class="px-8 sm:px-12 py-8 max-h-[60vh] overflow-y-auto space-y-5 bg-slate-50">
                     @forelse($recentRatings as $rating)
-                        <article class="rounded-[2rem] bg-white p-6 shadow-sm border border-slate-100 hover:border-indigo-100 hover:shadow-md transition-all">
+                        <article class="rounded-[2rem] bg-white p-6 shadow-sm border border-slate-100 hover:border-[#2563EB]/15 hover:shadow-md transition-all">
                             <div class="flex items-start gap-5">
                                 <img src="{{ optional($rating->fromUser)->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode(optional($rating->fromUser)->name ?? 'UMKM').'&background=random' }}" alt="{{ optional($rating->fromUser)->name ?? 'UMKM' }}" class="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-slate-50">
                                 <div class="flex-1 min-w-0">
                                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                                         <div>
                                             <p class="font-bold text-slate-800 text-lg">{{ optional($rating->fromUser)->name ?? 'UMKM' }}</p>
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500 mt-0.5">{{ optional($rating->project)->title ?? $rating->project_title_snapshot ?? 'Proyek diarsipkan' }}</p>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-[#2563EB] mt-0.5">{{ optional($rating->project)->title ?? $rating->project_title_snapshot ?? 'Proyek diarsipkan' }}</p>
                                         </div>
                                         <p class="text-xs text-slate-400 font-bold">{{ optional($rating->created_at)->diffForHumans() }}</p>
                                     </div>
@@ -450,9 +450,9 @@
     <footer class="py-10 border-t border-slate-200/50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
         <p class="text-slate-400 text-sm font-bold">&copy; 2026 Konekin. Wujudkan ide kreatifmu.</p>
         <div class="flex gap-8">
-            <a href="#" class="text-slate-400 hover:text-indigo-600 text-sm font-bold transition-colors">Bantuan</a>
-            <a href="#" class="text-slate-400 hover:text-indigo-600 text-sm font-bold transition-colors">Privasi</a>
-            <a href="#" class="text-slate-400 hover:text-indigo-600 text-sm font-bold transition-colors">Syarat & Ketentuan</a>
+            <a href="#" class="text-slate-400 hover:text-[#2563EB] text-sm font-bold transition-colors">Bantuan</a>
+            <a href="#" class="text-slate-400 hover:text-[#2563EB] text-sm font-bold transition-colors">Privasi</a>
+            <a href="#" class="text-slate-400 hover:text-[#2563EB] text-sm font-bold transition-colors">Syarat & Ketentuan</a>
         </div>
     </footer>
 
