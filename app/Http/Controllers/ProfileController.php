@@ -59,9 +59,10 @@ class ProfileController extends Controller
             'bank_code' => 'nullable|string|max:50',
             'bank_account_number' => 'nullable|string|max:50',
             'bank_account_name' => 'nullable|string|max:255',
+            'profile_border' => 'nullable|string|in:none,ocean,math,stars',
         ]);
 
-        $data = $request->only(['name', 'phone', 'address', 'city', 'bio', 'latitude', 'longitude', 'bank_code', 'bank_account_number', 'bank_account_name']);
+        $data = $request->only(['name', 'phone', 'address', 'city', 'bio', 'latitude', 'longitude', 'bank_code', 'bank_account_number', 'bank_account_name', 'profile_border']);
 
         if ($user->isCreativeWorker()) {
             $data['creative_category'] = CreativeRoles::normalize($request->input('creative_category'));

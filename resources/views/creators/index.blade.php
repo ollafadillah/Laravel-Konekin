@@ -77,72 +77,105 @@
         <!-- Creators Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse($creators as $creator)
-                <div class="bg-white p-8 rounded-[3rem] border border-[#2563EB]/5 shadow-sm hover:shadow-2xl hover:shadow-[#2563EB]/10 transition-all group flex flex-col h-full">
-                    <!-- Profile Header -->
-                    <div class="flex items-center gap-5 mb-6">
-                        <div class="w-20 h-20 rounded-[1.5rem] overflow-hidden shrink-0 border-2 border-white shadow-lg shadow-[#2563EB]/10 group-hover:scale-105 transition-transform">
-                            <img src="{{ $creator->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode($creator->name).'&background=2563EB&color=fff' }}" alt="{{ $creator->name }}" class="w-full h-full object-cover">
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors">{{ $creator->name }}</h3>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xs font-bold text-[#2563EB] uppercase tracking-wider">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
-                                <span class="w-1 h-1 bg-[#1E3A8A]/20 rounded-full"></span>
-                                <span class="text-xs font-medium text-[#1E3A8A]/40">{{ $creator->city ?? 'Domisili tidak diatur' }}</span>
+                @php
+                    $borderClass = 'bg-white border-[#2563EB]/5 hover:shadow-[#2563EB]/10';
+                    $borderStyle = '';
+                    $borderDecor = '';
+                    
+                    if (($creator->profile_border ?? 'none') === 'ocean') {
+                        $borderClass = 'bg-[#E0F2FE] border-[#bae6fd] hover:border-[#0284C7] ring-4 ring-transparent hover:ring-[#0284C7]/20 relative overflow-hidden hover:shadow-[#0284C7]/15';
+                        $borderStyle = 'background-image: radial-gradient(circle at top left, rgba(255,255,255,0.8) 0%, transparent 60%), radial-gradient(circle at bottom right, rgba(14,165,233,0.3) 0%, transparent 50%);';
+                        $borderDecor = '
+                            <svg class="absolute top-2 left-2 w-12 h-12 text-blue-400 opacity-60 pointer-events-none transition-transform group-hover:-translate-y-1 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 110 12 6 6 0 010-12z"/></svg>
+                            <svg class="absolute bottom-2 right-2 w-16 h-16 text-cyan-500 opacity-50 pointer-events-none transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        ';
+                    } elseif (($creator->profile_border ?? 'none') === 'math') {
+                        $borderClass = 'bg-[#fdfbf7] border-[#e2e8f0] hover:border-[#d97706] ring-4 ring-transparent hover:ring-[#d97706]/20 relative overflow-hidden hover:shadow-[#d97706]/15';
+                        $borderStyle = 'background-image: linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px); background-size: 20px 20px;';
+                        $borderDecor = '
+                            <div class="absolute top-4 left-4 text-xs font-bold text-orange-400 font-mono pointer-events-none opacity-80 transition-transform group-hover:scale-110">E=mc²</div>
+                            <svg class="absolute bottom-4 right-4 w-12 h-12 text-green-500 opacity-50 pointer-events-none transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        ';
+                    } elseif (($creator->profile_border ?? 'none') === 'stars') {
+                        $borderClass = 'bg-white border-dashed border-slate-300 hover:border-[#8b5cf6] hover:border-solid ring-4 ring-transparent hover:ring-[#8b5cf6]/20 relative overflow-hidden hover:shadow-[#8b5cf6]/15';
+                        $borderStyle = '';
+                        $borderDecor = '
+                            <svg class="absolute top-4 left-4 w-8 h-8 text-yellow-400 pointer-events-none opacity-80 transition-transform group-hover:rotate-45 group-hover:scale-110" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            <svg class="absolute bottom-4 right-4 w-10 h-10 text-purple-400 pointer-events-none opacity-70 transition-transform group-hover:-rotate-45 group-hover:scale-110" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            <svg class="absolute top-1/2 right-2 w-6 h-6 text-pink-400 pointer-events-none opacity-60 transition-transform group-hover:scale-125" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            <svg class="absolute bottom-1/3 left-2 w-5 h-5 text-indigo-400 pointer-events-none opacity-50 transition-transform group-hover:scale-125" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        ';
+                    }
+                @endphp
+                <div class="p-8 rounded-[3rem] border shadow-sm hover:shadow-2xl transition-all group flex flex-col h-full {{ $borderClass }}" style="{{ $borderStyle }}">
+                    {!! $borderDecor !!}
+                    <div class="relative z-10 flex flex-col h-full">
+                        <!-- Profile Header -->
+                        <div class="flex items-center gap-5 mb-6">
+                            <div class="w-20 h-20 rounded-[1.5rem] overflow-hidden shrink-0 border-2 border-white shadow-lg shadow-[#2563EB]/10 group-hover:scale-105 transition-transform">
+                                <img src="{{ $creator->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode($creator->name).'&background=2563EB&color=fff' }}" alt="{{ $creator->name }}" class="w-full h-full object-cover">
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Skills & Stats -->
-                    <div class="flex-grow">
-                        <div class="flex flex-wrap gap-2 mb-6">
-                            @forelse(($creator->role_skills_preview ?? []) as $skill)
-                                <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $skill }}</span>
-                            @empty
-                                <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold tracking-widest rounded-full">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
-                            @endforelse
-                        </div>
-                        
-                        <p class="text-[#1E3A8A]/60 text-sm mb-8 line-clamp-2 font-medium leading-relaxed">
-                            {{ $creator->bio ?? 'Kreator ini belum menambahkan bio profil mereka.' }}
-                        </p>
-
-                        <div class="grid grid-cols-2 gap-4 mb-8">
-                            <div class="text-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                                <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase mb-1">Rating</p>
-                                <div class="flex items-center justify-center gap-1">
-                                    <svg class="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/></svg>
-                                    <p class="text-sm font-display font-bold text-[#1E3A8A]">{{ $creator->average_rating }}</p>
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors">{{ $creator->name }}</h3>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-xs font-bold text-[#2563EB] uppercase tracking-wider">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
+                                    <span class="w-1 h-1 bg-[#1E3A8A]/20 rounded-full"></span>
+                                    <span class="text-xs font-medium text-[#1E3A8A]/40">{{ $creator->city ?? 'Domisili tidak diatur' }}</span>
                                 </div>
                             </div>
-                            <div class="text-center p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                                <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase mb-1">Proyek</p>
-                                <p class="text-sm font-display font-bold text-[#1E3A8A]">{{ $creator->completed_projects_count }}</p>
+                        </div>
+
+                        <!-- Skills & Stats -->
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap gap-2 mb-6">
+                                @forelse(($creator->role_skills_preview ?? []) as $skill)
+                                    <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ $skill }}</span>
+                                @empty
+                                    <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold tracking-widest rounded-full">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
+                                @endforelse
+                            </div>
+                            
+                            <p class="text-[#1E3A8A]/60 text-sm mb-8 line-clamp-2 font-medium leading-relaxed">
+                                {{ $creator->bio ?? 'Kreator ini belum menambahkan bio profil mereka.' }}
+                            </p>
+
+                            <div class="grid grid-cols-2 gap-4 mb-8">
+                                <div class="text-center p-3 rounded-2xl bg-white/60 backdrop-blur-sm border border-slate-100">
+                                    <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase mb-1">Rating</p>
+                                    <div class="flex items-center justify-center gap-1">
+                                        <svg class="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.784.57-1.838-.197-1.539-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.245 9.397c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z"/></svg>
+                                        <p class="text-sm font-display font-bold text-[#1E3A8A]">{{ $creator->average_rating }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-center p-3 rounded-2xl bg-white/60 backdrop-blur-sm border border-slate-100">
+                                    <p class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase mb-1">Proyek</p>
+                                    <p class="text-sm font-display font-bold text-[#1E3A8A]">{{ $creator->completed_projects_count }}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Action Footer -->
-                    <div class="pt-6 border-t border-[#2563EB]/5 flex items-center justify-between mt-auto gap-4">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase">Role</span>
-                            <span class="text-[#1E3A8A] font-display font-bold">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="p-3 bg-[#EFF6FF] text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-xl transition-all" title="Simpan">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                            </button>
-                            @if(auth()->check())
-                                <a href="{{ route('kreator.show', $creator->id) }}" class="px-6 py-3 bg-[#1E3A8A] text-white hover:bg-[#2563EB] rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#1E3A8A]/10 inline-flex items-center justify-center">Lihat Profil</a>
-                            @else
-                                <button
-                                    type="button"
-                                    class="px-6 py-3 bg-[#1E3A8A] text-white hover:bg-[#2563EB] rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#1E3A8A]/10"
-                                    onclick="openGuestPreviewModal('{{ e($creator->name) }}', '{{ e($creator->city ?? 'Kreator pilihan di Konekin') }}')"
-                                >
-                                    Lihat Profil
+                        <!-- Action Footer -->
+                        <div class="pt-6 border-t border-[#2563EB]/5 flex items-center justify-between mt-auto gap-4">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-[#1E3A8A]/40 uppercase">Role</span>
+                                <span class="text-[#1E3A8A] font-display font-bold">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="p-3 bg-[#EFF6FF] text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-xl transition-all" title="Simpan">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                                 </button>
-                            @endif
+                                @if(auth()->check())
+                                    <a href="{{ route('kreator.show', $creator->id) }}" class="px-6 py-3 bg-[#1E3A8A] text-white hover:bg-[#2563EB] rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#1E3A8A]/10 inline-flex items-center justify-center">Lihat Profil</a>
+                                @else
+                                    <button
+                                        type="button"
+                                        class="px-6 py-3 bg-[#1E3A8A] text-white hover:bg-[#2563EB] rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#1E3A8A]/10"
+                                        onclick="openGuestPreviewModal('{{ e($creator->name) }}', '{{ e($creator->city ?? 'Kreator pilihan di Konekin') }}')"
+                                    >
+                                        Lihat Profil
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>

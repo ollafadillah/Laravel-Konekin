@@ -189,6 +189,66 @@
                 </div>
             </div>
 
+            <!-- Profile Border Theme Section -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm space-y-6">
+                <div class="flex items-center justify-between border-b border-[#2563EB]/5 pb-4">
+                    <h3 class="text-xl font-display font-bold text-[#1E3A8A]">Pilih Border Profil</h3>
+                    <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-[10px] font-black uppercase tracking-widest">Premium Aesthetic</span>
+                </div>
+                
+                <p class="text-sm text-[#1E3A8A]/60 font-medium mb-4">Pilih gaya border yang akan menghiasi profilmu di halaman "Cari Kreator" saat UMKM mencari bakat. Pilih yang paling sesuai dengan kepribadian kreatifmu!</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- None -->
+                    <label class="relative cursor-pointer group">
+                        <input type="radio" name="profile_border" value="none" class="peer sr-only" {{ old('profile_border', $user->profile_border ?? 'none') === 'none' ? 'checked' : '' }}>
+                        <div class="h-32 rounded-2xl bg-slate-50 border-2 border-slate-200 peer-checked:border-[#2563EB] peer-checked:ring-4 peer-checked:ring-[#2563EB]/10 transition-all flex items-center justify-center flex-col gap-2">
+                            <div class="w-10 h-10 rounded-full bg-slate-200"></div>
+                            <span class="text-xs font-bold text-slate-500">Minimalis (Polos)</span>
+                        </div>
+                    </label>
+
+                    <!-- Ocean -->
+                    <label class="relative cursor-pointer group">
+                        <input type="radio" name="profile_border" value="ocean" class="peer sr-only" {{ old('profile_border', $user->profile_border) === 'ocean' ? 'checked' : '' }}>
+                        <div class="h-32 rounded-2xl bg-[#E0F2FE] border-2 border-[#bae6fd] peer-checked:border-[#0284C7] peer-checked:ring-4 peer-checked:ring-[#0284C7]/20 transition-all flex items-center justify-center flex-col gap-2 relative overflow-hidden" style="background-image: radial-gradient(circle at top left, rgba(255,255,255,0.4) 0%, transparent 50%), radial-gradient(circle at bottom right, rgba(14,165,233,0.3) 0%, transparent 50%);">
+                            <!-- SVG Ocean Decor -->
+                            <svg class="absolute top-1 left-1 w-6 h-6 text-blue-400 opacity-60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 110 12 6 6 0 010-12z"/></svg>
+                            <svg class="absolute bottom-1 right-1 w-8 h-8 text-cyan-500 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            
+                            <div class="w-10 h-10 rounded-full bg-blue-100 border-2 border-white shadow-sm relative z-10"></div>
+                            <span class="text-xs font-bold text-blue-800 relative z-10">Samudera Kreatif</span>
+                        </div>
+                    </label>
+
+                    <!-- Math/School -->
+                    <label class="relative cursor-pointer group">
+                        <input type="radio" name="profile_border" value="math" class="peer sr-only" {{ old('profile_border', $user->profile_border) === 'math' ? 'checked' : '' }}>
+                        <div class="h-32 rounded-2xl bg-[#fdfbf7] border-2 border-[#e2e8f0] peer-checked:border-[#d97706] peer-checked:ring-4 peer-checked:ring-[#d97706]/20 transition-all flex items-center justify-center flex-col gap-2 relative overflow-hidden" style="background-image: linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px); background-size: 10px 10px;">
+                            <!-- SVG Math Decor -->
+                            <div class="absolute top-2 left-2 text-[10px] font-bold text-orange-400 font-mono">E=mc²</div>
+                            <svg class="absolute bottom-2 right-2 w-6 h-6 text-green-500 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+
+                            <div class="w-10 h-10 rounded-full bg-amber-50 border-2 border-white shadow-sm relative z-10"></div>
+                            <span class="text-xs font-bold text-amber-800 relative z-10 bg-white/60 px-2 py-0.5 rounded-full">Ilmu & Logika</span>
+                        </div>
+                    </label>
+
+                    <!-- Stars -->
+                    <label class="relative cursor-pointer group">
+                        <input type="radio" name="profile_border" value="stars" class="peer sr-only" {{ old('profile_border', $user->profile_border) === 'stars' ? 'checked' : '' }}>
+                        <div class="h-32 rounded-2xl bg-white border-2 border-dashed border-slate-300 peer-checked:border-[#8b5cf6] peer-checked:ring-4 peer-checked:ring-[#8b5cf6]/20 transition-all flex items-center justify-center flex-col gap-2 relative overflow-hidden">
+                            <!-- SVG Stars Decor -->
+                            <svg class="absolute top-2 left-2 w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            <svg class="absolute bottom-2 right-2 w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+
+                            <div class="w-10 h-10 rounded-full bg-purple-50 border-2 border-white shadow-sm relative z-10"></div>
+                            <span class="text-xs font-bold text-purple-700 relative z-10">Bintang Keberuntungan</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
             <!-- Submit Button -->
             <div class="flex justify-end pt-4">
                 <button type="submit" class="px-10 py-4 bg-[#2563EB] text-white rounded-2xl font-bold text-base shadow-xl shadow-[#2563EB]/20 hover:bg-[#1E3A8A] hover:-translate-y-1 transition-all active:translate-y-0">Simpan Perubahan</button>

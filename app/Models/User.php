@@ -40,6 +40,7 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
         'bank_name',
         'bank_account_number',
         'bank_account_name',
+        'profile_border',
     ];
 
     protected $hidden = [
