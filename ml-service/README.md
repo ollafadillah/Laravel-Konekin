@@ -62,7 +62,8 @@ cd konekin-ml-service
 # 2. Buat virtual environment
 python -m venv venv
 source venv/bin/activate        # Linux/Mac
-# venv\Scripts\activate         # Windows
+venv\Scripts\activate           # Windows CMD
+.\venv\Scripts\Activate.ps1     # Windows PowerShell
 
 # 3. Install dependencies
 pip install -r requirements.txt
@@ -105,6 +106,8 @@ Output yang diharapkan:
 ## Menjalankan API
 
 ```bash
+venv\Scripts\activate           # Windows CMD
+# atau: .\venv\Scripts\Activate.ps1 untuk PowerShell
 python app.py
 # Server: http://0.0.0.0:5000
 ```
