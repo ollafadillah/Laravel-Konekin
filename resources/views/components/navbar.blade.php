@@ -1,3 +1,9 @@
+@php
+    $navBaseClass = 'hover:text-[#2563EB] text-sm transition-all hover:-translate-y-0.5';
+    $navActiveClass = 'text-[#1E3A8A] font-bold';
+    $navInactiveClass = 'text-[#1E3A8A]/70 font-semibold';
+@endphp
+
 <header class="fixed w-full top-0 z-50 transition-all duration-300 backdrop-blur-xl bg-[#EFF6FF]/70 border-b border-[#2563EB]/10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20 md:h-24 transition-all">
@@ -15,10 +21,10 @@
 
             <!-- Desktop Menu -->
             <nav class="hidden md:flex space-x-8 items-center bg-white/40 px-8 py-3 rounded-full border border-white/50 backdrop-blur-sm shadow-sm">
-                <a href="{{ route('home') }}" class="text-[#1E3A8A] hover:text-[#2563EB] font-bold text-sm transition-all hover:-translate-y-0.5">Beranda</a>
-                <a href="{{ route('kreator.index') }}" class="text-[#1E3A8A]/70 hover:text-[#2563EB] font-semibold text-sm transition-all hover:-translate-y-0.5">Cari Kreator</a>
-                <a href="{{ route('umkm.index') }}" class="text-[#1E3A8A]/70 hover:text-[#2563EB] font-semibold text-sm transition-all hover:-translate-y-0.5">Proyek UMKM</a>
-                <a href="{{ route('about') }}" class="text-[#1E3A8A]/70 hover:text-[#2563EB] font-semibold text-sm transition-all hover:-translate-y-0.5">Tentang Kami</a>
+                <a href="{{ route('home') }}" class="{{ $navBaseClass }} {{ request()->routeIs('home') ? $navActiveClass : $navInactiveClass }}">Beranda</a>
+                <a href="{{ route('kreator.index') }}" class="{{ $navBaseClass }} {{ request()->routeIs('kreator.*') ? $navActiveClass : $navInactiveClass }}">Cari Kreator</a>
+                <a href="{{ route('umkm.index') }}" class="{{ $navBaseClass }} {{ request()->routeIs('umkm.*') || request()->routeIs('projects.show') ? $navActiveClass : $navInactiveClass }}">Proyek UMKM</a>
+                <a href="{{ route('about') }}" class="{{ $navBaseClass }} {{ request()->routeIs('about') ? $navActiveClass : $navInactiveClass }}">Tentang Kami</a>
             </nav>
 
             <!-- Call to Action -->

@@ -29,65 +29,6 @@
             letter-spacing: 0.08em;
         }
 
-        .custom-cursor,
-        .custom-cursor-ring {
-            position: fixed;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            opacity: 0;
-            z-index: 9999;
-            transition:
-                opacity 180ms ease,
-                transform 180ms ease,
-                width 180ms ease,
-                height 180ms ease,
-                border-color 180ms ease,
-                background-color 180ms ease,
-                box-shadow 180ms ease;
-        }
-
-        .custom-cursor {
-            width: 7px;
-            height: 7px;
-            border-radius: 9999px;
-            background: linear-gradient(135deg, #2563EB, #0A66C2);
-            box-shadow: 0 0 12px rgba(37, 99, 235, 0.28);
-            transform: translate(-50%, -50%);
-        }
-
-        .custom-cursor-ring {
-            width: 28px;
-            height: 28px;
-            border-radius: 9999px;
-            border: 1.2px solid rgba(37, 99, 235, 0.24);
-            background-color: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(4px);
-            transform: translate(-50%, -50%);
-        }
-
-        .custom-cursor.is-visible,
-        .custom-cursor-ring.is-visible {
-            opacity: 1;
-        }
-
-        .custom-cursor.is-active {
-            transform: translate(-50%, -50%) scale(0.82);
-        }
-
-        .custom-cursor-ring.is-hover {
-            width: 40px;
-            height: 40px;
-            border-color: rgba(37, 99, 235, 0.38);
-            background-color: rgba(37, 99, 235, 0.08);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.1);
-        }
-
-        .custom-cursor-ring.is-active {
-            width: 24px;
-            height: 24px;
-        }
-        
         /* Organic animation for creative vibe */
         .blob-shape {
             border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
@@ -100,31 +41,9 @@
             67% { border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%; }
         }
 
-        @media (hover: hover) and (pointer: fine) {
-            body.cursor-enhanced,
-            body.cursor-enhanced a,
-            body.cursor-enhanced button,
-            body.cursor-enhanced [role="button"],
-            body.cursor-enhanced input,
-            body.cursor-enhanced textarea,
-            body.cursor-enhanced select,
-            body.cursor-enhanced summary,
-            body.cursor-enhanced label {
-                cursor: none !important;
-            }
-        }
-
-        @media (hover: none), (pointer: coarse) {
-            .custom-cursor,
-            .custom-cursor-ring {
-                display: none;
-            }
-        }
     </style>
 </head>
 <body class="antialiased bg-[#EFF6FF] text-[#1E3A8A] selection:bg-[#2563EB] selection:text-white">
-    <div class="custom-cursor-ring" aria-hidden="true"></div>
-    <div class="custom-cursor" aria-hidden="true"></div>
     <div class="min-h-screen flex flex-col relative overflow-x-hidden">
         
         <!-- Creative Decorative Background Shapes -->
