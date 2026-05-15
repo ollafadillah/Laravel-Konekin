@@ -77,7 +77,7 @@ class PresentationCreativeRatingsSeeder extends Seeder
                     'city' => $creativeData['city'],
                     'bio' => 'Creative worker demo untuk kebutuhan presentasi Konekin.',
                     'profile_photo' => 'https://ui-avatars.com/api/?name=' . urlencode($creativeData['name']) . '&background=1E3A8A&color=fff',
-                    'profile_border' => 'samudera',
+                    'profile_border' => 'ocean',
                 ]
             );
 

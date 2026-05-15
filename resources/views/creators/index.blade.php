@@ -26,6 +26,20 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
+        .creative-tier-chip {
+            background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,250,252,0.86));
+            box-shadow: 0 18px 35px rgba(30, 58, 138, 0.14);
+        }
+        .creative-tier-chip img {
+            mix-blend-mode: multiply;
+        }
+        .creative-tier-chip.is-expert {
+            background: linear-gradient(135deg, #0F172A, #1E3A8A);
+            box-shadow: 0 18px 35px rgba(244, 63, 94, 0.18);
+        }
+        .creative-tier-chip.is-expert img {
+            mix-blend-mode: normal;
+        }
     </style>
 </head>
 <body class="antialiased text-[#1E3A8A]">
@@ -116,7 +130,7 @@
                                 <img src="{{ $creator->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode($creator->name).'&background=2563EB&color=fff' }}" alt="{{ $creator->name }}" class="w-full h-full object-cover">
                             </div>
                             <div class="flex-grow pt-1">
-                                <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors pr-8">{{ $creator->name }}</h3>
+                                <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors pr-24">{{ $creator->name }}</h3>
                                 <div class="flex flex-wrap items-center gap-2 mt-1.5">
                                     <span class="text-xs font-bold text-[#2563EB] uppercase tracking-wider">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
                                     <span class="w-1 h-1 bg-[#1E3A8A]/20 rounded-full"></span>
@@ -125,11 +139,14 @@
                             </div>
 
                             @if($creator->creative_tier)
-                                <div class="absolute top-0 right-0 flex flex-col items-end" title="Tier: {{ $creator->creative_tier['name'] }}">
-                                    <img src="{{ $creator->creative_tier['badge'] }}" alt="Tier Badge" class="w-10 h-10 object-contain drop-shadow-md transition-transform group-hover:scale-110 group-hover:rotate-6">
-                                    <span class="text-[9px] font-extrabold uppercase mt-1 px-2 py-0.5 rounded-full {{ $creator->creative_tier['bg'] }} {{ $creator->creative_tier['color'] }} shadow-sm">
+                                <div class="absolute -top-2 -right-2 creative-tier-chip {{ $creator->creative_tier['name'] === 'Expert' ? 'is-expert' : '' }} rounded-[1.35rem] border border-white/90 p-2 min-w-[5.5rem] text-center transition-all group-hover:-translate-y-1 group-hover:rotate-2" title="{{ $creator->creative_tier['name'] }} - {{ $creator->five_star_ratings_count }} ulasan bintang 5">
+                                    <div class="mx-auto w-12 h-12 rounded-2xl {{ $creator->creative_tier['name'] === 'Expert' ? 'bg-[#0F172A] border-rose-300/20' : 'bg-white border-[#2563EB]/10' }} border flex items-center justify-center overflow-hidden">
+                                        <img src="{{ $creator->creative_tier['badge'] }}" alt="{{ $creator->creative_tier['name'] }} Badge" class="w-11 h-11 object-contain transition-transform group-hover:scale-110">
+                                    </div>
+                                    <span class="mt-1.5 inline-flex px-2 py-0.5 rounded-full {{ $creator->creative_tier['bg'] }} {{ $creator->creative_tier['color'] }} text-[8px] font-black uppercase tracking-wider">
                                         {{ $creator->creative_tier['name'] }}
                                     </span>
+                                    <span class="block mt-1 text-[9px] font-extrabold {{ $creator->creative_tier['name'] === 'Expert' ? 'text-white/70' : 'text-[#1E3A8A]/45' }}">{{ $creator->five_star_ratings_count }}x 5&#9733;</span>
                                 </div>
                             @endif
                         </div>

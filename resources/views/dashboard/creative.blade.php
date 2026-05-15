@@ -81,6 +81,20 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .tier-logo {
+            background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(239,246,255,0.82));
+            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.14);
+        }
+        .tier-logo img {
+            mix-blend-mode: multiply;
+        }
+        .tier-logo.is-expert {
+            background: linear-gradient(135deg, #0F172A, #1E3A8A);
+            box-shadow: 0 18px 40px rgba(244, 63, 94, 0.18);
+        }
+        .tier-logo.is-expert img {
+            mix-blend-mode: normal;
+        }
     </style>
 </head>
 <body class="antialiased text-[#1E3A8A] relative min-h-screen">
@@ -105,9 +119,22 @@
                 <div class="absolute -bottom-20 -left-20 w-60 h-60 bg-gradient-to-tr from-[#1E3A8A] to-[#38BDF8] rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity duration-700"></div>
                 
                 <div class="relative z-10">
-                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-white shadow-sm mb-6">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-600">Online & Siap Bekerja</span>
+                    <div class="flex flex-wrap items-center gap-3 mb-6">
+                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-white shadow-sm">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-600">Online & Siap Bekerja</span>
+                        </div>
+                        @if($user->creative_tier)
+                            <div class="tier-logo {{ $user->creative_tier['name'] === 'Expert' ? 'is-expert' : '' }} inline-flex items-center gap-2.5 px-3 py-2 rounded-full border border-white/90" title="{{ $user->five_star_ratings_count }} ulasan bintang 5">
+                                <span class="w-9 h-9 rounded-full {{ $user->creative_tier['name'] === 'Expert' ? 'bg-[#0F172A] border-rose-300/20' : 'bg-white border-[#2563EB]/10' }} flex items-center justify-center overflow-hidden border">
+                                    <img src="{{ $user->creative_tier['badge'] }}" alt="{{ $user->creative_tier['name'] }} Badge" class="w-8 h-8 object-contain">
+                                </span>
+                                <span class="leading-none">
+                                    <span class="block text-[10px] font-black uppercase tracking-[0.18em] {{ $user->creative_tier['name'] === 'Expert' ? 'text-rose-200' : $user->creative_tier['color'] }}">{{ $user->creative_tier['name'] }}</span>
+                                    <span class="block text-[10px] font-bold {{ $user->creative_tier['name'] === 'Expert' ? 'text-white/70' : 'text-slate-500' }} mt-1">{{ $user->five_star_ratings_count }} bintang 5</span>
+                                </span>
+                            </div>
+                        @endif
                     </div>
 
                     <h1 class="font-display text-4xl md:text-[3.5rem] leading-[1.1] font-bold mb-4 tracking-tight text-slate-800">
