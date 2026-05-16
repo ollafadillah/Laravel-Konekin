@@ -111,7 +111,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Nama Usaha</label>
-                        <input type="text" name="name" value="{{ old('name', $user->name) }}"
+                        <input type="text" name="name" required maxlength="255" value="{{ old('name', $user->name) }}"
                             class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] focus:ring-4 focus:ring-[#2563EB]/5 outline-none transition-all font-medium text-[#1E3A8A]"
                             placeholder="Nama usaha atau brand">
                         @error('name') <p class="text-red-500 text-[10px] font-bold mt-1">{{ $message }}</p> @enderror

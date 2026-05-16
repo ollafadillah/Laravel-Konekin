@@ -64,23 +64,23 @@
         @endif
 
         <!-- Upload Form Section -->
-        <div id="upload-form" class="hidden mb-12 bg-white p-8 rounded-[3rem] border-2 border-[#2563EB]/10 shadow-xl shadow-[#2563EB]/5 animate-fade-in-up">
+        <div id="upload-form" class="{{ $errors->any() ? '' : 'hidden' }} mb-12 bg-white p-8 rounded-[3rem] border-2 border-[#2563EB]/10 shadow-xl shadow-[#2563EB]/5 animate-fade-in-up">
             <h2 class="font-display text-2xl font-bold text-[#1E3A8A] mb-6">Upload Karya Baru</h2>
             <form action="{{ route('portfolio.store') }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 @csrf
                 <div class="space-y-6">
                     <div class="space-y-2">
                         <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Judul Karya</label>
-                        <input type="text" name="title" required class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] outline-none transition-all font-medium text-[#1E3A8A]" placeholder="Contoh: Branding Logo Kopi Kita">
+                        <input type="text" name="title" required maxlength="255" value="{{ old('title') }}" class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] outline-none transition-all font-medium text-[#1E3A8A]" placeholder="Contoh: Branding Logo Kopi Kita">
                     </div>
                     <div class="space-y-2">
                         <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Deskripsi Karya</label>
-                        <textarea name="description" rows="4" required class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] outline-none transition-all font-medium text-[#1E3A8A] resize-none" placeholder="Ceritakan tentang proses pembuatan atau hasil dari karya ini..."></textarea>
+                        <textarea name="description" rows="4" required maxlength="1000" class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] outline-none transition-all font-medium text-[#1E3A8A] resize-none" placeholder="Ceritakan tentang proses pembuatan atau hasil dari karya ini...">{{ old('description') }}</textarea>
                     </div>
                     <div class="space-y-2">
                         <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">File Tambahan (PDF, Video, dll - Max 20MB)</label>
                         <div class="relative group">
-                            <input type="file" name="attachment" class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] outline-none transition-all font-medium text-[#1E3A8A] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#EFF6FF] file:text-[#2563EB] hover:file:bg-[#2563EB] hover:file:text-white">
+                            <input type="file" name="attachment" accept=".pdf,.mp4,.mov,.zip,.docx" class="w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/10 focus:border-[#2563EB] outline-none transition-all font-medium text-[#1E3A8A] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#EFF6FF] file:text-[#2563EB] hover:file:bg-[#2563EB] hover:file:text-white">
                         </div>
                     </div>
                 </div>
@@ -94,8 +94,8 @@
                                 <span class="text-xs font-bold text-[#2563EB]/50 uppercase tracking-widest">Pilih Gambar Preview</span>
                             </div>
                             <img id="preview-img" class="hidden w-full h-full object-cover rounded-2xl border-2 border-[#2563EB]/10">
-                            <input type="file" name="image" id="portfolio-img" required class="hidden" accept="image/*" onchange="previewFile()">
-                            <button type="button" onclick="document.getElementById('portfolio-img').click()" class="absolute inset-0 w-full h-full"></button>
+                            <input type="file" name="image" id="portfolio-img" required class="absolute inset-0 z-10 w-full h-full opacity-0 cursor-pointer" accept="image/*" onchange="previewFile()">
+                            <button type="button" onclick="document.getElementById('portfolio-img').click()" class="pointer-events-none absolute inset-0 w-full h-full"></button>
                         </div>
                     </div>
                     <div class="flex gap-4 pt-2">

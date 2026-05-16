@@ -74,7 +74,7 @@
                 <div class="space-y-3">
                     <label for="title" class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Judul
                         Proyek</label>
-                    <input type="text" id="title" name="title" required value="{{ old('title') }}"
+                    <input type="text" id="title" name="title" required maxlength="255" value="{{ old('title') }}"
                         placeholder="Contoh: Redesain Logo UMKM Kuliner"
                         class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium">
                     @error('title') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
@@ -109,7 +109,7 @@
                         <label for="budget"
                             class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Estimasi Budget
                             (Rp)</label>
-                        <input type="text" id="budget" name="budget" required value="{{ old('budget') }}"
+                        <input type="text" id="budget" name="budget" required maxlength="100" value="{{ old('budget') }}"
                             placeholder="Contoh: 2.500.000"
                             class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium">
                         @error('budget') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
@@ -133,7 +133,7 @@
                     <label for="description"
                         class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Deskripsi
                         Proyek</label>
-                    <textarea id="description" name="description" required rows="5"
+                    <textarea id="description" name="description" required maxlength="2000" rows="5"
                         placeholder="Jelaskan secara detail mengenai proyek yang ingin Anda buat..."
                         class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#2563EB] outline-none transition-all font-medium">{{ old('description') }}</textarea>
                     @error('description') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror

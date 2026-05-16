@@ -133,14 +133,14 @@
                                 @csrf
                                 <div>
                                     <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Deskripsi Pengajuan</label>
-                                    <textarea name="message" rows="4" class="mt-2 w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border {{ $errors->has('message') ? 'border-red-400 focus:border-red-500' : 'border-[#2563EB]/10 focus:border-[#2563EB]' }} outline-none transition-all font-medium" placeholder="Ceritakan kenapa kamu cocok untuk proyek ini, pengalaman relevan, dan pendekatan yang akan kamu pakai...">{{ old('message') }}</textarea>
+                                    <textarea name="message" rows="4" required minlength="20" maxlength="1000" class="mt-2 w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border {{ $errors->has('message') ? 'border-red-400 focus:border-red-500' : 'border-[#2563EB]/10 focus:border-[#2563EB]' }} outline-none transition-all font-medium" placeholder="Ceritakan kenapa kamu cocok untuk proyek ini, pengalaman relevan, dan pendekatan yang akan kamu pakai...">{{ old('message') }}</textarea>
                                     @error('message')
                                         <p class="mt-2 text-xs font-bold text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
                                     <label class="text-sm font-bold text-[#1E3A8A]/70 ml-1">Upload Proposal</label>
-                                    <input type="file" name="proposal_file" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip" class="mt-2 w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border {{ $errors->has('proposal_file') ? 'border-red-400 focus:border-red-500' : 'border-[#2563EB]/10 focus:border-[#2563EB]' }} outline-none transition-all font-medium file:mr-4 file:rounded-xl file:border-0 file:bg-[#EFF6FF] file:px-4 file:py-2 file:text-xs file:font-bold file:text-[#2563EB] hover:file:bg-[#DBEAFE]">
+                                    <input type="file" name="proposal_file" required accept=".pdf,.doc,.docx,.ppt,.pptx,.zip" class="mt-2 w-full px-5 py-4 rounded-2xl bg-[#F8FAFC] border {{ $errors->has('proposal_file') ? 'border-red-400 focus:border-red-500' : 'border-[#2563EB]/10 focus:border-[#2563EB]' }} outline-none transition-all font-medium file:mr-4 file:rounded-xl file:border-0 file:bg-[#EFF6FF] file:px-4 file:py-2 file:text-xs file:font-bold file:text-[#2563EB] hover:file:bg-[#DBEAFE]">
                                     <p class="mt-2 text-xs text-[#1E3A8A]/50 font-medium">Format PDF, DOC, DOCX, PPT, PPTX, atau ZIP. Maksimal 20MB.</p>
                                     @error('proposal_file')
                                         <p class="mt-2 text-xs font-bold text-red-500">{{ $message }}</p>

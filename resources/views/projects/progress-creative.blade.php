@@ -215,7 +215,7 @@
                                 <div class="relative">
                                     <select name="progress_percentage" class="appearance-none w-full px-6 py-4 rounded-2xl form-input-premium text-slate-800 font-bold text-lg cursor-pointer">
                                         @foreach([0, 10, 25, 40, 50, 60, 75, 90, 100] as $progress)
-                                            <option value="{{ $progress }}" {{ (int) ($project->progress_percentage ?? 0) === $progress ? 'selected' : '' }}>Set ke {{ $progress }}%</option>
+                                            <option value="{{ $progress }}" {{ (int) old('progress_percentage', $project->progress_percentage ?? 0) === $progress ? 'selected' : '' }}>Set ke {{ $progress }}%</option>
                                         @endforeach
                                     </select>
                                     <div class="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none text-[#2563EB]">
@@ -227,7 +227,7 @@
                             <!-- Note -->
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 ml-2 mb-2">Catatan Pengerjaan</label>
-                                <textarea name="note" rows="4" class="w-full px-6 py-4 rounded-[2rem] form-input-premium text-slate-800 placeholder-slate-400 font-medium resize-none" placeholder="Ceritakan detail apa saja yang baru kamu selesaikan... (Contoh: Selesai mewarnai karakter utama)">{{ old('note') }}</textarea>
+                                <textarea name="note" rows="4" required minlength="10" maxlength="1500" class="w-full px-6 py-4 rounded-[2rem] form-input-premium text-slate-800 placeholder-slate-400 font-medium resize-none" placeholder="Ceritakan detail apa saja yang baru kamu selesaikan... (Contoh: Selesai mewarnai karakter utama)">{{ old('note') }}</textarea>
                                 @error('note')
                                     <p class="mt-2 ml-2 text-xs font-bold text-red-500 flex items-center gap-1">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
