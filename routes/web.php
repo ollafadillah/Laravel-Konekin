@@ -113,6 +113,7 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     // Portfolio Routes
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
     Route::post('/portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
+    Route::get('/portfolio/{id}/file', [PortfolioController::class, 'attachment'])->name('portfolio.attachment');
     Route::delete('/portfolio/{id}', [PortfolioController::class, 'destroy'])->name('portfolio.destroy');
     
     // Admin Escrow

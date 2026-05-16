@@ -176,7 +176,7 @@
                                         <img src="{{ $portfolio->image_url }}" alt="{{ $portfolio->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                                         <div class="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-[#0F172A]/60 to-transparent">
                                             @if($portfolio->file_url)
-                                                <a href="{{ $portfolio->file_url }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 text-[#1E3A8A] text-[11px] font-extrabold uppercase tracking-[0.16em] hover:bg-[#2563EB] hover:text-white transition-all">
+                                                <a href="{{ route('portfolio.attachment', $portfolio->id) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 text-[#1E3A8A] text-[11px] font-extrabold uppercase tracking-[0.16em] hover:bg-[#2563EB] hover:text-white transition-all">
                                                     Lihat File
                                                 </a>
                                             @endif

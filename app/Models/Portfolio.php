@@ -16,6 +16,9 @@ class Portfolio extends Model
         'image_url', // Untuk thumbnail/preview
         'file_url',  // Untuk file lampiran (PDF, Video, dll)
         'file_type', // Tipe file (pdf, video, doc, dll)
+        'file_disk',
+        'file_path',
+        'file_original_name',
         'category',
     ];
 
