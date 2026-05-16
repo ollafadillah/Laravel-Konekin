@@ -11,6 +11,7 @@ use MongoDB\Laravel\Auth\User as Authenticatable;
 use App\Models\Rating;
 use App\Models\Project;
 use App\Models\ProjectHistory;
+use App\Support\MongoNotificationRoute;
 
 class User extends Authenticatable implements JWTSubject  // implements JWTSubject
 {
@@ -69,6 +70,11 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
     public function isAdmin(): bool
     {
         return $this->type === 'admin';
+    }
+
+    public function routeNotificationForDatabase($notification = null): MongoNotificationRoute
+    {
+        return new MongoNotificationRoute($this);
     }
 
     public function escrowPayments()

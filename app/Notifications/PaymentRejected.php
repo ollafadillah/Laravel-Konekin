@@ -43,10 +43,12 @@ class PaymentRejected extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'payment_id' => $this->payment->_id,
+            'payment_id' => (string) $this->payment->getKey(),
             'payment_number' => $this->payment->payment_number,
             'rejection_reason' => $this->payment->rejection_reason,
             'rejected_at' => $this->payment->rejected_at,
+            'project_id' => (string) $this->payment->project_id,
+            'message' => "Pembayaran {$this->payment->payment_number} ditolak admin. Silakan upload ulang bukti pembayaran.",
             'type' => 'payment_rejected',
         ];
     }

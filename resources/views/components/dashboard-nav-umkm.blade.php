@@ -61,23 +61,38 @@
                             ->getCollection('notifications')
                             ->find([
                                 'notifiable_id' => (string) auth()->id(),
-                                'type' => 'App\Notifications\PaymentApproved'
+                                'type' => ['$in' => [
+                                    'App\Notifications\PaymentInvoiceCreated',
+                                    'App\Notifications\PaymentApproved',
+                                    'App\Notifications\PaymentRejected',
+                                ]]
                             ], ['sort' => ['created_at' => -1], 'limit' => 5])
                             ->toArray();
 
                         $paymentNotifications = collect($notificationsDataUmkm)
                             ->map(function ($notification) {
                                 $data = $notification['data'] ?? [];
+                                $notificationType = $notification['type'] ?? '';
+                                $timestamp = $notification['created_at'] ?? now();
+                                if ($timestamp instanceof \MongoDB\BSON\UTCDateTime) {
+                                    $timestamp = \Illuminate\Support\Carbon::instance($timestamp->toDateTime());
+                                }
+
+                                $paymentId = $data['payment_id'] ?? null;
+                                $isRejected = str_contains($notificationType, 'PaymentRejected');
+                                $isInvoice = str_contains($notificationType, 'PaymentInvoiceCreated');
 
                                 return (object) [
                                     'id' => (string) ($notification['_id'] ?? ''),
                                     'type' => 'payment',
-                                    'title' => 'Pembayaran Disetujui',
-                                    'message' => $data['message'] ?? 'Pembayaran telah disetujui oleh admin. Dana masuk ke escrow.',
+                                    'title' => $isRejected ? 'Pembayaran Ditolak' : ($isInvoice ? 'Invoice Dibuat' : 'Pembayaran Disetujui'),
+                                    'message' => $data['message'] ?? ($isRejected
+                                        ? 'Pembayaran ditolak admin. Silakan upload bukti yang benar.'
+                                        : ($isInvoice ? 'Invoice pembayaran sudah dibuat.' : 'Pembayaran telah disetujui oleh admin. Dana masuk ke escrow.')),
                                     'project_title' => $data['project_title'] ?? 'Proyek',
-                                    'timestamp' => $notification['created_at'] ?? now(),
-                                    'level' => 'success',
-                                    'action_url' => route('payments.show', $data['payment_id'] ?? '') ?: route('dashboard.umkm'),
+                                    'timestamp' => $timestamp,
+                                    'level' => $isRejected ? 'danger' : 'success',
+                                    'action_url' => $paymentId ? route('payments.show', $paymentId) : route('dashboard.umkm'),
                                     'payment_id' => $data['payment_id'] ?? '',
                                 ];
                             })
@@ -95,7 +110,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
-                            @if($overdueCount > 0)
+                            @if($totalNotificationCount > 0)
                                 <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
                                     <span
                                         class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -125,12 +140,12 @@
                                             class="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
                                             <div class="flex items-start gap-4">
                                                 <div
-                                                    class="w-12 h-12 rounded-xl bg-green-50 border border-green-100 overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
-                                                    <i class="fas fa-check-circle text-lg text-green-500"></i>
+                                                    class="w-12 h-12 rounded-xl {{ $notification->level === 'danger' ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100' }} border overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
+                                                    <i class="fas {{ $notification->level === 'danger' ? 'fa-times-circle text-red-500' : 'fa-check-circle text-green-500' }} text-lg"></i>
                                                 </div>
                                                 <div>
                                                     <p
-                                                        class="text-[10px] font-black uppercase tracking-widest text-green-600 mb-0.5">
+                                                        class="text-[10px] font-black uppercase tracking-widest {{ $notification->level === 'danger' ? 'text-red-600' : 'text-green-600' }} mb-0.5">
                                                         ✓ {{ $notification->title }}</p>
                                                     <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">
                                                         {{ $notification->project_title }}</p>

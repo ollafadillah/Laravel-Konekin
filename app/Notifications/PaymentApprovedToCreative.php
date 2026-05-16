@@ -28,9 +28,9 @@ class PaymentApprovedToCreative extends Notification implements ShouldQueue
         $amount = number_format($this->payment->amount, 0, ',', '.');
 
         return [
-            'payment_id' => $this->payment->_id,
+            'payment_id' => (string) $this->payment->getKey(),
             'payment_number' => $this->payment->payment_number,
-            'project_id' => $this->project?->id,
+            'project_id' => (string) $this->project?->getKey(),
             'project_title' => $this->project?->title,
             'amount' => $this->payment->amount,
             'amount_formatted' => "Rp {$amount}",

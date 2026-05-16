@@ -40,7 +40,7 @@ class PaymentVerified extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'payment_id' => $this->payment->_id,
+            'payment_id' => (string) $this->payment->getKey(),
             'payment_number' => $this->payment->payment_number,
             'amount' => $this->payment->amount,
             'verified_at' => $this->payment->verified_at,

@@ -14,6 +14,7 @@ use App\Notifications\PaymentVerified;
 use App\Notifications\PaymentApproved;
 use App\Notifications\PaymentApprovedToCreative;
 use App\Notifications\PaymentRejected;
+use App\Notifications\PaymentRejectedToCreative;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -114,9 +115,7 @@ class PaymentController extends Controller
 
         // Send notification to UMKM
         $umkm = User::find($project->client_id);
-        if ($umkm) {
-            $umkm->notify(new PaymentInvoiceCreated($payment));
-        }
+        $this->sendUserNotification($umkm, new PaymentInvoiceCreated($payment), 'payment_invoice_created');
 
         return redirect()->route('payments.show', $payment->_id)
             ->with('success', 'VA pembayaran berhasil dibuat otomatis. Silakan transfer dan upload bukti pembayaran.');
@@ -197,7 +196,7 @@ class PaymentController extends Controller
                 if ($admins && count($admins) > 0) {
                     foreach ($admins as $admin) {
                         if (method_exists($admin, 'notify')) {
-                            $admin->notify(new PaymentProofSubmitted($payment));
+                            $this->sendUserNotification($admin, new PaymentProofSubmitted($payment), 'payment_proof_submitted');
                         }
                     }
                 }
@@ -262,8 +261,8 @@ class PaymentController extends Controller
 
         // Send notification to UMKM
         $umkm = User::find($payment->client_id);
-        if ($umkm && $project) {
-            $umkm->notify(new PaymentApproved($payment, $project));
+        if ($project) {
+            $this->sendUserNotification($umkm, new PaymentApproved($payment, $project), 'payment_approved_umkm');
         }
 
         // Update project status to ready for UMKM final review and hold funds in escrow
@@ -306,8 +305,8 @@ class PaymentController extends Controller
             // Notify Creative Worker
             $creative = User::find($project->selected_creative_id);
             if ($creative) {
-                $creative->notify(new \App\Notifications\EscrowPaymentReceived($project, $escrow));
-                $creative->notify(new PaymentApprovedToCreative($payment, $project));
+                $this->sendUserNotification($creative, new \App\Notifications\EscrowPaymentReceived($project, $escrow), 'escrow_payment_received_creative');
+                $this->sendUserNotification($creative, new PaymentApprovedToCreative($payment, $project), 'payment_approved_creative');
             }
         }
 
@@ -335,12 +334,6 @@ class PaymentController extends Controller
             return redirect()->back()->with('error', 'Hanya pembayaran dengan status "paid" yang dapat ditolak.');
         }
 
-        // Send notification to UMKM
-        $umkm = User::find($payment->client_id);
-        if ($umkm) {
-            $umkm->notify(new PaymentRejected($payment));
-        }
-
         $payment->update([
             'status' => 'failed',
             'rejection_reason' => $validated['rejection_reason'],
@@ -354,7 +347,17 @@ class PaymentController extends Controller
             'disbursement_status' => 'payment_rejected',
         ]);
 
-        if ($project = Project::find($payment->project_id)) {
+        $project = Project::find($payment->project_id);
+
+        // Send notification to UMKM
+        $umkm = User::find($payment->client_id);
+        $this->sendUserNotification($umkm, new PaymentRejected($payment), 'payment_rejected_umkm');
+
+        if ($project) {
+            if ($creative = User::find($project->selected_creative_id)) {
+                $this->sendUserNotification($creative, new PaymentRejectedToCreative($payment, $project), 'payment_rejected_creative');
+            }
+
             $project->update([
                 'status' => 'awaiting_payment',
                 'escrow_status' => 'unpaid',
@@ -399,5 +402,23 @@ class PaymentController extends Controller
 
         return redirect()->route('payments.index')
             ->with('success', 'Pembayaran berhasil dibatalkan.');
+    }
+
+    private function sendUserNotification(?User $user, object $notification, string $context): void
+    {
+        if (!$user || !method_exists($user, 'notifyNow')) {
+            return;
+        }
+
+        try {
+            $user->notifyNow($notification);
+        } catch (\Throwable $notificationError) {
+            Log::warning('Payment notification failed', [
+                'context' => $context,
+                'user_id' => (string) $user->getKey(),
+                'notification' => $notification::class,
+                'message' => $notificationError->getMessage(),
+            ]);
+        }
     }
 }

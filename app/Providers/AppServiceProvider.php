@@ -23,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('usage', function (Request $request) {
+            if ($request->user()?->isAdmin()) {
+                return Limit::none();
+            }
+
             $key = $request->user()?->getAuthIdentifier() ?? $request->ip();
 
             return Limit::perMinute(10)

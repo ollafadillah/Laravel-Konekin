@@ -8,7 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class PaymentApproved extends Notification implements ShouldQueue
+class PaymentRejectedToCreative extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -25,19 +25,15 @@ class PaymentApproved extends Notification implements ShouldQueue
 
     public function toArray(object $notifiable): array
     {
-        $amount = number_format($this->payment->amount, 0, ',', '.');
-        
         return [
             'payment_id' => (string) $this->payment->getKey(),
             'payment_number' => $this->payment->payment_number,
-            'project_id' => (string) $this->project?->getKey(),
-            'project_title' => $this->project?->title,
-            'amount' => $this->payment->amount,
-            'amount_formatted' => "Rp {$amount}",
-            'currency' => $this->payment->currency,
-            'verified_at' => $this->payment->verified_at,
-            'message' => "Pembayaran {$this->payment->payment_number} sebesar Rp {$amount} telah disetujui admin. Dana masuk escrow.",
-            'type' => 'payment_approved',
+            'project_id' => (string) $this->project->getKey(),
+            'project_title' => $this->project->title,
+            'rejection_reason' => $this->payment->rejection_reason,
+            'rejected_at' => $this->payment->rejected_at,
+            'message' => "Pembayaran untuk proyek '{$this->project->title}' ditolak admin. UMKM perlu mengirim ulang bukti pembayaran.",
+            'type' => 'payment_rejected_to_creative',
         ];
     }
 }

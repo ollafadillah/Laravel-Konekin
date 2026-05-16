@@ -40,10 +40,12 @@ class PaymentInvoiceCreated extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'payment_id' => $this->payment->_id,
+            'payment_id' => (string) $this->payment->getKey(),
             'payment_number' => $this->payment->payment_number,
             'amount' => $this->payment->amount,
-            'project_id' => $this->payment->project_id,
+            'project_id' => (string) $this->payment->project_id,
+            'project_title' => $this->payment->description,
+            'message' => "Invoice {$this->payment->payment_number} sudah dibuat. Silakan transfer dan upload bukti pembayaran.",
             'type' => 'payment_invoice_created',
         ];
     }

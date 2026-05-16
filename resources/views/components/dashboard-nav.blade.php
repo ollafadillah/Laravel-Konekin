@@ -96,7 +96,11 @@
                         ->getCollection('notifications')
                         ->find([
                             'notifiable_id' => (string) $user->id,
-                            'type' => ['$in' => ['App\Notifications\PaymentApproved', 'App\Notifications\PaymentApprovedToCreative']]
+                            'type' => ['$in' => [
+                                'App\Notifications\PaymentApproved',
+                                'App\Notifications\PaymentApprovedToCreative',
+                                'App\Notifications\PaymentRejectedToCreative',
+                            ]]
                         ], ['sort' => ['created_at' => -1], 'limit' => 5])
                         ->toArray();
 
@@ -104,12 +108,19 @@
                         ->map(function ($notification) {
                             $data = $notification['data'] ?? [];
                             $notificationType = $notification['type'] ?? '';
+                            $timestamp = $notification['created_at'] ?? now();
+                            if ($timestamp instanceof \MongoDB\BSON\UTCDateTime) {
+                                $timestamp = \Illuminate\Support\Carbon::instance($timestamp->toDateTime());
+                            }
                             
-                            $title = str_contains($notificationType, 'Creative') 
-                                ? 'Pembayaran Disetujui (Creative)' 
-                                : 'Pembayaran Disetujui';
+                            $isRejected = str_contains($notificationType, 'PaymentRejected');
+                            $title = $isRejected
+                                ? 'Pembayaran Ditolak'
+                                : (str_contains($notificationType, 'Creative') ? 'Pembayaran Disetujui' : 'Pembayaran Disetujui');
                             
-                            $message = $data['message'] ?? 'Pembayaran telah disetujui oleh admin.';
+                            $message = $data['message'] ?? ($isRejected
+                                ? 'Pembayaran ditolak admin. UMKM perlu mengirim ulang bukti pembayaran.'
+                                : 'Pembayaran telah disetujui oleh admin.');
 
                             return (object) [
                                 'id' => (string) ($notification['_id'] ?? ''),
@@ -117,9 +128,9 @@
                                 'title' => $title,
                                 'message' => $message,
                                 'project_title' => $data['project_title'] ?? 'Proyek',
-                                'timestamp' => $notification['created_at'] ?? now(),
-                                'level' => 'success',
-                                'action_url' => route('payments.show', $data['payment_id'] ?? '') ?: route('dashboard.creative'),
+                                'timestamp' => $timestamp,
+                                'level' => $isRejected ? 'danger' : 'success',
+                                'action_url' => route('projects.progress.creative') . '#project-' . ($data['project_id'] ?? ''),
                             ];
                         })
                         ->values();
