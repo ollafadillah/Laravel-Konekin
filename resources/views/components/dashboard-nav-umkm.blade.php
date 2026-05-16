@@ -37,6 +37,8 @@
                 <div class="flex items-center gap-4">
                     <!-- Notification Bell & Dropdown -->
                     @php
+                        $user = auth()->user();
+                        $dismissedNotificationIds = collect($user->dismissed_notification_ids ?? []);
                         $overdueProjects = \App\Models\Project::where('client_id', auth()->id())
                             ->where('status', '!=', 'completed')
                             ->where('deadline', '<', now()->startOfDay()->format('Y-m-d'))
@@ -52,7 +54,15 @@
                                 } else {
                                     $p->reason = 'Proyek telat diselesaikan oleh creative worker.';
                                 }
-                                return $p;
+                                return (object) [
+                                    'id' => 'overdue-' . $p->id,
+                                    'project_id' => (string) $p->id,
+                                    'type' => 'overdue',
+                                    'title' => $p->title,
+                                    'reason' => $p->reason,
+                                    'thumbnail' => $p->thumbnail,
+                                    'timestamp' => $deadline,
+                                ];
                             });
                         $overdueCount = $overdueProjects->count();
 
@@ -98,7 +108,10 @@
                             })
                             ->values();
 
-                        $allNotifications = $overdueProjects->concat($paymentNotifications)->values();
+                        $allNotifications = $overdueProjects
+                            ->concat($paymentNotifications)
+                            ->reject(fn ($item) => $dismissedNotificationIds->contains((string) $item->id))
+                            ->values();
                         $totalNotificationCount = $allNotifications->count();
                     @endphp
 
@@ -136,43 +149,47 @@
                             <div class="max-h-96 overflow-y-auto">
                                 @forelse($allNotifications as $notification)
                                     @if($notification->type === 'payment')
-                                        <a href="{{ $notification->action_url }}"
-                                            class="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
-                                            <div class="flex items-start gap-4">
-                                                <div
-                                                    class="w-12 h-12 rounded-xl {{ $notification->level === 'danger' ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100' }} border overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
-                                                    <i class="fas {{ $notification->level === 'danger' ? 'fa-times-circle text-red-500' : 'fa-check-circle text-green-500' }} text-lg"></i>
+                                        <div class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                            <a href="{{ $notification->action_url }}"
+                                                class="block p-5 cursor-pointer">
+                                                <div class="flex items-start gap-4">
+                                                    <div
+                                                        class="w-12 h-12 rounded-xl {{ $notification->level === 'danger' ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100' }} border overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
+                                                        <i class="fas {{ $notification->level === 'danger' ? 'fa-times-circle text-red-500' : 'fa-check-circle text-green-500' }} text-lg"></i>
+                                                    </div>
+                                                    <div>
+                                                        <p
+                                                            class="text-[10px] font-black uppercase tracking-widest {{ $notification->level === 'danger' ? 'text-red-600' : 'text-green-600' }} mb-0.5">
+                                                            {{ $notification->title }}</p>
+                                                        <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">
+                                                            {{ $notification->project_title }}</p>
+                                                        <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">
+                                                            {{ $notification->message }}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p
-                                                        class="text-[10px] font-black uppercase tracking-widest {{ $notification->level === 'danger' ? 'text-red-600' : 'text-green-600' }} mb-0.5">
-                                                        ✓ {{ $notification->title }}</p>
-                                                    <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">
-                                                        {{ $notification->project_title }}</p>
-                                                    <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">
-                                                        {{ $notification->message }}</p>
-                                                </div>
-                                            </div>
-                                        </a>
+                                            </a>
+                                        </div>
                                     @else
-                                        <a href="{{ route('projects.progress') }}#project-{{ $notification->id }}"
-                                            class="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
-                                            <div class="flex items-start gap-4">
-                                                <div
-                                                    class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 shadow-sm border border-slate-200/50">
-                                                    <img src="{{ $notification->thumbnail }}" alt="{{ $notification->title }}"
-                                                        class="w-full h-full object-cover">
+                                        <div class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                            <a href="{{ route('projects.progress') }}#project-{{ $notification->project_id }}"
+                                                class="block p-5 cursor-pointer">
+                                                <div class="flex items-start gap-4">
+                                                    <div
+                                                        class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 shadow-sm border border-slate-200/50">
+                                                        <img src="{{ $notification->thumbnail }}" alt="{{ $notification->title }}"
+                                                            class="w-full h-full object-cover">
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-[10px] font-black uppercase tracking-widest text-red-500 mb-0.5">
+                                                            Terlambat</p>
+                                                        <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">
+                                                            {{ $notification->title }}</p>
+                                                        <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">
+                                                            {{ $notification->reason }}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p class="text-[10px] font-black uppercase tracking-widest text-red-500 mb-0.5">
-                                                        Terlambat</p>
-                                                    <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">
-                                                        {{ $notification->title }}</p>
-                                                    <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">
-                                                        {{ $notification->reason }}</p>
-                                                </div>
-                                            </div>
-                                        </a>
+                                            </a>
+                                        </div>
                                     @endif
                                 @empty
                                     <div class="p-10 text-center">
@@ -187,10 +204,22 @@
                             </div>
 
                             @if($totalNotificationCount > 0)
-                                <a href="{{ route('projects.progress') }}"
-                                    class="block p-4 text-center text-xs font-bold text-[#2563EB] bg-slate-50 hover:bg-[#EFF6FF] transition-all">
-                                    Lihat Semua Progress Proyek
-                                </a>
+                                <div class="grid grid-cols-2 bg-slate-50 border-t border-slate-100">
+                                    <a href="{{ route('projects.progress') }}"
+                                        class="p-4 text-center text-xs font-bold text-[#2563EB] hover:bg-[#EFF6FF] transition-all">
+                                        Lihat Semua Progress Proyek
+                                    </a>
+                                    <form action="{{ route('notifications.destroy-all') }}" method="POST" class="border-l border-slate-100">
+                                        @csrf
+                                        @method('DELETE')
+                                        @foreach($allNotifications as $notification)
+                                            <input type="hidden" name="notification_ids[]" value="{{ $notification->id }}">
+                                        @endforeach
+                                        <button type="submit" class="w-full p-4 text-center text-xs font-bold text-red-500 hover:bg-red-50 transition-all">
+                                            Hapus Semua
+                                        </button>
+                                    </form>
+                                </div>
                             @endif
                         </div>
                     </div>

@@ -23,6 +23,7 @@
             <div class="flex items-center gap-4">
                 @php
                     $user = auth()->user();
+                    $dismissedNotificationIds = collect($user->dismissed_notification_ids ?? []);
                     $approvalNotifications = \App\Models\ProjectApplication::with(['project.client'])
                         ->where('creative_id', $user->id)
                         ->where('status', 'approved')
@@ -39,7 +40,7 @@
                                 ?? 'https://ui-avatars.com/api/?name=' . urlencode(optional($client)->name ?? 'UMKM') . '&background=random';
 
                             return (object) [
-                                'id' => (string) $notification->id,
+                                'id' => 'approval-' . $notification->id,
                                 'type' => 'approval',
                                 'title' => 'Lamaran Disetujui',
                                 'message' => 'UMKM telah menerima lamaranmu untuk proyek "' . $projectTitle . '".',
@@ -138,6 +139,7 @@
                     $creativeNotifications = $approvalNotifications
                         ->concat($deadlineNotifications)
                         ->concat($paymentNotifications)
+                        ->reject(fn ($item) => $dismissedNotificationIds->contains((string) $item->id))
                         ->sortByDesc(fn ($item) => optional($item->timestamp)->timestamp ?? now()->timestamp)
                         ->values();
 
@@ -171,26 +173,28 @@
 
                         <div class="max-h-96 overflow-y-auto">
                             @forelse($creativeNotifications as $notification)
-                                <a href="{{ $notification->action_url }}" class="block p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
-                                    <div class="flex items-start gap-4">
-                                        @if($notification->type === 'approval')
-                                            <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-blue-100 bg-blue-50">
-                                                <img src="{{ $notification->avatar }}" alt="{{ $notification->project_title }}" class="w-full h-full object-cover">
+                                <div class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <a href="{{ $notification->action_url }}" class="block p-5 cursor-pointer">
+                                        <div class="flex items-start gap-4">
+                                            @if($notification->type === 'approval')
+                                                <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-blue-100 bg-blue-50">
+                                                    <img src="{{ $notification->avatar }}" alt="{{ $notification->project_title }}" class="w-full h-full object-cover">
+                                                </div>
+                                            @else
+                                                <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border {{ $notification->level === 'danger' ? 'bg-red-50 border-red-100 text-red-500' : ($notification->level === 'warning' ? 'bg-amber-50 border-amber-100 text-amber-500' : 'bg-blue-50 border-blue-100 text-blue-500') }} flex items-center justify-center">
+                                                    <i class="fas fa-hourglass-half"></i>
+                                                </div>
+                                            @endif
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-[10px] font-black uppercase tracking-widest {{ $notification->level === 'danger' ? 'text-red-500' : ($notification->level === 'warning' ? 'text-amber-500' : 'text-[#2563EB]') }} mb-0.5">
+                                                    {{ $notification->title }}
+                                                </p>
+                                                <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">{{ $notification->project_title }}</p>
+                                                <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">{{ $notification->message }}</p>
                                             </div>
-                                        @else
-                                            <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border {{ $notification->level === 'danger' ? 'bg-red-50 border-red-100 text-red-500' : ($notification->level === 'warning' ? 'bg-amber-50 border-amber-100 text-amber-500' : 'bg-blue-50 border-blue-100 text-blue-500') }} flex items-center justify-center">
-                                                <i class="fas fa-hourglass-half"></i>
-                                            </div>
-                                        @endif
-                                        <div class="min-w-0 flex-1">
-                                            <p class="text-[10px] font-black uppercase tracking-widest {{ $notification->level === 'danger' ? 'text-red-500' : ($notification->level === 'warning' ? 'text-amber-500' : 'text-[#2563EB]') }} mb-0.5">
-                                                {{ $notification->title }}
-                                            </p>
-                                            <p class="text-sm font-bold text-[#1E3A8A] line-clamp-1 mb-0.5">{{ $notification->project_title }}</p>
-                                            <p class="text-xs text-[#1E3A8A]/60 font-medium leading-relaxed">{{ $notification->message }}</p>
                                         </div>
-                                    </div>
-                                </a>
+                                    </a>
+                                </div>
                             @empty
                                 <div class="p-10 text-center">
                                     <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
@@ -202,9 +206,21 @@
                         </div>
 
                         @if($creativeNotificationCount > 0)
-                            <a href="{{ route('projects.progress.creative') }}" class="block p-4 text-center text-xs font-bold text-[#2563EB] bg-slate-50 hover:bg-[#EFF6FF] transition-all">
-                                Lihat Semua Progress Proyek
-                            </a>
+                            <div class="grid grid-cols-2 bg-slate-50 border-t border-slate-100">
+                                <a href="{{ route('projects.progress.creative') }}" class="p-4 text-center text-xs font-bold text-[#2563EB] hover:bg-[#EFF6FF] transition-all">
+                                    Lihat Semua Progress Proyek
+                                </a>
+                                <form action="{{ route('notifications.destroy-all') }}" method="POST" class="border-l border-slate-100">
+                                    @csrf
+                                    @method('DELETE')
+                                    @foreach($creativeNotifications as $notification)
+                                        <input type="hidden" name="notification_ids[]" value="{{ $notification->id }}">
+                                    @endforeach
+                                    <button type="submit" class="w-full p-4 text-center text-xs font-bold text-red-500 hover:bg-red-50 transition-all">
+                                        Hapus Semua
+                                    </button>
+                                </form>
+                            </div>
                         @endif
                     </div>
                 </div>

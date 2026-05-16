@@ -16,6 +16,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\PaymentVerificationController;
 use App\Http\Controllers\PaymentReceiptController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman Utama (Landing Page)
@@ -70,6 +71,7 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/dashboard/umkm', [DashboardController::class, 'umkmDashboard'])->name('dashboard.umkm');
     Route::get('/dashboard/creative', [DashboardController::class, 'creativeWorkerDashboard'])->name('dashboard.creative');
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])->name('dashboard.admin');
+    Route::delete('/notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
     Route::get('/penghasilan', [DashboardController::class, 'creativeEarnings'])->name('earnings.index');
     Route::get('/rekomendasi-kreator', [MlRecommendationController::class, 'index'])->name('rekomendasi.kreator');
     Route::post('/rekomendasi-kreator', [MlRecommendationController::class, 'store'])->name('rekomendasi.kreator.store');
