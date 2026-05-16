@@ -27,18 +27,31 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .creative-tier-chip {
-            background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,250,252,0.86));
-            box-shadow: 0 18px 35px rgba(30, 58, 138, 0.14);
+            width: 100%;
+            background:
+                radial-gradient(circle at 22% 12%, rgba(255,255,255,0.92), transparent 34%),
+                linear-gradient(145deg, rgba(255,255,255,0.96), rgba(239,246,255,0.9));
+            box-shadow: 0 16px 32px rgba(30, 58, 138, 0.12);
         }
-        .creative-tier-chip img {
+        .creative-tier-chip .tier-art {
+            background: linear-gradient(145deg, #FFFFFF, #F8FAFC);
+            box-shadow: inset 0 0 0 1px rgba(37,99,235,0.08), 0 12px 24px rgba(37,99,235,0.12);
+        }
+        .creative-tier-chip .tier-art img {
             mix-blend-mode: multiply;
         }
         .creative-tier-chip.is-expert {
-            background: linear-gradient(135deg, #0F172A, #1E3A8A);
-            box-shadow: 0 18px 35px rgba(244, 63, 94, 0.18);
+            background:
+                radial-gradient(circle at 25% 10%, rgba(255,255,255,0.18), transparent 34%),
+                linear-gradient(145deg, #0F172A, #1E3A8A 70%, #BE123C);
+            box-shadow: 0 16px 32px rgba(244, 63, 94, 0.18);
         }
-        .creative-tier-chip.is-expert img {
-            mix-blend-mode: normal;
+        .creative-tier-chip.is-expert .tier-art {
+            background: linear-gradient(145deg, rgba(15,23,42,0.9), rgba(30,58,138,0.82));
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 12px 24px rgba(15,23,42,0.3);
+        }
+        .creative-tier-chip.is-expert .tier-art img {
+            mix-blend-mode: screen;
         }
     </style>
 </head>
@@ -125,31 +138,36 @@
                     {!! $borderDecor !!}
                     <div class="relative z-10 flex flex-col h-full">
                         <!-- Profile Header -->
-                        <div class="flex items-start gap-5 mb-6 relative">
+                        <div class="flex items-start gap-5 mb-5 relative">
                             <div class="w-20 h-20 rounded-[1.5rem] overflow-hidden shrink-0 border-2 border-white shadow-lg shadow-[#2563EB]/10 group-hover:scale-105 transition-transform">
                                 <img src="{{ $creator->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode($creator->name).'&background=2563EB&color=fff' }}" alt="{{ $creator->name }}" class="w-full h-full object-cover">
                             </div>
-                            <div class="flex-grow pt-1">
-                                <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors pr-24">{{ $creator->name }}</h3>
+                            <div class="flex-grow pt-1 min-w-0">
+                                <h3 class="text-xl font-display font-bold text-[#1E3A8A] leading-tight group-hover:text-[#2563EB] transition-colors">{{ $creator->name }}</h3>
                                 <div class="flex flex-wrap items-center gap-2 mt-1.5">
                                     <span class="text-xs font-bold text-[#2563EB] uppercase tracking-wider">{{ $creator->display_creative_category ?? 'Creative Worker' }}</span>
                                     <span class="w-1 h-1 bg-[#1E3A8A]/20 rounded-full"></span>
                                     <span class="text-xs font-medium text-[#1E3A8A]/40">{{ $creator->city ?? 'Domisili tidak diatur' }}</span>
                                 </div>
                             </div>
+                        </div>
 
-                            @if($creator->creative_tier)
-                                <div class="absolute -top-2 -right-2 creative-tier-chip {{ $creator->creative_tier['name'] === 'Expert' ? 'is-expert' : '' }} rounded-[1.35rem] border border-white/90 p-2 min-w-[5.5rem] text-center transition-all group-hover:-translate-y-1 group-hover:rotate-2" title="{{ $creator->creative_tier['name'] }} - {{ $creator->five_star_ratings_count }} ulasan bintang 5">
-                                    <div class="mx-auto w-12 h-12 rounded-2xl {{ $creator->creative_tier['name'] === 'Expert' ? 'bg-[#0F172A] border-rose-300/20' : 'bg-white border-[#2563EB]/10' }} border flex items-center justify-center overflow-hidden">
-                                        <img src="{{ $creator->creative_tier['badge'] }}" alt="{{ $creator->creative_tier['name'] }} Badge" class="w-11 h-11 object-contain transition-transform group-hover:scale-110">
-                                    </div>
-                                    <span class="mt-1.5 inline-flex px-2 py-0.5 rounded-full {{ $creator->creative_tier['bg'] }} {{ $creator->creative_tier['color'] }} text-[8px] font-black uppercase tracking-wider">
+                        @if($creator->creative_tier)
+                            <div class="creative-tier-chip {{ $creator->creative_tier['name'] === 'Expert' ? 'is-expert' : '' }} rounded-[1.8rem] border border-white/90 p-3 mb-6 flex items-center gap-4 transition-all group-hover:-translate-y-1" title="{{ $creator->creative_tier['name'] }} - {{ $creator->five_star_ratings_count }} ulasan bintang 5">
+                                <div class="tier-art w-16 h-16 rounded-[1.35rem] flex items-center justify-center overflow-hidden shrink-0">
+                                    <img src="{{ $creator->creative_tier['badge'] }}" alt="{{ $creator->creative_tier['name'] }} Badge" class="w-14 h-14 object-contain transition-transform group-hover:scale-110">
+                                </div>
+                                <div class="min-w-0">
+                                    <span class="inline-flex px-3 py-1 rounded-full {{ $creator->creative_tier['name'] === 'Expert' ? 'bg-white/10 text-rose-100 border border-white/10' : $creator->creative_tier['bg'].' '.$creator->creative_tier['color'] }} text-[10px] font-black uppercase tracking-wider">
                                         {{ $creator->creative_tier['name'] }}
                                     </span>
-                                    <span class="block mt-1 text-[9px] font-extrabold {{ $creator->creative_tier['name'] === 'Expert' ? 'text-white/70' : 'text-[#1E3A8A]/45' }}">{{ $creator->five_star_ratings_count }}x 5&#9733;</span>
+                                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                                        <span class="text-lg font-display font-bold {{ $creator->creative_tier['name'] === 'Expert' ? 'text-white' : 'text-[#1E3A8A]' }}">{{ $creator->five_star_ratings_count }}&times; 5&#9733;</span>
+                                        <span class="text-[10px] font-extrabold uppercase tracking-[0.16em] {{ $creator->creative_tier['name'] === 'Expert' ? 'text-white/55' : 'text-[#1E3A8A]/40' }}">Ulasan Terbaik</span>
+                                    </div>
                                 </div>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
 
                         <!-- Skills & Stats -->
                         <div class="flex-grow">

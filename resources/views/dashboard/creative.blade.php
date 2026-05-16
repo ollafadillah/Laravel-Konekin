@@ -82,18 +82,30 @@
             -webkit-text-fill-color: transparent;
         }
         .tier-logo {
-            background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(239,246,255,0.82));
-            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.14);
+            background:
+                radial-gradient(circle at 22% 12%, rgba(255,255,255,0.92), transparent 34%),
+                linear-gradient(145deg, rgba(255,255,255,0.96), rgba(239,246,255,0.9));
+            box-shadow: 0 22px 42px rgba(30, 58, 138, 0.16);
         }
-        .tier-logo img {
+        .tier-logo .tier-art {
+            background: linear-gradient(145deg, #FFFFFF, #F8FAFC);
+            box-shadow: inset 0 0 0 1px rgba(37,99,235,0.08), 0 12px 24px rgba(37,99,235,0.12);
+        }
+        .tier-logo .tier-art img {
             mix-blend-mode: multiply;
         }
         .tier-logo.is-expert {
-            background: linear-gradient(135deg, #0F172A, #1E3A8A);
-            box-shadow: 0 18px 40px rgba(244, 63, 94, 0.18);
+            background:
+                radial-gradient(circle at 25% 10%, rgba(255,255,255,0.18), transparent 34%),
+                linear-gradient(145deg, #0F172A, #1E3A8A 70%, #BE123C);
+            box-shadow: 0 22px 42px rgba(244, 63, 94, 0.2);
         }
-        .tier-logo.is-expert img {
-            mix-blend-mode: normal;
+        .tier-logo.is-expert .tier-art {
+            background: linear-gradient(145deg, rgba(15,23,42,0.9), rgba(30,58,138,0.82));
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 12px 24px rgba(15,23,42,0.3);
+        }
+        .tier-logo.is-expert .tier-art img {
+            mix-blend-mode: screen;
         }
     </style>
 </head>
@@ -125,13 +137,13 @@
                             <span class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-600">Online & Siap Bekerja</span>
                         </div>
                         @if($user->creative_tier)
-                            <div class="tier-logo {{ $user->creative_tier['name'] === 'Expert' ? 'is-expert' : '' }} inline-flex items-center gap-2.5 px-3 py-2 rounded-full border border-white/90" title="{{ $user->five_star_ratings_count }} ulasan bintang 5">
-                                <span class="w-9 h-9 rounded-full {{ $user->creative_tier['name'] === 'Expert' ? 'bg-[#0F172A] border-rose-300/20' : 'bg-white border-[#2563EB]/10' }} flex items-center justify-center overflow-hidden border">
-                                    <img src="{{ $user->creative_tier['badge'] }}" alt="{{ $user->creative_tier['name'] }} Badge" class="w-8 h-8 object-contain">
+                            <div class="tier-logo {{ $user->creative_tier['name'] === 'Expert' ? 'is-expert' : '' }} inline-flex items-center gap-3 px-4 py-3 rounded-[1.65rem] border border-white/90" title="{{ $user->five_star_ratings_count }} ulasan bintang 5">
+                                <span class="tier-art w-14 h-14 rounded-[1.2rem] flex items-center justify-center overflow-hidden">
+                                    <img src="{{ $user->creative_tier['badge'] }}" alt="{{ $user->creative_tier['name'] }} Badge" class="w-12 h-12 object-contain">
                                 </span>
                                 <span class="leading-none">
-                                    <span class="block text-[10px] font-black uppercase tracking-[0.18em] {{ $user->creative_tier['name'] === 'Expert' ? 'text-rose-200' : $user->creative_tier['color'] }}">{{ $user->creative_tier['name'] }}</span>
-                                    <span class="block text-[10px] font-bold {{ $user->creative_tier['name'] === 'Expert' ? 'text-white/70' : 'text-slate-500' }} mt-1">{{ $user->five_star_ratings_count }} bintang 5</span>
+                                    <span class="inline-flex px-3 py-1 rounded-full {{ $user->creative_tier['name'] === 'Expert' ? 'bg-white/10 text-rose-100 border border-white/10' : $user->creative_tier['bg'].' '.$user->creative_tier['color'] }} text-[10px] font-black uppercase tracking-[0.18em]">{{ $user->creative_tier['name'] }}</span>
+                                    <span class="block text-xs font-bold {{ $user->creative_tier['name'] === 'Expert' ? 'text-white/72' : 'text-slate-500' }} mt-2">{{ $user->five_star_ratings_count }}&times; bintang 5</span>
                                 </span>
                             </div>
                         @endif

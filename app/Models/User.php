@@ -127,21 +127,21 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
         if ($fiveStarCount >= 20) {
             return [
                 'name' => 'Expert',
-                'badge' => asset('images/badges/star-red.jpg'),
+                'badge' => asset('images/assets/red%20star.png'),
                 'color' => 'text-rose-600',
                 'bg' => 'bg-rose-50',
             ];
         } elseif ($fiveStarCount >= 10) {
             return [
                 'name' => 'Intermediate',
-                'badge' => asset('images/badges/star-blue.jpg'),
+                'badge' => asset('images/assets/blue%20star.jpg'),
                 'color' => 'text-blue-600',
                 'bg' => 'bg-blue-50',
             ];
         } elseif ($fiveStarCount >= 1) {
             return [
                 'name' => 'Beginner',
-                'badge' => asset('images/badges/star-yellow.jpg'),
+                'badge' => asset('images/assets/yellow%20stars.jpg'),
                 'color' => 'text-amber-600',
                 'bg' => 'bg-amber-50',
             ];
