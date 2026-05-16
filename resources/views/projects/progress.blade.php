@@ -135,9 +135,9 @@
                                 <div class="mt-4 flex flex-wrap items-center gap-3 text-xs font-bold text-[#1E3A8A]/55">
                                     <span><i class="fas fa-calendar mr-1 text-[#2563EB]"></i> Deadline
                                         {{ \Illuminate\Support\Carbon::parse($project->deadline)->translatedFormat('d M Y') }}</span>
-                                    <span><i class="fas fa-wallet mr-1 text-[#10B981]"></i> Rp {{ $project->budget }}</span>
+                                    <span><i class="fas fa-wallet mr-1 text-[#2563EB]"></i> Rp {{ $project->budget }}</span>
                                     @if(!empty($project->selected_creative_name))
-                                        <span><i class="fas fa-user-check mr-1 text-[#7C3AED]"></i>
+                                        <span><i class="fas fa-user-check mr-1 text-[#0A66C2]"></i>
                                             {{ $project->selected_creative_name }}</span>
                                     @endif
                                 </div>
@@ -150,7 +150,7 @@
                                 <p class="font-display text-3xl font-bold text-[#2563EB]">{{ $progress }}%</p>
                             </div>
                             <div class="h-3 rounded-full bg-white overflow-hidden border border-[#2563EB]/10">
-                                <div class="h-full bg-gradient-to-r from-[#2563EB] via-[#10B981] to-[#F59E0B]"
+                                <div class="h-full bg-gradient-to-r from-[#1E3A8A] via-[#2563EB] to-[#0EA5E9]"
                                     style="width: {{ $progress }}%"></div>
                             </div>
                             <p class="mt-3 text-xs text-[#1E3A8A]/60 font-medium leading-6">{{ $project->progress_summary }}

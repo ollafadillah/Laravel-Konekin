@@ -176,8 +176,16 @@
                                     <label for="proof_file" class="block text-sm font-medium text-gray-700 mb-2">File Bukti
                                         Pembayaran</label>
                                     <input type="file" name="proof_file" id="proof_file" accept=".pdf,.jpg,.jpeg,.png,.gif"
+                                        onchange="previewPaymentProof(this)"
                                         required class="w-full px-4 py-3 border border-gray-300 rounded-lg">
                                     <p class="text-sm text-gray-500 mt-2">PDF, JPG, PNG, atau GIF. Maksimal 10MB.</p>
+                                    <div id="proof_preview" class="hidden mt-4 rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+                                        <img id="proof_preview_image" src="" alt="Preview bukti pembayaran"
+                                            class="hidden w-full max-h-80 rounded-xl object-contain bg-white">
+                                        <div id="proof_preview_file"
+                                            class="hidden rounded-xl bg-white border border-blue-100 px-4 py-3 text-sm font-semibold text-blue-900"></div>
+                                        <p id="proof_preview_meta" class="mt-3 text-xs font-semibold text-blue-700"></p>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -258,4 +266,46 @@
             </div>
         </div>
     </div>
+    <script>
+        function formatPaymentProofSize(bytes) {
+            if (!bytes) {
+                return '0 KB';
+            }
+
+            const units = ['B', 'KB', 'MB', 'GB'];
+            const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+            return `${(bytes / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+        }
+
+        function previewPaymentProof(input) {
+            const file = input.files && input.files[0];
+            const preview = document.getElementById('proof_preview');
+            const image = document.getElementById('proof_preview_image');
+            const fallback = document.getElementById('proof_preview_file');
+            const meta = document.getElementById('proof_preview_meta');
+
+            image.classList.add('hidden');
+            fallback.classList.add('hidden');
+
+            if (!file) {
+                preview.classList.add('hidden');
+                image.src = '';
+                fallback.textContent = '';
+                meta.textContent = '';
+                return;
+            }
+
+            preview.classList.remove('hidden');
+            meta.textContent = `${file.name} - ${formatPaymentProofSize(file.size)}`;
+
+            if (file.type.startsWith('image/')) {
+                image.src = URL.createObjectURL(file);
+                image.classList.remove('hidden');
+                return;
+            }
+
+            fallback.textContent = `${file.name} siap diupload`;
+            fallback.classList.remove('hidden');
+        }
+    </script>
 @endsection

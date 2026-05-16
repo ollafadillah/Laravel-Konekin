@@ -29,11 +29,11 @@ class AppServiceProvider extends ServiceProvider
 
             $key = $request->user()?->getAuthIdentifier() ?? $request->ip();
 
-            return Limit::perMinute(10)
+            return Limit::perSecond(10, 15)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {
                     $payload = [
-                        'message' => 'Terlalu banyak permintaan. Coba lagi dalam 1 menit.',
+                        'message' => 'Terlalu banyak permintaan. Coba lagi dalam 15 detik.',
                     ];
 
                     if ($request->expectsJson()) {
