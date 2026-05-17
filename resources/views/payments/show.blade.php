@@ -52,11 +52,7 @@
 
     <div class="px-4 py-10 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-7xl">
-            <a href="{{ route('payments.index') }}"
-                class="mb-6 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#2563EB] shadow-sm ring-1 ring-[#2563EB]/10 transition hover:bg-[#EFF6FF]">
-                <i class="fas fa-arrow-left text-xs"></i>
-                Kembali ke Pembayaran
-            </a>
+            <x-page-back :href="route('payments.index')" label="Kembali ke Pembayaran" class="mb-6" />
 
             @if ($errors->any())
                 <div class="mb-6 rounded-3xl border border-red-200 bg-red-50 p-5 text-red-700">

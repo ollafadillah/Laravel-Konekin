@@ -18,6 +18,11 @@
 <body class="min-h-screen text-[#1E3A8A]">
     <main class="min-h-screen p-4 md:p-8">
         <section class="mx-auto max-w-6xl space-y-5">
+            <x-page-back
+                :href="route('projects.show', $application->project_id)"
+                label="Kembali ke Detail Proyek"
+            />
+
             <div class="rounded-3xl border border-[#2563EB]/10 bg-white p-6 shadow-sm">
                 <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                     <div>

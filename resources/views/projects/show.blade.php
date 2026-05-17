@@ -26,6 +26,11 @@
     @endif
 
     <main class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        <x-page-back
+            :href="auth()->user()->isUMKM() ? route('projects.progress') : route('projects.index')"
+            label="Kembali"
+        />
+
         @if(session('success'))
             <div class="p-4 bg-green-50 border border-green-200 text-green-700 rounded-2xl font-bold text-sm">{{ session('success') }}</div>
         @endif

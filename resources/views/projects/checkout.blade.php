@@ -13,7 +13,10 @@
     </style>
 </head>
 <body class="antialiased text-[#1E3A8A] min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-[#2563EB]/5">
+    <div class="max-w-xl w-full">
+        <x-page-back :href="route('projects.show', $project->id)" label="Kembali ke Detail Proyek" class="mb-5" />
+
+        <div class="bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-[#2563EB]/5">
         <div class="p-10">
             <div class="flex flex-col items-center mb-10">
                 <div class="w-20 h-20 bg-gradient-to-br from-[#2563EB] to-[#0A66C2] rounded-3xl flex items-center justify-center text-white text-3xl shadow-xl shadow-[#2563EB]/20 mb-6">
@@ -50,6 +53,7 @@
         </div>
         <div class="bg-slate-50 p-6 text-center border-t border-slate-100">
             <a href="{{ route('projects.show', $project->id) }}" class="text-sm font-bold text-[#1E3A8A]/40 hover:text-[#2563EB] transition-colors">Batal & Kembali</a>
+        </div>
         </div>
     </div>
 </body>

@@ -166,13 +166,6 @@
                                             d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach($categories as $category)
-                                        <button type="button"
-                                            class="category-chip px-3 py-2 rounded-full border border-[#2563EB]/10 bg-white text-[#1E3A8A]/60 text-[11px] font-bold hover:border-[#2563EB]/35 hover:text-[#2563EB] transition-all"
-                                            data-category="{{ $category }}">{{ $category }}</button>
-                                    @endforeach
-                                </div>
                                 @error('category') <p class="text-red-500 text-xs font-bold">{{ $message }}</p> @enderror
                             </div>
 
@@ -389,15 +382,6 @@
     <script>
         let activeMediaUrl = null;
 
-        document.querySelectorAll('.category-chip').forEach((button) => {
-            button.addEventListener('click', () => {
-                const categoryInput = document.getElementById('category');
-                categoryInput.value = button.dataset.category;
-                syncBriefPreview();
-                syncCategoryChips();
-            });
-        });
-
         function formatBudgetInput() {
             const budgetInput = document.getElementById('budget');
             const digits = budgetInput.value.replace(/\D/g, '');
@@ -469,22 +453,6 @@
             }) : '-';
 
             document.getElementById('description-count').textContent = `${description.value.length}/2000`;
-            syncCategoryChips();
-        }
-
-        function syncCategoryChips() {
-            const selectedCategory = document.getElementById('category').value;
-
-            document.querySelectorAll('.category-chip').forEach((button) => {
-                const active = button.dataset.category === selectedCategory;
-                button.classList.toggle('bg-[#2563EB]', active);
-                button.classList.toggle('text-white', active);
-                button.classList.toggle('border-[#2563EB]', active);
-                button.classList.toggle('hover:text-white', active);
-                button.classList.toggle('bg-white', !active);
-                button.classList.toggle('text-[#1E3A8A]/60', !active);
-                button.classList.toggle('border-[#2563EB]/10', !active);
-            });
         }
 
         document.addEventListener('DOMContentLoaded', () => {

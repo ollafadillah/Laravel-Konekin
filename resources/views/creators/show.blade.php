@@ -66,6 +66,8 @@
     @endif
 
     <main class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        <x-page-back :href="route('kreator.index')" label="Kembali ke Daftar Kreator" />
+
         <section class="relative overflow-hidden rounded-[3rem] border border-[#2563EB]/10 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.14),_transparent_38%),linear-gradient(135deg,#EFF6FF_0%,#FFFFFF_55%,#F8FAFC_100%)] p-8 md:p-10 shadow-xl shadow-[#2563EB]/10">
             <div class="absolute -top-16 -right-10 w-48 h-48 rounded-full bg-[#2563EB]/10 blur-3xl"></div>
 
