@@ -235,7 +235,7 @@ class ProjectController extends Controller
         return back()->with('success', 'Pengajuan berhasil dikirim ke UMKM.');
     }
 
-    public function previewProposal(string $applicationId)
+    public function previewProposal(string $applicationId, CloudinaryService $cloudinary)
     {
         $application = ProjectApplication::findOrFail($applicationId);
         $this->ensureProposalCanBeOpened($application);
@@ -243,7 +243,7 @@ class ProjectController extends Controller
         $extension = strtolower($application->proposal_type ?: pathinfo($application->proposal_display_name, PATHINFO_EXTENSION));
 
         if ($extension === 'pdf') {
-            return $this->serveProposalFile($application, false);
+            return $this->serveProposalFile($application, false, $cloudinary);
         }
 
         return view('projects.proposal-preview', [
@@ -253,12 +253,12 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function downloadProposal(string $applicationId)
+    public function downloadProposal(string $applicationId, CloudinaryService $cloudinary)
     {
         $application = ProjectApplication::findOrFail($applicationId);
         $this->ensureProposalCanBeOpened($application);
 
-        return $this->serveProposalFile($application, true);
+        return $this->serveProposalFile($application, true, $cloudinary);
     }
 
     public function progress(ProjectArchiveService $archiveService)
@@ -1134,22 +1134,54 @@ class ProjectController extends Controller
         }
     }
 
-    private function serveProposalFile(ProjectApplication $application, bool $asDownload)
+    private function serveProposalFile(ProjectApplication $application, bool $asDownload, CloudinaryService $cloudinary)
     {
-        $response = Http::timeout(60)->get($application->proposal_url);
+        $fileName = str_replace(['"', '\\', '/', "\r", "\n"], '', $application->proposal_display_name);
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION) ?: ($application->proposal_type ?? 'file'));
 
-        if (!$response->successful()) {
+        $candidateUrls = collect([
+            $this->signedProposalUrl($application, $cloudinary, $extension),
+            $this->normalizeCloudinaryProposalUrl($application->proposal_url),
+            $application->proposal_url,
+        ])->filter()->unique()->values();
+
+        $response = null;
+        $failedAttempts = [];
+
+        foreach ($candidateUrls as $candidateUrl) {
+            try {
+                $candidateResponse = Http::timeout(60)
+                    ->withHeaders(['User-Agent' => 'Konekin-Proposal-Proxy/1.0'])
+                    ->get($candidateUrl);
+
+                if ($candidateResponse->successful()) {
+                    $response = $candidateResponse;
+                    break;
+                }
+
+                $failedAttempts[] = [
+                    'status' => $candidateResponse->status(),
+                    'url' => $candidateUrl,
+                ];
+            } catch (\Throwable $e) {
+                $failedAttempts[] = [
+                    'status' => 'exception',
+                    'url' => $candidateUrl,
+                    'message' => $e->getMessage(),
+                ];
+            }
+        }
+
+        if (!$response) {
             Log::warning('Proposal file could not be fetched.', [
                 'application_id' => (string) $application->id,
-                'status' => $response->status(),
                 'url' => $application->proposal_url,
+                'attempts' => $failedAttempts,
             ]);
 
             abort(404, 'File proposal tidak bisa dibuka dari storage.');
         }
 
-        $fileName = str_replace(['"', '\\', '/', "\r", "\n"], '', $application->proposal_display_name);
-        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION) ?: ($application->proposal_type ?? 'file'));
         $contentType = $application->proposal_mime_type ?: $this->proposalMimeType($extension);
         $disposition = $asDownload ? 'attachment' : 'inline';
 
@@ -1158,6 +1190,38 @@ class ProjectController extends Controller
             'Content-Disposition' => $disposition . '; filename="' . $fileName . '"',
             'Cache-Control' => 'private, max-age=300',
         ]);
+    }
+
+    private function signedProposalUrl(ProjectApplication $application, CloudinaryService $cloudinary, string $extension): ?string
+    {
+        if (!str_contains((string) $application->proposal_url, 'res.cloudinary.com')) {
+            return null;
+        }
+
+        try {
+            return $cloudinary->signedDownloadUrl($application->proposal_url, $extension);
+        } catch (\Throwable $e) {
+            Log::warning('Proposal signed URL could not be generated.', [
+                'application_id' => (string) $application->id,
+                'url' => $application->proposal_url,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    private function normalizeCloudinaryProposalUrl(?string $url): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+
+        if (str_contains($url, 'res.cloudinary.com') && str_contains($url, '/image/upload/')) {
+            return str_replace('/image/upload/', '/raw/upload/', $url);
+        }
+
+        return $url;
     }
 
     private function proposalMimeType(string $extension): string
