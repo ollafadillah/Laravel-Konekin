@@ -80,6 +80,10 @@ class DashboardController extends Controller
 
         $totalApplications = ProjectApplication::whereIn('project_id', $projects->pluck('id')->all())->count();
         $projectsInProgress = $projects->filter(fn ($project) => ($project->progress_percentage ?? 0) > 0)->count();
+        $latestRecommendationResult = session('latest_recommendation_result') ?? $user->last_ai_recommendation;
+        $recommendedCreators = collect(data_get($latestRecommendationResult, 'recommendations', []))
+            ->take(2)
+            ->values();
 
         return view('dashboard.umkm', [
             'user' => $user,
@@ -87,6 +91,8 @@ class DashboardController extends Controller
             'projectsCount' => $projects->count(),
             'projectsInProgress' => $projectsInProgress,
             'totalApplications' => $totalApplications,
+            'latestRecommendationResult' => $latestRecommendationResult,
+            'recommendedCreators' => $recommendedCreators,
         ]);
     }
 

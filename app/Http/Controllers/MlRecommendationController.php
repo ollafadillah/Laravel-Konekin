@@ -30,7 +30,9 @@ class MlRecommendationController extends Controller
             'serviceStatus' => $this->safeServiceStatus($service),
             'formOptions' => $this->formOptions(),
             'formValues' => $this->defaultFormValues(),
-            'recommendationResult' => session('recommendation_result'),
+            'recommendationResult' => session('recommendation_result')
+                ?? session('latest_recommendation_result')
+                ?? $user->last_ai_recommendation,
             'projects' => $projects,
         ]);
     }
@@ -97,6 +99,10 @@ class MlRecommendationController extends Controller
             $payload = $this->normalizePayload($validated);
             $response = $service->recommend($payload);
             $result = $this->buildResult($response, $payload);
+            session(['latest_recommendation_result' => $result]);
+
+            $user->last_ai_recommendation = $result;
+            $user->save();
 
             return redirect()
                 ->route('rekomendasi.kreator')
@@ -295,6 +301,7 @@ class MlRecommendationController extends Controller
             'total_found' => (int) data_get($response, 'total_found', count($recommendations)),
             'input_summary' => $payload,
             'recommendations' => $recommendations,
+            'generated_at' => now()->toISOString(),
         ];
     }
 

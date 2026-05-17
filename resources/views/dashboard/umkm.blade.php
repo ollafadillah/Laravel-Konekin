@@ -137,62 +137,59 @@
                     <a href="{{ route('kreator.index') }}" class="text-[#2563EB] text-sm font-bold hover:underline">Lihat Semua</a>
                 </div>
                 <p class="text-sm text-[#1E3A8A]/60 font-medium -mt-2">
-                    Untuk hasil yang lebih personal berdasarkan data UMKM, buka <a href="{{ route('rekomendasi.kreator') }}" class="text-[#2563EB] font-bold hover:underline">Rekomendasi Kreator AI</a>.
+                    @if($recommendedCreators->isNotEmpty())
+                        Menampilkan hasil terbaru dari <a href="{{ route('rekomendasi.kreator') }}" class="text-[#2563EB] font-bold hover:underline">Rekomendasi Kreator AI</a>.
+                    @else
+                        Untuk hasil yang lebih personal berdasarkan data UMKM, buka <a href="{{ route('rekomendasi.kreator') }}" class="text-[#2563EB] font-bold hover:underline">Rekomendasi Kreator AI</a>.
+                    @endif
                 </p>
 
-                <!-- Creator Card 1 -->
-                <div class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all flex flex-col md:flex-row gap-6 items-center">
-                    <div class="w-full md:w-40 h-40 rounded-[2rem] overflow-hidden shrink-0">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1974&auto=format&fit=crop" alt="Creator" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-grow">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">Graphic Designer</span>
-                            <span class="text-[#1E3A8A]/40 text-xs font-bold">Aktif 5 menit yang lalu</span>
+                @forelse($recommendedCreators as $worker)
+                    @php
+                        $creatorName = data_get($worker, 'full_name', 'Creative Worker');
+                        $creatorPhoto = data_get($worker, 'profile_photo') ?: 'https://ui-avatars.com/api/?name=' . urlencode($creatorName) . '&background=2563EB&color=fff';
+                        $creatorBudget = (float) data_get($worker, 'min_budget_idr', 0);
+                    @endphp
+                    <div class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all flex flex-col md:flex-row gap-6 items-center">
+                        <div class="w-full md:w-40 h-40 rounded-[2rem] overflow-hidden shrink-0 bg-slate-100">
+                            <img src="{{ $creatorPhoto }}" alt="{{ $creatorName }}" class="w-full h-full object-cover">
                         </div>
-                        <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2">Alex Rivera</h4>
-                        <p class="text-[#1E3A8A]/60 text-sm line-clamp-2 mb-4 font-medium">Spesialis branding dan desain UI/UX dengan pengalaman lebih dari 5 tahun membantu UMKM berkembang.</p>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="flex text-yellow-400">
-                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <span class="ml-1 text-xs font-bold text-[#1E3A8A]">4.9 (124 Review)</span>
+                        <div class="flex-grow w-full min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span class="px-3 py-1 bg-[#EFF6FF] text-[#2563EB] text-[10px] font-extrabold uppercase tracking-widest rounded-full">{{ data_get($worker, 'display_role', 'Creative Worker') }}</span>
+                                <span class="px-3 py-1 bg-[#F5F3FF] text-[#7C3AED] text-[10px] font-extrabold uppercase tracking-widest rounded-full">Match {{ data_get($worker, 'match_percentage', 0) }}%</span>
+                                <span class="text-[#1E3A8A]/40 text-xs font-bold">{{ data_get($worker, 'verified_label', 'Belum terverifikasi') }}</span>
+                            </div>
+                            <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2 line-clamp-1">{{ $creatorName }}</h4>
+                            <p class="text-[#1E3A8A]/60 text-sm line-clamp-2 mb-4 font-medium">
+                                {{ data_get($worker, 'bio') ?: 'Creative worker yang direkomendasikan oleh model AI Konekin.' }}
+                            </p>
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <div class="flex text-yellow-400 items-center">
+                                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        <span class="ml-1 text-xs font-bold text-[#1E3A8A]">{{ number_format((float) data_get($worker, 'client_rating', 0), 1) }} Rating</span>
+                                    </div>
+                                    <span class="text-xs font-bold text-[#1E3A8A]/50">{{ number_format((float) data_get($worker, 'jobs_completed', 0), 0, ',', '.') }} Proyek</span>
+                                </div>
+                                <div class="flex items-center gap-4 shrink-0">
+                                    <span class="text-[#1E3A8A] font-display font-bold text-sm">
+                                        {{ $creatorBudget > 0 ? 'Mulai dari Rp ' . number_format($creatorBudget, 0, ',', '.') : 'Budget belum diatur' }}
+                                    </span>
+                                    <a href="{{ route('rekomendasi.kreator') }}" class="px-5 py-2.5 bg-[#1E3A8A] text-white text-xs font-bold rounded-xl hover:bg-[#2563EB] transition-colors">Undang</a>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-4">
-                                <span class="text-[#1E3A8A] font-display font-bold text-sm">Mulai dari Rp 500rb</span>
-                                <button class="px-5 py-2.5 bg-[#1E3A8A] text-white text-xs font-bold rounded-xl hover:bg-[#2563EB] transition-colors">Undang</button>
-                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Creator Card 2 -->
-                <div class="bg-white p-6 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm hover:shadow-xl hover:shadow-[#2563EB]/5 transition-all flex flex-col md:flex-row gap-6 items-center">
-                    <div class="w-full md:w-40 h-40 rounded-[2rem] overflow-hidden shrink-0">
-                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&auto=format&fit=crop" alt="Creator" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-grow">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-3 py-1 bg-[#FDF2F8] text-[#DB2777] text-[10px] font-extrabold uppercase tracking-widest rounded-full">Content Creator</span>
-                            <span class="text-[#1E3A8A]/40 text-xs font-bold">Aktif 1 jam yang lalu</span>
+                @empty
+                    <div class="bg-white p-7 rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                        <div>
+                            <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2">Belum ada hasil AI</h4>
+                            <p class="text-[#1E3A8A]/60 text-sm font-medium leading-7">Jalankan rekomendasi untuk melihat kreator yang paling cocok dengan profil UMKM kamu.</p>
                         </div>
-                        <h4 class="text-xl font-display font-bold text-[#1E3A8A] mb-2">Sarah Wijaya</h4>
-                        <p class="text-[#1E3A8A]/60 text-sm line-clamp-2 mb-4 font-medium">Membantu bisnis kuliner dan fashion untuk go-viral lewat konten video kreatif dan estetik di TikTok/Instagram.</p>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="flex text-yellow-400">
-                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    <span class="ml-1 text-xs font-bold text-[#1E3A8A]">5.0 (86 Review)</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <span class="text-[#1E3A8A] font-display font-bold text-sm">Mulai dari Rp 750rb</span>
-                                <button class="px-5 py-2.5 bg-[#1E3A8A] text-white text-xs font-bold rounded-xl hover:bg-[#2563EB] transition-colors">Undang</button>
-                            </div>
-                        </div>
+                        <a href="{{ route('rekomendasi.kreator') }}" class="inline-flex items-center justify-center px-6 py-3 bg-[#1E3A8A] text-white text-sm font-bold rounded-2xl hover:bg-[#2563EB] transition-colors shadow-lg shadow-[#1E3A8A]/10">Mulai Rekomendasi</a>
                     </div>
-                </div>
+                @endforelse
             </div>
 
             <!-- Messages & Quick Actions (Right 1/3) -->

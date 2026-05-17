@@ -56,6 +56,7 @@ class User extends Authenticatable implements JWTSubject  // implements JWTSubje
             'password' => 'hashed',
             'onboarding_completed' => 'boolean',
             'dismissed_notification_ids' => 'array',
+            'last_ai_recommendation' => 'array',
         ];
     }
 
