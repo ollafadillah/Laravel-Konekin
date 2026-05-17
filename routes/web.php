@@ -73,6 +73,7 @@ Route::middleware(['auth', 'throttle:usage'])->group(function () {
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])->name('dashboard.admin');
     Route::delete('/notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
     Route::get('/penghasilan', [DashboardController::class, 'creativeEarnings'])->name('earnings.index');
+    Route::get('/riwayat-proyek-kreator', [DashboardController::class, 'creativeHistory'])->name('projects.history.creative');
     Route::get('/rekomendasi-kreator', [MlRecommendationController::class, 'index'])->name('rekomendasi.kreator');
     Route::post('/rekomendasi-kreator', [MlRecommendationController::class, 'store'])->name('rekomendasi.kreator.store');
     Route::post('/rekomendasi-kreator/hire', [MlRecommendationController::class, 'hire'])->name('rekomendasi.kreator.hire');

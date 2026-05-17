@@ -387,9 +387,10 @@
                 <div class="glass-bento rounded-[2.5rem] p-8 bento-hover">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="font-display text-xl font-bold text-slate-800">Suara Klien</h2>
-                        <span class="p-2 bg-[#EFF6FF] text-[#2563EB] rounded-xl">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                        </span>
+                        <a href="{{ route('projects.history.creative') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#EFF6FF] text-[#2563EB] rounded-xl text-xs font-bold hover:bg-[#2563EB] hover:text-white transition-all">
+                            Riwayat
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </a>
                     </div>
                     <div class="space-y-4">
                         @forelse($recentRatings as $rating)

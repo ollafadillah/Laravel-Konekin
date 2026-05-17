@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\ProjectApplication;
 use App\Models\EscrowTransaction;
+use App\Models\ProjectHistory;
+use App\Models\Rating;
 use App\Support\CreativeRoles;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -242,6 +244,94 @@ class DashboardController extends Controller
             'pendingApproval',
             'inDisbursement',
             'releasedCount'
+        ));
+    }
+
+    public function creativeHistory()
+    {
+        $user = auth()->user();
+
+        if (!$user->isCreativeWorker()) {
+            return redirect()->route('home')->with('error', 'Hanya creative worker yang dapat melihat riwayat proyek.');
+        }
+
+        $histories = ProjectHistory::where('selected_creative_id', (string) $user->id)
+            ->where('history_type', 'completed')
+            ->orderBy('archived_at', 'desc')
+            ->get();
+
+        $ratings = Rating::where('to_user_id', (string) $user->id)
+            ->with(['fromUser:id,name,profile_photo', 'project:id,title,category,budget,thumbnail,deadline,client_name,client_avatar'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $historyItems = $ratings->map(function ($rating) use ($histories) {
+            $projectId = (string) ($rating->project_id ?? '');
+            $history = $histories->firstWhere('original_project_id', $projectId);
+            $project = $rating->project;
+
+            return (object) [
+                'id' => (string) $rating->id,
+                'project_id' => $projectId,
+                'title' => $history->title ?? optional($project)->title ?? $rating->project_title_snapshot ?? 'Proyek diarsipkan',
+                'category' => $history->category ?? optional($project)->category ?? 'Creative Project',
+                'budget' => $history->budget ?? optional($project)->budget,
+                'thumbnail' => $history->thumbnail ?? optional($project)->thumbnail ?? 'https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=1200&auto=format&fit=crop',
+                'client_name' => $history->client_name ?? optional($rating->fromUser)->name ?? optional($project)->client_name ?? 'UMKM',
+                'client_avatar' => $history->client_avatar ?? optional($rating->fromUser)->profile_photo ?? optional($project)->client_avatar,
+                'rating' => (int) ($rating->rating ?? $history->rating ?? 0),
+                'comment' => $rating->comment ?? $history->comment,
+                'rated_at' => $rating->created_at ?? $history->rated_at,
+                'archived_at' => optional($history)->archived_at,
+                'deadline' => optional($history)->deadline ?? optional($project)->deadline,
+                'source' => $history ? 'history' : 'rating',
+            ];
+        });
+
+        $ratedProjectIds = $ratings
+            ->pluck('project_id')
+            ->map(fn ($id) => (string) $id)
+            ->filter()
+            ->values();
+
+        $historyOnlyItems = $histories
+            ->reject(fn ($history) => $ratedProjectIds->contains((string) ($history->original_project_id ?? '')))
+            ->map(fn ($history) => (object) [
+                'id' => (string) $history->id,
+                'project_id' => (string) ($history->original_project_id ?? ''),
+                'title' => $history->title,
+                'category' => $history->category ?? 'Creative Project',
+                'budget' => $history->budget,
+                'thumbnail' => $history->thumbnail ?? 'https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=1200&auto=format&fit=crop',
+                'client_name' => $history->client_name ?? 'UMKM',
+                'client_avatar' => $history->client_avatar,
+                'rating' => (int) ($history->rating ?? 0),
+                'comment' => $history->comment,
+                'rated_at' => $history->rated_at,
+                'archived_at' => $history->archived_at,
+                'deadline' => $history->deadline,
+                'source' => 'history',
+            ]);
+
+        $historyItems = $historyItems
+            ->concat($historyOnlyItems)
+            ->sortByDesc(fn ($item) => optional($item->rated_at ?? $item->archived_at)->timestamp ?? 0)
+            ->values();
+
+        $ratingsCount = $ratings->count();
+        $averageRating = $ratingsCount > 0
+            ? round((float) $ratings->avg(fn ($rating) => (float) ($rating->rating ?? 0)), 1)
+            : 0;
+        $fiveStarCount = $ratings->where('rating', 5)->count();
+        $completedCount = $histories->count();
+
+        return view('projects.history-creative', compact(
+            'user',
+            'historyItems',
+            'ratingsCount',
+            'averageRating',
+            'fiveStarCount',
+            'completedCount'
         ));
     }
 
