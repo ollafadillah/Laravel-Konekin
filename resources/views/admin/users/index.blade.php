@@ -44,12 +44,6 @@
                 <p class="text-[#1E3A8A]/60 font-medium">Pantau dan kelola seluruh pengguna dalam ekosistem Konekin.</p>
             </div>
             
-            <!-- Filters -->
-            <div class="flex bg-white p-1.5 rounded-2xl border border-[#2563EB]/10 shadow-sm">
-                <a href="{{ route('admin.users') }}" class="px-5 py-2.5 {{ !$type ? 'bg-[#2563EB] text-white shadow-md' : 'text-[#1E3A8A]/60 hover:bg-[#EFF6FF]' }} rounded-xl text-sm font-bold transition-all">Semua</a>
-                <a href="{{ route('admin.users', ['type' => 'creative_worker']) }}" class="px-5 py-2.5 {{ $type === 'creative_worker' ? 'bg-[#2563EB] text-white shadow-md' : 'text-[#1E3A8A]/60 hover:bg-[#EFF6FF]' }} rounded-xl text-sm font-bold transition-all">Creative</a>
-                <a href="{{ route('admin.users', ['type' => 'umkm']) }}" class="px-5 py-2.5 {{ $type === 'umkm' ? 'bg-[#2563EB] text-white shadow-md' : 'text-[#1E3A8A]/60 hover:bg-[#EFF6FF]' }} rounded-xl text-sm font-bold transition-all">UMKM</a>
-            </div>
         </div>
 
         @if(session('success'))
@@ -59,6 +53,58 @@
         </div>
         @endif
 
+        <form action="{{ route('admin.users') }}" method="GET" class="mb-8 bg-white rounded-[2rem] border border-[#2563EB]/5 shadow-sm p-5">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div class="lg:col-span-4">
+                    <label for="search" class="block text-[10px] font-black uppercase tracking-widest text-[#1E3A8A]/40 mb-2">Cari User</label>
+                    <div class="relative">
+                        <input type="search" name="search" id="search" value="{{ $search }}" placeholder="Nama, email, atau kota"
+                            class="w-full rounded-2xl border border-[#2563EB]/10 bg-[#F8FAFC] px-5 py-3 pl-11 text-sm font-semibold text-[#1E3A8A] outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-[#2563EB]/10">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-[#1E3A8A]/30"></i>
+                    </div>
+                </div>
+                <div class="lg:col-span-2">
+                    <label for="type" class="block text-[10px] font-black uppercase tracking-widest text-[#1E3A8A]/40 mb-2">Tipe</label>
+                    <select name="type" id="type" class="w-full rounded-2xl border border-[#2563EB]/10 bg-[#F8FAFC] px-4 py-3 text-sm font-bold text-[#1E3A8A] outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-[#2563EB]/10">
+                        <option value="">Semua</option>
+                        <option value="creative_worker" @selected($type === 'creative_worker')>Creative</option>
+                        <option value="umkm" @selected($type === 'umkm')>UMKM</option>
+                    </select>
+                </div>
+                <div class="lg:col-span-3">
+                    <label for="sort" class="block text-[10px] font-black uppercase tracking-widest text-[#1E3A8A]/40 mb-2">Urutkan</label>
+                    <select name="sort" id="sort" class="w-full rounded-2xl border border-[#2563EB]/10 bg-[#F8FAFC] px-4 py-3 text-sm font-bold text-[#1E3A8A] outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-[#2563EB]/10">
+                        <option value="joined_newest" @selected($sort === 'joined_newest')>Tanggal join terbaru</option>
+                        <option value="joined_oldest" @selected($sort === 'joined_oldest')>Tanggal join terlama</option>
+                        <option value="name_asc" @selected($sort === 'name_asc')>Nama A-Z</option>
+                        <option value="name_desc" @selected($sort === 'name_desc')>Nama Z-A</option>
+                    </select>
+                </div>
+                <div class="lg:col-span-1">
+                    <label for="per_page" class="block text-[10px] font-black uppercase tracking-widest text-[#1E3A8A]/40 mb-2">List</label>
+                    <select name="per_page" id="per_page" class="w-full rounded-2xl border border-[#2563EB]/10 bg-[#F8FAFC] px-4 py-3 text-sm font-bold text-[#1E3A8A] outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-[#2563EB]/10">
+                        @foreach([10, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="lg:col-span-2 flex items-end gap-2">
+                    <button type="submit" class="flex-1 rounded-2xl bg-[#1E3A8A] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E3A8A]/10 transition hover:bg-[#2563EB]">
+                        Terapkan
+                    </button>
+                    <a href="{{ route('admin.users') }}" class="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-[#1E3A8A]/60 transition hover:bg-slate-200" title="Reset filter">
+                        <i class="fas fa-rotate-left"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-bold text-[#1E3A8A]/45">
+                <span>Menampilkan {{ $users->firstItem() ?? 0 }}-{{ $users->lastItem() ?? 0 }} dari {{ $users->total() }} user.</span>
+                @if($search !== '')
+                    <span>Query aktif: <span class="text-[#2563EB]">{{ $search }}</span></span>
+                @endif
+            </div>
+        </form>
+
         <!-- Users Table Card -->
         <div class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
@@ -67,13 +113,14 @@
                         <tr class="bg-[#F8FAFC] border-b border-[#2563EB]/5">
                             <th class="px-8 py-6 text-xs font-extrabold uppercase tracking-widest text-[#1E3A8A]/40">User</th>
                             <th class="px-8 py-6 text-xs font-extrabold uppercase tracking-widest text-[#1E3A8A]/40">Tipe</th>
+                            <th class="px-8 py-6 text-xs font-extrabold uppercase tracking-widest text-[#1E3A8A]/40">Join</th>
                             <th class="px-8 py-6 text-xs font-extrabold uppercase tracking-widest text-[#1E3A8A]/40">Status</th>
                             <th class="px-8 py-6 text-xs font-extrabold uppercase tracking-widest text-[#1E3A8A]/40">Peringatan</th>
                             <th class="px-8 py-6 text-xs font-extrabold uppercase tracking-widest text-[#1E3A8A]/40">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#2563EB]/5">
-                        @foreach($users as $u)
+                        @forelse($users as $u)
                         <tr class="hover:bg-[#F8FAFC]/50 transition-colors">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
@@ -88,6 +135,10 @@
                                 <span class="px-3 py-1.5 {{ $u->type === 'umkm' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600' }} text-[10px] font-extrabold uppercase tracking-widest rounded-full">
                                     {{ $u->type === 'umkm' ? 'UMKM' : 'Creative' }}
                                 </span>
+                            </td>
+                            <td class="px-8 py-6">
+                                <p class="text-sm font-bold text-[#1E3A8A]">{{ optional($u->created_at)->translatedFormat('d M Y') ?? '-' }}</p>
+                                <p class="text-[10px] font-bold text-[#1E3A8A]/35">{{ optional($u->created_at)->format('H:i') ?? '' }}</p>
                             </td>
                             <td class="px-8 py-6">
                                 @if($u->status === 'active' || !$u->status)
@@ -112,7 +163,7 @@
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-2">
                                     <!-- Warn Button -->
-                                    <button onclick="openWarnModal('{{ $u->id }}', '{{ $u->name }}')" class="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Beri Peringatan">
+                                    <button onclick="openWarnModal(@js((string) $u->id), @js($u->name))" class="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Beri Peringatan">
                                         <i class="fas fa-exclamation-triangle"></i>
                                     </button>
                                     
@@ -135,10 +186,25 @@
                                 </div>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="6" class="px-8 py-16 text-center">
+                                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300">
+                                    <i class="fas fa-user-slash text-2xl"></i>
+                                </div>
+                                <p class="font-display text-xl font-bold text-[#1E3A8A]">User tidak ditemukan</p>
+                                <p class="mt-2 text-sm font-medium text-[#1E3A8A]/50">Coba ubah keyword, tipe user, atau reset filter.</p>
+                            </td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
+            @if($users->hasPages())
+                <div class="border-t border-[#2563EB]/5 bg-[#F8FAFC] px-6 py-5">
+                    {{ $users->links() }}
+                </div>
+            @endif
         </div>
     </main>
 

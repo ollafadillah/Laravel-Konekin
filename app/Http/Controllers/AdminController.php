@@ -15,15 +15,40 @@ class AdminController extends Controller
         }
 
         $type = $request->query('type');
+        $type = in_array($type, ['creative_worker', 'umkm'], true) ? $type : null;
+        $search = trim((string) $request->query('search', ''));
+        $sort = $request->query('sort', 'joined_newest');
+        $sort = in_array($sort, ['name_asc', 'name_desc', 'joined_newest', 'joined_oldest'], true)
+            ? $sort
+            : 'joined_newest';
+        $perPage = (int) $request->query('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
+
         $query = User::where('type', '!=', 'admin');
 
         if ($type) {
             $query->where('type', $type);
         }
 
-        $users = $query->orderBy('created_at', 'desc')->get();
+        if ($search !== '') {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('city', 'like', '%' . $search . '%');
+            });
+        }
 
-        return view('admin.users.index', compact('users', 'type'));
+        match ($sort) {
+            'name_asc' => $query->orderBy('name', 'asc'),
+            'name_desc' => $query->orderBy('name', 'desc'),
+            'joined_oldest' => $query->orderBy('created_at', 'asc'),
+            default => $query->orderBy('created_at', 'desc'),
+        };
+
+        $users = $query->paginate($perPage)->withQueryString();
+
+        return view('admin.users.index', compact('users', 'type', 'search', 'sort', 'perPage'));
     }
 
     public function warnUser(Request $request, $id)
