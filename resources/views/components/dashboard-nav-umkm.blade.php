@@ -154,8 +154,8 @@
                                                 class="block p-5 cursor-pointer">
                                                 <div class="flex items-start gap-4">
                                                     <div
-                                                        class="w-12 h-12 rounded-xl {{ $notification->level === 'danger' ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100' }} border overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
-                                                        <i class="fas {{ $notification->level === 'danger' ? 'fa-times-circle text-red-500' : 'fa-check-circle text-green-500' }} text-lg"></i>
+                                                        class="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 overflow-hidden shrink-0 shadow-sm flex items-center justify-center p-1.5">
+                                                        <img src="{{ asset('images/assets/dollars.png') }}" alt="Notifikasi pembayaran" class="w-full h-full object-contain">
                                                     </div>
                                                     <div>
                                                         <p

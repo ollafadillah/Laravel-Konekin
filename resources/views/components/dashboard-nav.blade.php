@@ -180,6 +180,10 @@
                                                 <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-blue-100 bg-blue-50">
                                                     <img src="{{ $notification->avatar }}" alt="{{ $notification->project_title }}" class="w-full h-full object-cover">
                                                 </div>
+                                            @elseif($notification->type === 'payment')
+                                                <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-emerald-100 bg-emerald-50 flex items-center justify-center p-1.5">
+                                                    <img src="{{ asset('images/assets/dollars.png') }}" alt="Notifikasi pembayaran" class="w-full h-full object-contain">
+                                                </div>
                                             @else
                                                 <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border {{ $notification->level === 'danger' ? 'bg-red-50 border-red-100 text-red-500' : ($notification->level === 'warning' ? 'bg-amber-50 border-amber-100 text-amber-500' : 'bg-blue-50 border-blue-100 text-blue-500') }} flex items-center justify-center">
                                                     <i class="fas fa-hourglass-half"></i>
