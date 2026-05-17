@@ -192,36 +192,82 @@
                 @endforelse
             </div>
 
-            <!-- Messages & Quick Actions (Right 1/3) -->
+            <!-- Project History & Quick Actions (Right 1/3) -->
             <div class="space-y-8">
                 <div>
-                    <h2 class="font-display text-2xl font-bold text-[#1E3A8A] mb-6">Pesan Terbaru</h2>
-                    <div class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm divide-y divide-[#2563EB]/5">
-                        <!-- Message 1 -->
-                        <div class="p-5 flex gap-4 hover:bg-[#F8FAFC] transition-colors cursor-pointer">
-                            <img src="https://ui-avatars.com/api/?name=Alex&background=random" class="w-12 h-12 rounded-2xl shadow-sm">
-                            <div class="flex-grow overflow-hidden">
-                                <div class="flex justify-between items-center mb-1">
-                                    <h5 class="text-sm font-bold text-[#1E3A8A]">Alex Rivera</h5>
-                                    <span class="text-[10px] text-[#1E3A8A]/40 font-bold">10:45</span>
+                    <h2 class="font-display text-2xl font-bold text-[#1E3A8A] mb-6">Riwayat Proyek</h2>
+                    <div class="bg-white rounded-[2.5rem] border border-[#2563EB]/5 shadow-sm divide-y divide-[#2563EB]/5 overflow-hidden">
+                        @forelse($projects->take(3) as $project)
+                            @php
+                                $statusConfig = match ($project->status ?? 'open') {
+                                    'completed' => ['label' => 'Selesai', 'class' => 'bg-emerald-50 text-emerald-600'],
+                                    'pending_admin_approval' => ['label' => 'Menunggu Admin', 'class' => 'bg-indigo-50 text-indigo-600'],
+                                    'ready_for_review' => ['label' => 'Review UMKM', 'class' => 'bg-blue-50 text-blue-600'],
+                                    'in_progress' => ['label' => 'Berjalan', 'class' => 'bg-sky-50 text-sky-600'],
+                                    'hired' => ['label' => 'Siap Bayar', 'class' => 'bg-amber-50 text-amber-600'],
+                                    'waiting_confirmation' => ['label' => 'Menunggu Kreator', 'class' => 'bg-orange-50 text-orange-600'],
+                                    'revision' => ['label' => 'Revisi', 'class' => 'bg-purple-50 text-purple-600'],
+                                    'disputed' => ['label' => 'Dispute', 'class' => 'bg-red-50 text-red-600'],
+                                    'open' => ['label' => 'Terbuka', 'class' => 'bg-slate-100 text-slate-500'],
+                                    'applied' => ['label' => 'Ada Apply', 'class' => 'bg-[#EFF6FF] text-[#2563EB]'],
+                                    default => ['label' => ucfirst(str_replace('_', ' ', $project->status ?? 'open')), 'class' => 'bg-slate-100 text-slate-500'],
+                                };
+                                $progress = (int) ($project->progress_percentage ?? 0);
+                                $budget = (float) ($project->budget ?? 0);
+                            @endphp
+
+                            <a href="{{ route('projects.progress') }}#project-{{ $project->id }}" class="p-5 block hover:bg-[#F8FAFC] transition-colors">
+                                <div class="flex items-start justify-between gap-3 mb-3">
+                                    <div class="min-w-0">
+                                        <h5 class="text-sm font-bold text-[#1E3A8A] line-clamp-1">{{ $project->title }}</h5>
+                                        <p class="text-[11px] text-[#1E3A8A]/45 font-bold mt-1">
+                                            {{ optional($project->updated_at)->diffForHumans() ?? 'Baru dibuat' }}
+                                        </p>
+                                    </div>
+                                    <span class="shrink-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider {{ $statusConfig['class'] }}">
+                                        {{ $statusConfig['label'] }}
+                                    </span>
                                 </div>
-                                <p class="text-xs text-[#1E3A8A]/60 line-clamp-1 font-medium">Saya sudah mengirimkan draf pertama logonya...</p>
-                            </div>
-                        </div>
-                        <!-- Message 2 -->
-                        <div class="p-5 flex gap-4 hover:bg-[#F8FAFC] transition-colors cursor-pointer">
-                            <img src="https://ui-avatars.com/api/?name=Sarah&background=random" class="w-12 h-12 rounded-2xl shadow-sm">
-                            <div class="flex-grow overflow-hidden">
-                                <div class="flex justify-between items-center mb-1">
-                                    <h5 class="text-sm font-bold text-[#1E3A8A]">Sarah Wijaya</h5>
-                                    <span class="text-[10px] text-[#1E3A8A]/40 font-bold">Kemarin</span>
+
+                                <div class="space-y-3">
+                                    <div>
+                                        <div class="flex justify-between text-[11px] font-bold text-[#1E3A8A]/50 mb-1.5">
+                                            <span>Progress</span>
+                                            <span>{{ $progress }}%</span>
+                                        </div>
+                                        <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
+                                            <div class="h-full bg-[#2563EB] rounded-full" style="width: {{ min(100, max(0, $progress)) }}%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-3 text-xs">
+                                        <div>
+                                            <p class="text-[#1E3A8A]/40 font-bold">Budget</p>
+                                            <p class="font-display font-bold text-[#1E3A8A] mt-0.5">{{ $budget > 0 ? 'Rp ' . number_format($budget, 0, ',', '.') : 'Belum diatur' }}</p>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-[#1E3A8A]/40 font-bold">Kreator</p>
+                                            <p class="font-display font-bold text-[#1E3A8A] mt-0.5 truncate">{{ $project->selected_creative_name ?: 'Belum dipilih' }}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-[#1E3A8A]/60 line-clamp-1 font-medium">Kapan kita bisa meeting untuk bahas konsepnya?</p>
+                            </a>
+                        @empty
+                            <div class="p-6 text-center">
+                                <div class="w-14 h-14 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                                </div>
+                                <h5 class="text-sm font-bold text-[#1E3A8A] mb-2">Belum ada proyek</h5>
+                                <p class="text-xs text-[#1E3A8A]/55 font-medium leading-6 mb-5">Riwayat proyek UMKM kamu akan tampil di sini setelah proyek pertama dibuat.</p>
+                                <a href="{{ route('projects.create') }}" class="inline-flex items-center justify-center px-5 py-2.5 bg-[#1E3A8A] text-white text-xs font-bold rounded-xl hover:bg-[#2563EB] transition-colors">Buat Proyek</a>
                             </div>
-                        </div>
-                        <div class="p-4 text-center">
-                            <a href="#" class="text-xs font-bold text-[#2563EB] hover:underline">Semua Pesan</a>
-                        </div>
+                        @endforelse
+
+                        @if($projects->isNotEmpty())
+                            <div class="p-4 text-center">
+                                <a href="{{ route('projects.progress') }}" class="text-xs font-bold text-[#2563EB] hover:underline">Lihat Semua Riwayat</a>
+                            </div>
+                        @endif
                     </div>
                 </div>
 

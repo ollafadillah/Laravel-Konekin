@@ -163,23 +163,23 @@
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-2">
                                     <!-- Warn Button -->
-                                    <button onclick="openWarnModal(@js((string) $u->id), @js($u->name))" class="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Beri Peringatan">
-                                        <i class="fas fa-exclamation-triangle"></i>
+                                    <button onclick="openWarnModal(@js((string) $u->id), @js($u->name))" class="group flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 shadow-sm ring-1 ring-amber-100 transition-all hover:bg-amber-100 hover:shadow-md" title="Beri Peringatan" aria-label="Beri peringatan">
+                                        <img src="{{ asset('images/assets/warning.png') }}" alt="" class="h-6 w-6 object-contain transition-transform group-hover:scale-110">
                                     </button>
                                     
                                     <!-- Suspend/Activate Toggle -->
                                     @if($u->status === 'suspended')
                                         <form action="{{ route('admin.users.activate', $u->id) }}" method="POST">
                                             @csrf
-                                            <button type="submit" class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Aktifkan Kembali">
+                                            <button type="submit" class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shadow-sm ring-1 ring-emerald-100 transition-all hover:bg-emerald-600 hover:text-white hover:shadow-md" title="Aktifkan Kembali" aria-label="Aktifkan kembali">
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         </form>
                                     @else
                                         <form action="{{ route('admin.users.suspend', $u->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menangguhkan akun ini?')">
                                             @csrf
-                                            <button type="submit" class="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Tangguhkan Akun">
-                                                <i class="fas fa-ban"></i>
+                                            <button type="submit" class="group flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 shadow-sm ring-1 ring-red-100 transition-all hover:bg-red-100 hover:shadow-md" title="Tangguhkan Akun" aria-label="Tangguhkan akun">
+                                                <img src="{{ asset('images/assets/delete.png') }}" alt="" class="h-6 w-6 object-contain transition-transform group-hover:scale-110">
                                             </button>
                                         </form>
                                     @endif

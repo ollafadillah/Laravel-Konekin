@@ -64,7 +64,7 @@
                         Rekomendasi Kreator AI untuk UMKM Kamu
                     </h1>
                     <p class="text-[#1E3A8A]/65 font-medium text-lg leading-relaxed">
-                        Masukkan data UMKM, kirim ke Flask ML service, lalu ambil daftar creative worker yang paling cocok berdasarkan cluster dan kesamaan skill.
+                        Masukkan data UMKM, lalu ambil daftar creative worker yang paling cocok berdasarkan cluster dan kesamaan skill.
                     </p>
                 </div>
 
