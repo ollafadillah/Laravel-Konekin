@@ -404,61 +404,116 @@
                         </section>
 
                         <section>
-                            <div class="mb-5">
-                                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB] mb-1">Riwayat
-                                </p>
-                                <h3 class="font-display text-2xl font-bold">Update Progress</h3>
+                            @php
+                                $progressUpdates = $project->progress_updates ?? collect();
+                                $latestUpdate = $progressUpdates->first();
+                                $olderUpdates = $progressUpdates->skip(1)->values();
+                            @endphp
+
+                            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB] mb-1">Riwayat</p>
+                                    <h3 class="font-display text-2xl font-bold">Update Progress</h3>
+                                </div>
+                                @if($progressUpdates->isNotEmpty())
+                                    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[11px] font-black uppercase tracking-widest">
+                                        <i class="fas fa-clock-rotate-left"></i>
+                                        {{ $progressUpdates->count() }} Update
+                                    </span>
+                                @endif
                             </div>
 
-                            <div class="space-y-4">
-                                @forelse($project->progress_updates as $update)
-                                    @php
-                                        $updateNote = $update->note ?: 'Creative worker belum menambahkan catatan progress.';
-                                        $updateNoteLimit = 190;
-                                        $isUpdateNoteLong = \Illuminate\Support\Str::length($updateNote) > $updateNoteLimit;
-                                        $updateNoteId = 'progress-note-' . $update->id;
-                                    @endphp
-                                    <article class="rounded-2xl bg-white border border-[#2563EB]/8 p-5">
-                                        <div class="flex items-center justify-between gap-4">
-                                            <div>
-                                                <p class="font-bold">{{ $update->creative_name }}</p>
-                                                <p class="text-xs text-[#2563EB] font-bold uppercase tracking-widest mt-1">
-                                                    {{ optional($update->created_at)->diffForHumans() ?? 'Baru saja' }}</p>
+                            @if($latestUpdate)
+                                @php
+                                    $latestNote = $latestUpdate->note ?: 'Creative worker belum menambahkan catatan progress.';
+                                    $latestNoteLimit = 220;
+                                    $isLatestNoteLong = \Illuminate\Support\Str::length($latestNote) > $latestNoteLimit;
+                                    $latestNoteId = 'latest-progress-note-' . $latestUpdate->id;
+                                @endphp
+
+                                <div class="rounded-[1.75rem] border border-[#2563EB]/10 bg-gradient-to-br from-[#EFF6FF] to-white p-5 shadow-sm">
+                                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-wrap items-center gap-3 mb-3">
+                                                <span class="px-3 py-1 rounded-full bg-white text-[#2563EB] text-[10px] font-black uppercase tracking-widest border border-[#2563EB]/10">Update Terbaru</span>
+                                                <span class="text-xs text-[#1E3A8A]/45 font-bold">{{ optional($latestUpdate->created_at)->diffForHumans() ?? 'Baru saja' }}</span>
                                             </div>
-                                            <span
-                                                class="px-4 py-2 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-black uppercase tracking-widest">{{ $update->progress_percentage }}%</span>
+
+                                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                                                <p class="font-display text-xl font-bold text-[#1E3A8A]">{{ $latestUpdate->creative_name }}</p>
+                                                <span class="w-fit px-4 py-1.5 rounded-full bg-[#2563EB] text-white text-[11px] font-black uppercase tracking-widest">{{ $latestUpdate->progress_percentage }}%</span>
+                                            </div>
+
+                                            <p id="{{ $latestNoteId }}" class="readable-text text-sm text-[#1E3A8A]/68 font-medium leading-7">
+                                                @if($isLatestNoteLong)
+                                                    <span data-readable-short>{{ \Illuminate\Support\Str::limit($latestNote, $latestNoteLimit, '') }}</span><span data-readable-full class="hidden">{{ $latestNote }}</span><button type="button"
+                                                        class="ml-1 font-black text-[#2563EB] hover:text-[#1E3A8A] transition-colors"
+                                                        data-show-label="...Lihat Selengkapnya" data-hide-label="Sembunyikan"
+                                                        onclick="toggleReadableText(@js($latestNoteId), this)">...Lihat Selengkapnya</button>
+                                                @else
+                                                    {{ $latestNote }}
+                                                @endif
+                                            </p>
                                         </div>
-                                        <p id="{{ $updateNoteId }}"
-                                            class="readable-text mt-3 text-sm text-[#1E3A8A]/62 font-medium leading-7">
-                                            @if($isUpdateNoteLong)
-                                                <span
-                                                    data-readable-short>{{ \Illuminate\Support\Str::limit($updateNote, $updateNoteLimit, '') }}</span><span
-                                                    data-readable-full class="hidden">{{ $updateNote }}</span><button type="button"
-                                                    class="ml-1 font-black text-[#2563EB] hover:text-[#1E3A8A] transition-colors"
-                                                    data-show-label="...Lihat Selengkapnya" data-hide-label="Sembunyikan"
-                                                    onclick="toggleReadableText(@js($updateNoteId), this)">...Lihat
-                                                    Selengkapnya</button>
-                                            @else
-                                                {{ $updateNote }}
-                                            @endif
-                                        </p>
-                                        @if(!empty($update->media_url))
-                                            <a href="{{ $update->media_url }}" target="_blank"
-                                                class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#2563EB] text-[11px] font-black uppercase tracking-widest hover:bg-[#2563EB] hover:text-white transition-all">
+
+                                        @if(!empty($latestUpdate->media_url))
+                                            <a href="{{ $latestUpdate->media_url }}" target="_blank"
+                                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white border border-[#2563EB]/10 text-[#2563EB] text-xs font-black uppercase tracking-widest hover:bg-[#2563EB] hover:text-white transition-all shrink-0">
                                                 <i class="fas fa-up-right-from-square"></i>
-                                                {{ ($update->media_type ?? 'image') === 'video' ? 'Lihat Video' : 'Lihat Foto' }}
+                                                {{ ($latestUpdate->media_type ?? 'image') === 'video' ? 'Lihat Video' : 'Lihat Foto' }}
                                             </a>
                                         @endif
-                                    </article>
-                                @empty
-                                    <div
-                                        class="rounded-2xl bg-[#F8FAFC] border border-dashed border-[#2563EB]/15 p-8 text-center">
-                                        <p class="font-bold">Belum ada update progress</p>
-                                        <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2">Update dari creative worker akan
-                                            tampil sebagai timeline di sini.</p>
                                     </div>
-                                @endforelse
-                            </div>
+                                </div>
+
+                                @if($olderUpdates->isNotEmpty())
+                                    <details class="mt-4 group rounded-[1.75rem] border border-[#2563EB]/8 bg-white overflow-hidden">
+                                        <summary class="list-none cursor-pointer px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#F8FAFC] transition-all">
+                                            <div>
+                                                <p class="text-sm font-bold text-[#1E3A8A]">Update sebelumnya</p>
+                                                <p class="text-xs text-[#1E3A8A]/45 font-semibold mt-1">{{ $olderUpdates->count() }} update lama disimpan di sini</p>
+                                            </div>
+                                            <span class="w-10 h-10 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center group-open:rotate-180 transition-transform">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </span>
+                                        </summary>
+
+                                        <div class="border-t border-[#2563EB]/6 bg-[#FBFDFF] max-h-80 overflow-y-auto">
+                                            @foreach($olderUpdates as $update)
+                                                @php
+                                                    $updateNote = $update->note ?: 'Creative worker belum menambahkan catatan progress.';
+                                                @endphp
+                                                <article class="px-5 py-4 border-b border-[#2563EB]/6 last:border-b-0">
+                                                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                                                        <div class="min-w-0">
+                                                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                                                <p class="font-bold text-[#1E3A8A]">{{ $update->creative_name }}</p>
+                                                                <span class="text-[11px] text-[#2563EB] font-black uppercase tracking-widest">{{ optional($update->created_at)->diffForHumans() ?? 'Baru saja' }}</span>
+                                                            </div>
+                                                            <p class="readable-text text-sm text-[#1E3A8A]/62 font-medium leading-6 line-clamp-2">{{ $updateNote }}</p>
+                                                        </div>
+                                                        <div class="flex items-center gap-2 shrink-0">
+                                                            <span class="px-3 py-1.5 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[10px] font-black uppercase tracking-widest">{{ $update->progress_percentage }}%</span>
+                                                            @if(!empty($update->media_url))
+                                                                <a href="{{ $update->media_url }}" target="_blank"
+                                                                    class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB] hover:text-white transition-all"
+                                                                    title="{{ ($update->media_type ?? 'image') === 'video' ? 'Lihat Video' : 'Lihat Foto' }}">
+                                                                    <i class="fas fa-up-right-from-square text-xs"></i>
+                                                                </a>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            @endforeach
+                                        </div>
+                                    </details>
+                                @endif
+                            @else
+                                <div class="rounded-2xl bg-[#F8FAFC] border border-dashed border-[#2563EB]/15 p-8 text-center">
+                                    <p class="font-bold">Belum ada update progress</p>
+                                    <p class="text-sm text-[#1E3A8A]/60 font-medium mt-2">Update dari creative worker akan tampil sebagai ringkasan singkat di sini.</p>
+                                </div>
+                            @endif
                         </section>
                     </div>
                 </div>
