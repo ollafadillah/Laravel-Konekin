@@ -201,8 +201,56 @@
                 </table>
             </div>
             @if($users->hasPages())
-                <div class="border-t border-[#2563EB]/5 bg-[#F8FAFC] px-6 py-5">
-                    {{ $users->links() }}
+                <div class="border-t border-slate-200 bg-slate-100 px-6 py-5">
+                    @php
+                        $currentPage = $users->currentPage();
+                        $lastPage = $users->lastPage();
+                        $pages = collect([1, $lastPage, $currentPage - 1, $currentPage, $currentPage + 1])
+                            ->filter(fn ($page) => $page >= 1 && $page <= $lastPage)
+                            ->unique()
+                            ->sort()
+                            ->values();
+                    @endphp
+
+                    <nav class="flex items-center justify-center" aria-label="Pagination">
+                        <div class="inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm">
+                            @if($users->onFirstPage())
+                                <span class="flex h-11 min-w-12 items-center justify-center border-r border-slate-300 bg-slate-200 px-4 text-slate-400">
+                                    <i class="fas fa-chevron-left text-sm"></i>
+                                </span>
+                            @else
+                                <a href="{{ $users->previousPageUrl() }}" class="flex h-11 min-w-12 items-center justify-center border-r border-slate-300 bg-slate-200 px-4 text-slate-600 transition hover:bg-slate-300 hover:text-slate-800" aria-label="Halaman sebelumnya">
+                                    <i class="fas fa-chevron-left text-sm"></i>
+                                </a>
+                            @endif
+
+                            @foreach($pages as $index => $page)
+                                @if($index > 0 && $page - $pages[$index - 1] > 1)
+                                    <span class="flex h-11 min-w-12 items-center justify-center border-r border-slate-300 bg-slate-100 px-4 text-sm font-bold text-slate-400">...</span>
+                                @endif
+
+                                @if($page === $currentPage)
+                                    <span class="flex h-11 min-w-12 items-center justify-center border-r border-slate-300 bg-slate-600 px-4 text-sm font-bold text-white" aria-current="page">
+                                        {{ $page }}
+                                    </span>
+                                @else
+                                    <a href="{{ $users->url($page) }}" class="flex h-11 min-w-12 items-center justify-center border-r border-slate-300 bg-slate-200 px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-300 hover:text-slate-800" aria-label="Ke halaman {{ $page }}">
+                                        {{ $page }}
+                                    </a>
+                                @endif
+                            @endforeach
+
+                            @if($users->hasMorePages())
+                                <a href="{{ $users->nextPageUrl() }}" class="flex h-11 min-w-12 items-center justify-center bg-slate-200 px-4 text-slate-600 transition hover:bg-slate-300 hover:text-slate-800" aria-label="Halaman berikutnya">
+                                    <i class="fas fa-chevron-right text-sm"></i>
+                                </a>
+                            @else
+                                <span class="flex h-11 min-w-12 items-center justify-center bg-slate-200 px-4 text-slate-400">
+                                    <i class="fas fa-chevron-right text-sm"></i>
+                                </span>
+                            @endif
+                        </div>
+                    </nav>
                 </div>
             @endif
         </div>
