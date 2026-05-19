@@ -7,6 +7,7 @@ use App\Models\ProjectApplication;
 use App\Models\EscrowTransaction;
 use App\Models\ProjectHistory;
 use App\Models\Rating;
+use App\Models\User;
 use App\Support\CreativeRoles;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -106,11 +107,86 @@ class DashboardController extends Controller
             return redirect()->route('home')->with('error', 'Akses ditolak.');
         }
 
-        // Admin might want to see total stats
-        $totalUsers = \App\Models\User::count();
-        $totalCreativeWorkers = \App\Models\User::where('type', 'creative_worker')->count();
-        $totalUMKM = \App\Models\User::where('type', 'umkm')->count();
+        $totalUsers = User::where('type', '!=', 'admin')->count();
+        $totalCreativeWorkers = User::where('type', 'creative_worker')->count();
+        $totalUMKM = User::where('type', 'umkm')->count();
         $totalProjects = Project::count();
+        $activeProjects = Project::whereIn('status', ['hired', 'in_progress', 'pending_admin_approval'])->count();
+        $completedProjects = Project::where('status', 'completed')->count();
+        $newUsersThisWeek = User::where('type', '!=', 'admin')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+
+        $pendingVerificationCount = EscrowTransaction::where('status', 'pending')->count();
+        $pendingVerificationAmount = EscrowTransaction::where('status', 'pending')->sum('amount');
+        $heldEscrowCount = EscrowTransaction::where('status', 'held')->count();
+        $heldEscrowAmount = EscrowTransaction::where('status', 'held')->sum('net_amount');
+        $releasingEscrowCount = EscrowTransaction::where('status', 'releasing')->count();
+        $disputeCount = EscrowTransaction::where('status', 'disputed')->count();
+
+        $pendingApprovalEscrows = EscrowTransaction::where('status', 'held')
+            ->with(['project'])
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->filter(fn ($escrow) => ($escrow->project->status ?? null) === 'pending_admin_approval');
+
+        $pendingApprovalCount = $pendingApprovalEscrows->count();
+        $pendingApprovalAmount = $pendingApprovalEscrows->sum(fn ($escrow) => (int) ($escrow->net_amount ?? 0));
+
+        $recentUsers = User::where('type', '!=', 'admin')
+            ->orderBy('created_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        $recentProjects = Project::orderBy('created_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        $recentEscrows = EscrowTransaction::with(['project', 'payer', 'payee'])
+            ->orderBy('updated_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        $recentActivities = collect()
+            ->merge($recentUsers->map(fn ($recentUser) => (object) [
+                'icon' => 'fa-user-plus',
+                'tone' => 'blue',
+                'title' => 'User baru mendaftar',
+                'description' => $recentUser->name . ' bergabung sebagai ' . ($recentUser->type === 'umkm' ? 'UMKM' : 'Creative Worker'),
+                'date' => $recentUser->created_at,
+            ]))
+            ->merge($recentProjects->map(fn ($project) => (object) [
+                'icon' => 'fa-folder-plus',
+                'tone' => 'emerald',
+                'title' => 'Proyek baru dibuat',
+                'description' => $project->title ?? 'Proyek tanpa judul',
+                'date' => $project->created_at,
+            ]))
+            ->merge($recentEscrows->map(fn ($escrow) => (object) [
+                'icon' => match ($escrow->status) {
+                    'pending' => 'fa-receipt',
+                    'held' => 'fa-lock',
+                    'releasing' => 'fa-money-bill-transfer',
+                    'released' => 'fa-circle-check',
+                    'disputed' => 'fa-scale-balanced',
+                    default => 'fa-shield-halved',
+                },
+                'tone' => match ($escrow->status) {
+                    'pending' => 'amber',
+                    'held' => 'indigo',
+                    'releasing' => 'sky',
+                    'released' => 'emerald',
+                    'disputed' => 'red',
+                    default => 'slate',
+                },
+                'title' => 'Update escrow',
+                'description' => ($escrow->project->title ?? 'Transaksi escrow') . ' berstatus ' . ucfirst((string) $escrow->status),
+                'date' => $escrow->updated_at ?? $escrow->created_at,
+            ]))
+            ->filter(fn ($activity) => !empty($activity->date))
+            ->sortByDesc(fn ($activity) => $activity->date->timestamp ?? 0)
+            ->take(6)
+            ->values();
 
         return view('dashboard.admin', [
             'user' => $user,
@@ -118,6 +194,20 @@ class DashboardController extends Controller
             'totalCreativeWorkers' => $totalCreativeWorkers,
             'totalUMKM' => $totalUMKM,
             'totalProjects' => $totalProjects,
+            'activeProjects' => $activeProjects,
+            'completedProjects' => $completedProjects,
+            'newUsersThisWeek' => $newUsersThisWeek,
+            'pendingVerificationCount' => $pendingVerificationCount,
+            'pendingVerificationAmount' => $pendingVerificationAmount,
+            'pendingApprovalCount' => $pendingApprovalCount,
+            'pendingApprovalAmount' => $pendingApprovalAmount,
+            'heldEscrowCount' => $heldEscrowCount,
+            'heldEscrowAmount' => $heldEscrowAmount,
+            'releasingEscrowCount' => $releasingEscrowCount,
+            'disputeCount' => $disputeCount,
+            'recentUsers' => $recentUsers,
+            'recentProjects' => $recentProjects,
+            'recentActivities' => $recentActivities,
         ]);
     }
 
