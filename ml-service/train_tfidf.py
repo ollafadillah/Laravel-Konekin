@@ -19,8 +19,9 @@ warnings.filterwarnings('ignore')
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import (
     CW_DATA_PATH, MODEL_DIR, TFIDF_VECTORIZER_PATH,
-    CLUSTER_SKILL_MAP, TOP_N_DEFAULT, LOG_FORMAT,
+    TOP_N_DEFAULT, LOG_FORMAT,
 )
+from src.cluster_skill_mapping import load_cluster_skill_map
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 logger = logging.getLogger(__name__)
@@ -103,7 +104,7 @@ def evaluate_coverage(
         dict with 'coverage' and 'diversity' keys
     """
     if cluster_skill_map is None:
-        cluster_skill_map = CLUSTER_SKILL_MAP
+        cluster_skill_map = load_cluster_skill_map()
 
     if vectorizer is None:
         if not os.path.exists(TFIDF_VECTORIZER_PATH):

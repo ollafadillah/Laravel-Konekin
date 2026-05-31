@@ -17,6 +17,7 @@ from config import (
     SCALER_CW_PATH,
     LABEL_ENCODERS_PATH,
     CLUSTER_SUMMARY_PATH,
+    CLUSTER_SKILL_MAP_PATH,
     ELBOW_PLOT_PATH,
     SILHOUETTE_PLOT_PATH,
 )
@@ -29,6 +30,7 @@ ARTIFACTS = {
     "scaler_cw": SCALER_CW_PATH,
     "label_encoders": LABEL_ENCODERS_PATH,
     "cluster_summary": CLUSTER_SUMMARY_PATH,
+    "cluster_skill_map": CLUSTER_SKILL_MAP_PATH,
     "elbow_plot": ELBOW_PLOT_PATH,
     "silhouette_plot": SILHOUETTE_PLOT_PATH,
 }
@@ -60,6 +62,7 @@ def required_artifacts_ready() -> bool:
         "scaler_umkm",
         "scaler_cw",
         "label_encoders",
+        "cluster_skill_map",
     ]
     status = artifact_status()
     return all(status[name]["exists"] for name in required_names)

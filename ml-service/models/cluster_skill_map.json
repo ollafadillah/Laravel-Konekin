@@ -1,0 +1,167 @@
+{
+  "generated_at": "2026-05-30T03:20:10.280235+00:00",
+  "source": "D:\\laragon\\www\\Konekin-Laravel\\ml-service\\models\\cluster_summary.csv",
+  "method": "top_jenis_usaha + numeric mean rules from cluster_summary.csv",
+  "cluster_skill_map": {
+    "0": "learning content presentation design video editing copywriting community marketing brand awareness marketplace setup social media content financial planning pricing strategy cost optimization inventory management product catalog operations workflow automation hr operations project management go to market launch campaign content creator",
+    "1": "ecommerce marketplace optimization product photography digital ads sales copywriting sales growth conversion optimization customer retention analytics dashboard crm inventory management product catalog operations workflow automation hr operations project management go to market launch campaign content creator",
+    "2": "service marketing customer support landing page copywriting social media digital ads sales growth conversion optimization customer retention analytics dashboard crm inventory management product catalog operations workflow automation hr operations project management brand refresh seo ecommerce strategy",
+    "3": "service marketing customer support landing page copywriting social media brand awareness marketplace setup social media content customer retention analytics dashboard crm brand refresh seo ecommerce strategy",
+    "4": "ecommerce marketplace optimization product photography digital ads sales copywriting sales growth conversion optimization brand refresh seo ecommerce strategy"
+  },
+  "cluster_profiles": {
+    "0": {
+      "top_jenis_usaha": "Pendidikan",
+      "cluster_size": 1340,
+      "numeric_means": {
+        "omset": 6193531.402108,
+        "laba": -3086261.958893,
+        "aset": 6910242.31678,
+        "total_tenaga_kerja": 98.310448,
+        "umur_usaha": 12.733333,
+        "rasio_laba_omset": -1.109993
+      },
+      "query_terms": [
+        "learning content",
+        "presentation design",
+        "video editing",
+        "copywriting",
+        "community marketing",
+        "brand awareness",
+        "marketplace setup",
+        "social media content",
+        "financial planning",
+        "pricing strategy",
+        "cost optimization",
+        "inventory management",
+        "product catalog",
+        "operations",
+        "workflow automation",
+        "hr operations",
+        "project management",
+        "go to market",
+        "launch campaign",
+        "content creator"
+      ]
+    },
+    "1": {
+      "top_jenis_usaha": "Perdagangan",
+      "cluster_size": 4915,
+      "numeric_means": {
+        "omset": 27677628.504723,
+        "laba": 22621489.879959,
+        "aset": 5067432.388238,
+        "total_tenaga_kerja": 97.942421,
+        "umur_usaha": 12.896445,
+        "rasio_laba_omset": 0.747227
+      },
+      "query_terms": [
+        "ecommerce",
+        "marketplace optimization",
+        "product photography",
+        "digital ads",
+        "sales copywriting",
+        "sales growth",
+        "conversion optimization",
+        "customer retention",
+        "analytics dashboard",
+        "crm",
+        "inventory management",
+        "product catalog",
+        "operations",
+        "workflow automation",
+        "hr operations",
+        "project management",
+        "go to market",
+        "launch campaign",
+        "content creator"
+      ]
+    },
+    "2": {
+      "top_jenis_usaha": "Jasa",
+      "cluster_size": 2441,
+      "numeric_means": {
+        "omset": 27948940.06888,
+        "laba": 22873845.259335,
+        "aset": 5031818.408526,
+        "total_tenaga_kerja": 98.158951,
+        "umur_usaha": 13.110054,
+        "rasio_laba_omset": 0.746852
+      },
+      "query_terms": [
+        "service marketing",
+        "customer support",
+        "landing page",
+        "copywriting",
+        "social media",
+        "digital ads",
+        "sales growth",
+        "conversion optimization",
+        "customer retention",
+        "analytics dashboard",
+        "crm",
+        "inventory management",
+        "product catalog",
+        "operations",
+        "workflow automation",
+        "hr operations",
+        "project management",
+        "brand refresh",
+        "seo",
+        "ecommerce strategy"
+      ]
+    },
+    "3": {
+      "top_jenis_usaha": "Jasa",
+      "cluster_size": 2504,
+      "numeric_means": {
+        "omset": 27500091.224605,
+        "laba": 22497027.553557,
+        "aset": 5003464.430237,
+        "total_tenaga_kerja": 97.900559,
+        "umur_usaha": 13.055331,
+        "rasio_laba_omset": 0.746665
+      },
+      "query_terms": [
+        "service marketing",
+        "customer support",
+        "landing page",
+        "copywriting",
+        "social media",
+        "brand awareness",
+        "marketplace setup",
+        "social media content",
+        "customer retention",
+        "analytics dashboard",
+        "crm",
+        "brand refresh",
+        "seo",
+        "ecommerce strategy"
+      ]
+    },
+    "4": {
+      "top_jenis_usaha": "Perdagangan",
+      "cluster_size": 2364,
+      "numeric_means": {
+        "omset": 27608564.979949,
+        "laba": 22493302.762389,
+        "aset": 5019740.440911,
+        "total_tenaga_kerja": 96.606176,
+        "umur_usaha": 13.030756,
+        "rasio_laba_omset": 0.747705
+      },
+      "query_terms": [
+        "ecommerce",
+        "marketplace optimization",
+        "product photography",
+        "digital ads",
+        "sales copywriting",
+        "sales growth",
+        "conversion optimization",
+        "brand refresh",
+        "seo",
+        "ecommerce strategy"
+      ]
+    }
+  }
+}

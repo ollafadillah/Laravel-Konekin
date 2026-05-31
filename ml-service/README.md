@@ -12,7 +12,7 @@
                           └───────────────────┘
                                     │
                           ┌─────────▼─────────┐
-                          │ CLUSTER_SKILL_MAP  │──► Skill Query String
+                          │ cluster_skill_map  │──► Skill Query String
                           └───────────────────┘
                                     │
                           ┌─────────▼─────────┐
@@ -25,7 +25,7 @@
 ```
 konekin-ml-service/
 │
-├── config.py                   # Semua konstanta, path, mapping
+├── config.py                   # Konstanta dan path artifact
 ├── app.py                      # Flask REST API
 ├── run.py                      # Full training pipeline
 ├── requirements.txt
@@ -35,6 +35,7 @@ konekin-ml-service/
 │   ├── preprocessing_umkm.py   # UMKMPreprocessor class
 │   ├── preprocessing_cw.py     # CWPreprocessor class
 │   ├── train_kmeans.py         # KMeans training & evaluation
+│   ├── cluster_skill_mapping.py # Auto-generate cluster skill map
 │   ├── train_tfidf.py          # TF-IDF training & coverage eval
 │   └── recommend.py            # Recommender class (singleton)
 │
@@ -299,15 +300,12 @@ $data = $response->json();
 
 ## Cluster Skill Map
 
-Setelah training selesai, update `CLUSTER_SKILL_MAP` di `config.py`
-sesuai analisis cluster dari `models/cluster_summary.csv`:
+`CLUSTER_SKILL_MAP` tidak lagi di-hardcode di `config.py`.
+Training KMeans akan:
 
-```python
-CLUSTER_SKILL_MAP = {
-    0: "social media content graphic design copywriting",
-    1: "full stack web development laravel react postgresql",
-    2: "video editing motion graphic content creator",
-    3: "graphic design branding illustration visual",
-    4: "social media marketing ads content strategy",
-}
-```
+1. menjalankan `find_optimal_k()` untuk analisis dan plot,
+2. melatih model final dengan `KMEANS_N_CLUSTERS = 5`,
+3. menyimpan `models/cluster_summary.csv`,
+4. generate `models/cluster_skill_map.json` otomatis dari `top_jenis_usaha` dan rata-rata fitur numerik per cluster.
+
+Saat service rekomendasi berjalan, skill query dibaca dari `models/cluster_skill_map.json`.

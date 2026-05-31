@@ -21,10 +21,11 @@ from config import (
     CW_DATA_PATH, MODEL_DIR,
     KMEANS_MODEL_PATH, TFIDF_VECTORIZER_PATH,
     SCALER_UMKM_PATH, LABEL_ENCODERS_PATH,
-    CLUSTER_SKILL_MAP, CLUSTER_LABEL_MAP,
+    CLUSTER_LABEL_MAP,
     UMKM_KMEANS_FEATURES, TOP_N_DEFAULT,
     LOG_FORMAT,
 )
+from src.cluster_skill_mapping import load_cluster_skill_map
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 logger = logging.getLogger(__name__)
@@ -51,6 +52,10 @@ class Recommender:
         self.tfidf    = joblib.load(TFIDF_VECTORIZER_PATH)
         self.scaler   = joblib.load(SCALER_UMKM_PATH)
         self.encoders = joblib.load(LABEL_ENCODERS_PATH)
+        self.n_clusters = self.kmeans.n_clusters
+        self.cluster_skill_map = load_cluster_skill_map(
+            expected_clusters=self.n_clusters,
+        )
 
         # Load full CW dataset (all rows, pre-recommendations will filter)
         self.df_cw = pd.read_csv(CW_DATA_PATH, low_memory=False)
@@ -64,8 +69,6 @@ class Recommender:
             .str.strip()
         )
         self.tfidf_matrix = self.tfidf.transform(skills_corpus)
-        self.n_clusters   = self.kmeans.n_clusters
-
         logger.info(
             f"[Recommender] CW dataset: {len(self.df_cw):,} rows | "
             f"TF-IDF: {self.tfidf_matrix.shape} | "
@@ -191,7 +194,7 @@ class Recommender:
         Return the skill query string for a given cluster_id.
         Falls back to a generic query if cluster_id not in map.
         """
-        query = CLUSTER_SKILL_MAP.get(
+        query = self.cluster_skill_map.get(
             cluster_id,
             "digital marketing content social media",
         )

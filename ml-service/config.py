@@ -1,6 +1,6 @@
 """
 config.py — Konekin ML Service
-Centralized configuration: all paths, constants, and mappings.
+Centralized configuration: paths and constants.
 """
 
 import os
@@ -28,17 +28,19 @@ SCALER_UMKM_PATH      = os.path.join(MODEL_DIR, 'scaler_umkm.pkl')
 SCALER_CW_PATH        = os.path.join(MODEL_DIR, 'scaler_cw.pkl')
 TFIDF_VECTORIZER_PATH = os.path.join(MODEL_DIR, 'tfidf_vectorizer.pkl')
 LABEL_ENCODERS_PATH   = os.path.join(MODEL_DIR, 'label_encoders.pkl')
-CLUSTER_SUMMARY_PATH  = os.path.join(MODEL_DIR, 'cluster_summary.csv')
-ELBOW_PLOT_PATH       = os.path.join(MODEL_DIR, 'elbow_plot.png')
-SILHOUETTE_PLOT_PATH  = os.path.join(MODEL_DIR, 'silhouette_plot.png')
+CLUSTER_SUMMARY_PATH   = os.path.join(MODEL_DIR, 'cluster_summary.csv')
+CLUSTER_SKILL_MAP_PATH = os.path.join(MODEL_DIR, 'cluster_skill_map.json')
+ELBOW_PLOT_PATH        = os.path.join(MODEL_DIR, 'elbow_plot.png')
+SILHOUETTE_PLOT_PATH   = os.path.join(MODEL_DIR, 'silhouette_plot.png')
 
 # ──────────────────────────────────────────────
 # TRAINING CONSTANTS
 # ──────────────────────────────────────────────
-RANDOM_STATE   = 42
-TOP_N_DEFAULT  = 10
-K_RANGE        = range(2, 11)
-KMEANS_N_INIT  = 10
+RANDOM_STATE      = 42
+TOP_N_DEFAULT     = 10
+K_RANGE           = range(2, 11)
+KMEANS_N_INIT     = 10
+KMEANS_N_CLUSTERS = 5
 
 # ──────────────────────────────────────────────
 # UMKM PREPROCESSING COLUMNS
@@ -79,17 +81,9 @@ CW_MINMAX_COLS = [
 ]
 
 # ──────────────────────────────────────────────
-# CLUSTER → SKILL QUERY MAP
-# (Will be reviewed/updated after clustering analysis)
+# CLUSTER SKILL QUERY MAP
+# Generated during KMeans training and saved to CLUSTER_SKILL_MAP_PATH.
 # ──────────────────────────────────────────────
-CLUSTER_SKILL_MAP = {
-    0: "social media content graphic design copywriting",
-    1: "full stack web development laravel react postgresql",
-    2: "video editing motion graphic content creator",
-    3: "graphic design branding illustration visual",
-    4: "social media marketing ads content strategy",
-}
-
 # Human-readable cluster labels for API responses
 CLUSTER_LABEL_MAP = {
     0: "UMKM Sosial & Kreatif",
@@ -127,6 +121,4 @@ if __name__ == '__main__':
     print(f"MODEL_DIR : {MODEL_DIR}")
     print(f"CW_DATA   : {CW_DATA_PATH}")
     print(f"UMKM_DATA : {UMKM_DATA_PATH}")
-    print(f"\nCLUSTER_SKILL_MAP:")
-    for k, v in CLUSTER_SKILL_MAP.items():
-        print(f"  Cluster {k}: {v}")
+    print(f"CLUSTER_SKILL_MAP_PATH: {CLUSTER_SKILL_MAP_PATH}")

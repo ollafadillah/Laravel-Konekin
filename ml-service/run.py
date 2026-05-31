@@ -20,6 +20,7 @@ from config import (  # noqa: E402
     KMEANS_MODEL_PATH, TFIDF_VECTORIZER_PATH,
     SCALER_UMKM_PATH, SCALER_CW_PATH,
     LABEL_ENCODERS_PATH, CLUSTER_SUMMARY_PATH,
+    CLUSTER_SKILL_MAP_PATH,
     ELBOW_PLOT_PATH, SILHOUETTE_PLOT_PATH,
     ensure_dirs,
 )
@@ -89,6 +90,7 @@ def print_artifact_summary() -> None:
         "TF-IDF Vectorizer": TFIDF_VECTORIZER_PATH,
         "Label Encoders": LABEL_ENCODERS_PATH,
         "Cluster Summary CSV": CLUSTER_SUMMARY_PATH,
+        "Cluster Skill Map": CLUSTER_SKILL_MAP_PATH,
         "Elbow Plot": ELBOW_PLOT_PATH,
         "Silhouette Plot": SILHOUETTE_PLOT_PATH,
     }
