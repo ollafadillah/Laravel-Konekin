@@ -27,7 +27,6 @@ class ChatbotController extends Controller
         $userMessage = $request->input('message');
         $history = $request->input('history', []);
 
-        // Konteks lengkap tentang platform Konekin agar AI bisa menjawab dengan spesifik
         $konekinContext = "Kamu adalah 'Konekin AI', asisten virtual resmi dari platform Konekin.
 Konekin adalah platform kolaborasi yang menghubungkan Creative Workers (pekerja kreatif/freelancer) dengan UMKM di seluruh Indonesia.
 

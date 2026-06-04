@@ -1,5 +1,5 @@
 # Konekin
-
+Solusi Platform Digital (KonekIN) untuk Menghubungkan Creative Workers dan UMKM Menggunakan Algoritma Clustering dan Content-Based Filtering Berbasis Web dan Mobile.
 Konekin adalah platform kolaborasi antara UMKM dan creative worker. UMKM dapat mempublikasikan proyek, menerima proposal, memilih creative worker, memantau progress, melakukan pembayaran escrow, meminta revisi, membuka dispute, dan memberi rating setelah proyek selesai.
 
 ## Ringkasan Fitur

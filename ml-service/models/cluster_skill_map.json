@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T03:20:10.280235+00:00",
+  "generated_at": "2026-06-04T02:46:08.843120+00:00",
   "source": "D:\\laragon\\www\\Konekin-Laravel\\ml-service\\models\\cluster_summary.csv",
   "method": "top_jenis_usaha + numeric mean rules from cluster_summary.csv",
   "cluster_skill_map": {

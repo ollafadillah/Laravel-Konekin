@@ -497,12 +497,18 @@
                             <div class="space-y-4 mb-8">
                                 <label class="text-sm font-extrabold text-[#1E3A8A] uppercase tracking-wider ml-1">Pilih Proyek Kamu</label>
                                 <div class="grid grid-cols-1 gap-3">
-                                    @foreach($projects as $project)
+                    @foreach($projects as $project)
+                        @php
+                            $projectBudget = $project->budget;
+                            $projectBudgetLabel = is_numeric($projectBudget)
+                                ? 'Rp ' . number_format((float) $projectBudget, 0, ',', '.')
+                                : ($projectBudget ?: '-');
+                        @endphp
                                         <label class="relative flex items-center p-4 rounded-2xl border-2 border-slate-100 hover:border-[#2563EB]/30 cursor-pointer transition-all has-[:checked]:border-[#2563EB] has-[:checked]:bg-blue-50">
                                             <input type="radio" name="project_id" value="{{ $project->id }}" class="sr-only" required>
                                             <div class="flex-grow">
                                                 <p class="font-bold text-[#1E3A8A]">{{ $project->title }}</p>
-                                                <p class="text-xs text-[#1E3A8A]/60 font-medium">Budget: Rp {{ number_format($project->budget, 0, ',', '.') }}</p>
+                                <p class="text-xs text-[#1E3A8A]/60 font-medium">Budget: {{ $projectBudgetLabel }}</p>
                                             </div>
                                             <div class="w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center ml-4 group-has-[:checked]:border-[#2563EB]">
                                                 <div class="w-2.5 h-2.5 rounded-full bg-[#2563EB] scale-0 transition-transform duration-200"></div>
