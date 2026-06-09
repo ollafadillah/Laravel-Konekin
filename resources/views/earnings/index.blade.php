@@ -3,7 +3,7 @@
 @section('title', 'Rekam Jejak Penghasilan - Konekin')
 
 @section('content')
-<x-dashboard-nav-creative />
+<x-dashboard-nav />
 
 <main class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
     <div class="mb-12">

@@ -7,10 +7,8 @@
     <meta name="description" content="Konekin adalah platform yang menghubungkan Creative Worker dengan UMKM untuk menciptakan kolaborasi yang luar biasa.">
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Kita pakai font yang sangat modern, kreatif, tapi tetap readable -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    @include('components.fonts', ['withCinzel' => true])
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

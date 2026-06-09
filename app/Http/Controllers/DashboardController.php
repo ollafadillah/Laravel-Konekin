@@ -1,10 +1,8 @@
 <?php
-
 namespace App\Http\Controllers;
-
+use App\Models\EscrowTransaction;
 use App\Models\Project;
 use App\Models\ProjectApplication;
-use App\Models\EscrowTransaction;
 use App\Models\ProjectHistory;
 use App\Models\Rating;
 use App\Models\User;
@@ -16,9 +14,9 @@ class DashboardController extends Controller
 {
     public function creativeWorkerDashboard()
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
-        if (!$user->isCreativeWorker()) {
+        if (! $user->isCreativeWorker()) {
             return redirect()->route('home')->with('error', 'Akses ditolak.');
         }
 
@@ -26,31 +24,14 @@ class DashboardController extends Controller
             ->limit(3)
             ->get();
 
-        $latestProjects = $latestProjects->map(function ($project) {
-            $applicationsCount = (int) ($project->applications_count ?? 0);
-            $progress = $applicationsCount === 0 ? 0 : (int) ($project->progress_percentage ?? 0);
-            $status = $project->status ?? 'open';
+        $latestProjects = $latestProjects->map(fn (Project $project) => $this->withProjectStatusLabel($project));
 
-            if ($applicationsCount === 0) {
-                $status = 'Belum Ada Apply';
-            } elseif ($progress >= 100) {
-                $status = 'Selesai';
-            } elseif ($progress > 0) {
-                $status = 'Sedang Dikerjakan';
-            } else {
-                $status = 'Sudah Di-apply';
-            }
-
-            $project->applications_count = $applicationsCount;
-            $project->progress_percentage = $progress;
-            $project->status_label = $status;
-
-            return $project;
-        });
-
-        $ratingsCount = $user->ratings_count;
-        $averageRating = $user->average_rating;
-        $recentRatings = $user->recentRatings(5)->get();
+        $ratingStats = $this->ratingStatsFor($user);
+        $recentRatings = Rating::where('to_user_id', (string) $user->id)
+            ->with(['fromUser:id,name,profile_photo', 'project:id,title'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
         $invitations = Project::where('selected_creative_id', $user->id)
             ->where('status', 'waiting_confirmation')
@@ -62,18 +43,18 @@ class DashboardController extends Controller
             'latestProjects' => $latestProjects,
             'invitations' => $invitations,
             'activeProjectsCount' => Project::where('selected_creative_id', $user->id)->where('status', 'in_progress')->count(),
-            'completedProjectsCount' => $user->completed_projects_count,
-            'averageRating' => $averageRating,
-            'ratingsCount' => $ratingsCount,
+            'completedProjectsCount' => $this->completedProjectsCountFor($user),
+            'averageRating' => $ratingStats['average'],
+            'ratingsCount' => $ratingStats['count'],
             'recentRatings' => $recentRatings,
         ]);
     }
 
     public function umkmDashboard()
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
-        if (!$user->isUMKM()) {
+        if (! $user->isUMKM()) {
             return redirect()->route('home')->with('error', 'Akses ditolak.');
         }
 
@@ -81,8 +62,10 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $totalApplications = ProjectApplication::whereIn('project_id', $projects->pluck('id')->all())->count();
-        $projectsInProgress = $projects->filter(fn ($project) => ($project->progress_percentage ?? 0) > 0)->count();
+        $totalApplications = $this->applicationsCountForProjects($projects);
+        $projectsInProgress = Project::where('client_id', $user->id)
+            ->where('progress_percentage', '>', 0)
+            ->count();
         $latestRecommendationResult = session('latest_recommendation_result') ?? $user->last_ai_recommendation;
         $recommendedCreators = collect(data_get($latestRecommendationResult, 'recommendations', []))
             ->take(2)
@@ -101,9 +84,9 @@ class DashboardController extends Controller
 
     public function adminDashboard()
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
-        if (!$user->isAdmin()) {
+        if (! $user->isAdmin()) {
             return redirect()->route('home')->with('error', 'Akses ditolak.');
         }
 
@@ -124,14 +107,16 @@ class DashboardController extends Controller
         $releasingEscrowCount = EscrowTransaction::where('status', 'releasing')->count();
         $disputeCount = EscrowTransaction::where('status', 'disputed')->count();
 
-        $pendingApprovalEscrows = EscrowTransaction::where('status', 'held')
-            ->with(['project'])
-            ->orderBy('updated_at', 'desc')
-            ->get()
-            ->filter(fn ($escrow) => ($escrow->project->status ?? null) === 'pending_admin_approval');
-
-        $pendingApprovalCount = $pendingApprovalEscrows->count();
-        $pendingApprovalAmount = $pendingApprovalEscrows->sum(fn ($escrow) => (int) ($escrow->net_amount ?? 0));
+        $pendingApprovalProjectIds = Project::where('status', 'pending_admin_approval')
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+        $pendingApprovalCount = empty($pendingApprovalProjectIds)
+            ? 0
+            : EscrowTransaction::where('status', 'held')->whereIn('project_id', $pendingApprovalProjectIds)->count();
+        $pendingApprovalAmount = empty($pendingApprovalProjectIds)
+            ? 0
+            : EscrowTransaction::where('status', 'held')->whereIn('project_id', $pendingApprovalProjectIds)->sum('net_amount');
 
         $recentUsers = User::where('type', '!=', 'admin')
             ->orderBy('created_at', 'desc')
@@ -152,7 +137,7 @@ class DashboardController extends Controller
                 'icon' => 'fa-user-plus',
                 'tone' => 'blue',
                 'title' => 'User baru mendaftar',
-                'description' => $recentUser->name . ' bergabung sebagai ' . ($recentUser->type === 'umkm' ? 'UMKM' : 'Creative Worker'),
+                'description' => $recentUser->name.' bergabung sebagai '.($recentUser->type === 'umkm' ? 'UMKM' : 'Creative Worker'),
                 'date' => $recentUser->created_at,
             ]))
             ->merge($recentProjects->map(fn ($project) => (object) [
@@ -180,10 +165,10 @@ class DashboardController extends Controller
                     default => 'slate',
                 },
                 'title' => 'Update escrow',
-                'description' => ($escrow->project->title ?? 'Transaksi escrow') . ' berstatus ' . ucfirst((string) $escrow->status),
+                'description' => ($escrow->project->title ?? 'Transaksi escrow').' berstatus '.ucfirst((string) $escrow->status),
                 'date' => $escrow->updated_at ?? $escrow->created_at,
             ]))
-            ->filter(fn ($activity) => !empty($activity->date))
+            ->filter(fn ($activity) => ! empty($activity->date))
             ->sortByDesc(fn ($activity) => $activity->date->timestamp ?? 0)
             ->take(6)
             ->values();
@@ -213,7 +198,7 @@ class DashboardController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -243,9 +228,9 @@ class DashboardController extends Controller
 
     public function apiCreativeWorkerDashboard()
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
-        if (!$user->isCreativeWorker()) {
+        if (! $user->isCreativeWorker()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak. Anda bukan Creative Worker.',
@@ -258,24 +243,8 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $latestProjects = $latestProjects->map(function ($project) {
-            $applicationsCount = (int) ($project->applications_count ?? 0);
-            $progress = $applicationsCount === 0 ? 0 : (int) ($project->progress_percentage ?? 0);
-            $status = $project->status ?? 'open';
-
-            if ($applicationsCount === 0) {
-                $status = 'Belum Ada Apply';
-            } elseif ($progress >= 100) {
-                $status = 'Selesai';
-            } elseif ($progress > 0) {
-                $status = 'Sedang Dikerjakan';
-            } else {
-                $status = 'Sudah Di-apply';
-            }
-
-            $project->applications_count = $applicationsCount;
-            $project->progress_percentage = $progress;
-            $project->status_label = $status;
+        $latestProjects = $latestProjects->map(function (Project $project) {
+            $project = $this->withProjectStatusLabel($project);
 
             return [
                 'id' => (string) $project->id,
@@ -283,10 +252,12 @@ class DashboardController extends Controller
                 'category' => $project->category,
                 'budget' => $project->budget,
                 'deadline' => $project->deadline,
-                'status_label' => $status,
+                'status_label' => $project->status_label,
                 'thumbnail' => $project->thumbnail,
             ];
         });
+
+        $ratingStats = $this->ratingStatsFor($user);
 
         return response()->json([
             'success' => true,
@@ -298,23 +269,23 @@ class DashboardController extends Controller
                     'type' => $user->type,
                     'creative_category' => $user->creative_category,
                     'onboarding_completed' => (bool) $user->onboarding_completed,
-                    'profile_photo' => $user->profile_photo ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=random',
+                    'profile_photo' => $user->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=random',
                 ],
                 'stats' => [
                     'active_projects' => Project::where('selected_creative_id', $user->id)->where('status', 'in_progress')->count(),
-                    'completed_projects' => (int) $user->completed_projects_count,
-                    'average_rating' => (float) $user->average_rating,
+                    'completed_projects' => $this->completedProjectsCountFor($user),
+                    'average_rating' => $ratingStats['average'],
                 ],
                 'latest_projects' => $latestProjects,
-            ]
+            ],
         ], 200);
     }
 
     public function creativeEarnings()
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
-        if (!$user->isCreativeWorker()) {
+        if (! $user->isCreativeWorker()) {
             return redirect()->route('home')->with('error', 'Hanya creative worker yang dapat melihat penghasilan.');
         }
 
@@ -323,10 +294,10 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $totalEarned = $transactions->where('status', 'released')->sum('net_amount');
-        $pendingApproval = $transactions->where('status', 'held')->sum('net_amount');
-        $inDisbursement = $transactions->where('status', 'releasing')->sum('net_amount');
-        $releasedCount = $transactions->where('status', 'released')->count();
+        $totalEarned = EscrowTransaction::where('payee_id', $user->id)->where('status', 'released')->sum('net_amount');
+        $pendingApproval = EscrowTransaction::where('payee_id', $user->id)->where('status', 'held')->sum('net_amount');
+        $inDisbursement = EscrowTransaction::where('payee_id', $user->id)->where('status', 'releasing')->sum('net_amount');
+        $releasedCount = EscrowTransaction::where('payee_id', $user->id)->where('status', 'released')->count();
 
         return view('earnings.index', compact(
             'transactions',
@@ -339,9 +310,9 @@ class DashboardController extends Controller
 
     public function creativeHistory()
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
-        if (!$user->isCreativeWorker()) {
+        if (! $user->isCreativeWorker()) {
             return redirect()->route('home')->with('error', 'Hanya creative worker yang dapat melihat riwayat proyek.');
         }
 
@@ -355,9 +326,11 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $historyItems = $ratings->map(function ($rating) use ($histories) {
+        $historiesByProjectId = $histories->keyBy(fn ($history) => (string) ($history->original_project_id ?? ''));
+
+        $historyItems = $ratings->map(function ($rating) use ($historiesByProjectId) {
             $projectId = (string) ($rating->project_id ?? '');
-            $history = $histories->firstWhere('original_project_id', $projectId);
+            $history = $historiesByProjectId->get($projectId);
             $project = $rating->project;
 
             return (object) [
@@ -427,7 +400,7 @@ class DashboardController extends Controller
 
     public function apiUpdateProfile(Request $request)
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
@@ -451,7 +424,7 @@ class DashboardController extends Controller
             $validated['onboarding_completed'] = true;
         }
 
-        $user->update(array_filter($validated));
+        $user->update(array_filter($validated, fn ($value) => $value !== null));
 
         return response()->json([
             'success' => true,
@@ -467,16 +440,16 @@ class DashboardController extends Controller
                     'bank_name' => $user->bank_name,
                     'bank_account_number' => $user->bank_account_number,
                     'bank_account_name' => $user->bank_account_name,
-                ]
-            ]
+                ],
+            ],
         ], 200);
     }
 
     public function apiUMKMDashboard()
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
-        if (!$user->isUMKM()) {
+        if (! $user->isUMKM()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak. Anda bukan UMKM.',
@@ -487,8 +460,11 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $totalApplications = ProjectApplication::whereIn('project_id', $projects->pluck('id')->all())->count();
-        $projectsInProgress = $projects->filter(fn ($project) => ($project->progress_percentage ?? 0) > 0 && ($project->progress_percentage ?? 0) < 100)->count();
+        $totalApplications = $this->applicationsCountForProjects($projects);
+        $projectsInProgress = Project::where('client_id', $user->id)
+            ->where('progress_percentage', '>', 0)
+            ->where('progress_percentage', '<', 100)
+            ->count();
 
         return response()->json([
             'success' => true,
@@ -498,7 +474,7 @@ class DashboardController extends Controller
                     'id' => (string) $user->id,
                     'name' => $user->name,
                     'type' => $user->type,
-                    'profile_photo' => $user->profile_photo ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=random',
+                    'profile_photo' => $user->profile_photo ?? 'https://ui-avatars.com/api/?name='.urlencode($user->name).'&background=random',
                 ],
                 'stats' => [
                     'total_projects' => $projects->count(),
@@ -514,7 +490,79 @@ class DashboardController extends Controller
                     'thumbnail' => $project->thumbnail,
                     'created_at' => $project->created_at->toISOString(),
                 ]),
-            ]
+            ],
         ], 200);
+    }
+
+    private function currentUser(): User
+    {
+        $user = auth()->user();
+
+        abort_unless($user instanceof User, 401);
+
+        return $user;
+    }
+
+    private function withProjectStatusLabel(Project $project): Project
+    {
+        $applicationsCount = (int) ($project->applications_count ?? 0);
+        $progress = $applicationsCount === 0 ? 0 : (int) ($project->progress_percentage ?? 0);
+
+        if ($applicationsCount === 0) {
+            $status = 'Belum Ada Apply';
+        } elseif ($progress >= 100) {
+            $status = 'Selesai';
+        } elseif ($progress > 0) {
+            $status = 'Sedang Dikerjakan';
+        } else {
+            $status = 'Sudah Di-apply';
+        }
+
+        $project->applications_count = $applicationsCount;
+        $project->progress_percentage = $progress;
+        $project->status_label = $status;
+
+        return $project;
+    }
+
+    private function applicationsCountForProjects($projects): int
+    {
+        $projectIds = $projects
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->filter()
+            ->all();
+
+        if (empty($projectIds)) {
+            return 0;
+        }
+
+        return ProjectApplication::whereIn('project_id', $projectIds)->count();
+    }
+
+    private function ratingStatsFor(User $user): array
+    {
+        $ratingsCount = Rating::where('to_user_id', (string) $user->id)->count();
+        $averageRating = $ratingsCount > 0
+            ? round((float) Rating::where('to_user_id', (string) $user->id)->avg('rating'), 1)
+            : 0;
+
+        return [
+            'count' => $ratingsCount,
+            'average' => $averageRating,
+        ];
+    }
+
+    private function completedProjectsCountFor(User $user): int
+    {
+        $activeCompleted = Project::where('selected_creative_id', $user->id)
+            ->where('status', 'completed')
+            ->count();
+
+        $archivedCompleted = ProjectHistory::where('selected_creative_id', $user->id)
+            ->where('history_type', 'completed')
+            ->count();
+
+        return $activeCompleted + $archivedCompleted;
     }
 }
